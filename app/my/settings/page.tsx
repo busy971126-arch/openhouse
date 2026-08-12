@@ -1,0 +1,56 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { NotificationSettingsForm } from "@/components/my/NotificationSettingsForm";
+
+export default async function MySettingsPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect("/login?redirect=/my/settings");
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("notify_new_events")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  return (
+    <div className="flex flex-col gap-6">
+      <Link href="/my" className="text-sm font-medium text-orange-600">
+        ← 마이페이지
+      </Link>
+      <h1 className="text-2xl font-bold text-zinc-900">설정</h1>
+
+      <div className="flex flex-col gap-2">
+        <Link
+          href="/my/profile/edit"
+          className="rounded-xl border border-zinc-200 bg-white px-4 py-3 hover:bg-zinc-50"
+        >
+          프로필 수정
+        </Link>
+        <Link
+          href="/my/settings/password"
+          className="rounded-xl border border-zinc-200 bg-white px-4 py-3 hover:bg-zinc-50"
+        >
+          비밀번호 변경
+        </Link>
+      </div>
+
+      <NotificationSettingsForm
+        initialEnabled={profile?.notify_new_events ?? true}
+      />
+
+      <p className="text-xs text-zinc-500">
+        관심 지역·종목은 프로필 수정에서 변경할 수 있습니다. 관심 체육관은
+        이벤트 상세 또는{" "}
+        <Link href="/my/wishlist" className="text-orange-600 underline">
+          관심 목록
+        </Link>
+        에서 관리합니다.
+      </p>
+    </div>
+  );
+}

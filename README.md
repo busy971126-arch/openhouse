@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# OpenHouse
 
-## Getting Started
+운동 이벤트를 찾고 참가하는 스포츠 커뮤니티 MVP (웹).
 
-First, run the development server:
+## Setup
+
+### 1. Supabase 프로젝트
+
+1. [Supabase](https://supabase.com)에서 새 프로젝트 생성
+2. SQL Editor에서 `supabase/migrations/` 파일을 **번호 순**으로 실행  
+   (최소 `001_initial_schema.sql` → 최신 `024_gym_photo_captions.sql`)
+3. Authentication → Providers에서 Email 활성화 (MVP 테스트 시 Confirm email OFF 권장)
+
+### 2. 환경 변수
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.local.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`.env.local`에 Supabase URL과 anon key 입력:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 3. 실행
 
-## Learn More
+```bash
+npm install
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+http://localhost:3000 에서 확인
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## MVP 흐름
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. 회원가입 / 로그인
+2. 운영자: 체육관 등록 → 이벤트 등록
+3. 참가자: 이벤트 목록 · 필터 → 상세 → 참가 신청
+4. 운영자: 참가자 승인 · 공지 작성
+5. 참가자: 참가 취소 · 참가 이력 확인
 
-## Deploy on Vercel
+## 문서
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [DATABASE.md](docs/DATABASE.md) — DB·RLS 설계
+- [ROUTES.md](docs/ROUTES.md) — 화면·라우트
+- [PROJECT.md](PROJECT.md) — 제품 방향
+- [AGENTS.md](AGENTS.md) — AI 팀 협업
