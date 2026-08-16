@@ -37,6 +37,18 @@ export default async function MySettingsPage() {
         >
           비밀번호 변경
         </Link>
+        <Link
+          href="/my/settings/privacy"
+          className="rounded-xl border border-zinc-200 bg-white px-4 py-3 hover:bg-zinc-50"
+        >
+          개인정보 공개 범위
+        </Link>
+        <Link
+          href="/my/inquiries"
+          className="rounded-xl border border-zinc-200 bg-white px-4 py-3 hover:bg-zinc-50"
+        >
+          문의하기
+        </Link>
       </div>
 
       <NotificationSettingsForm
@@ -44,9 +56,8 @@ export default async function MySettingsPage() {
       />
 
       <p className="text-xs text-zinc-500">
-        관심 지역·종목은 프로필 수정에서 변경할 수 있습니다. 관심 체육관은
-        이벤트 상세 또는{" "}
-        <Link href="/my/wishlist" className="text-orange-600 underline">
+        관심 지역·종목은 프로필 수정에서 변경할 수 있습니다. 관심 체육관·이벤트는{" "}
+        <Link href="/my/interests" className="text-orange-600 underline">
           관심 목록
         </Link>
         에서 관리합니다.

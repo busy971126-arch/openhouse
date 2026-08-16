@@ -22,7 +22,7 @@ export function GymFormPreviewPanel(props: GymFormPreviewPanelProps) {
         <div>
           <h2 className="text-sm font-semibold text-zinc-900">프로필 미리보기</h2>
           <p className="mb-3 text-xs leading-relaxed text-zinc-500">
-            참가자에게 보이는 화면입니다. 저장 전에 확인하세요.
+            예정 참가자에게 보이는 화면입니다. 저장 전에 확인하세요.
           </p>
         </div>
 

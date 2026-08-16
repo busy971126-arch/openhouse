@@ -7,6 +7,11 @@ import {
 } from "@/lib/constants/event-recruitment-filter";
 import { getApprovedCountsByEvent } from "@/lib/queries/event-counts";
 import { getEvents } from "@/lib/queries/events";
+import {
+  getUserInterestedEventIds,
+  getUserInterestedGymIds,
+} from "@/lib/queries/interests";
+import { createClient } from "@/lib/supabase/server";
 import type { EventType } from "@/lib/types/database";
 import { getEventRecruitmentStatus } from "@/lib/utils/event-status";
 
@@ -35,6 +40,12 @@ export async function EventList({
   searchQuery,
   recruitmentStatus = "recruiting",
 }: EventListProps) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const interestedEventIds = await getUserInterestedEventIds(user?.id);
+
   const { data, error } = await getEvents({
     region,
     sport,
@@ -99,6 +110,8 @@ export async function EventList({
           key={event.id}
           event={event}
           approvedCount={countsMap.get(event.id) ?? 0}
+          userId={user?.id ?? null}
+          initialInterested={interestedEventIds.has(event.id)}
         />
       ))}
     </div>

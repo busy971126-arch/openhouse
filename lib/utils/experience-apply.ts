@@ -43,6 +43,20 @@ export function buildApplyExperience(
   return background;
 }
 
+const APPLICANT_YEAR_VALUES = new Set<string>(
+  APPLICANT_YEARS_OPTIONS.map((option) => option.value),
+);
+
+function normalizeApplicantYears(raw: string): ApplicantYears | "" {
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+  if (trimmed === "1년 미만") return "입문";
+  if (APPLICANT_YEAR_VALUES.has(trimmed)) {
+    return trimmed as ApplicantYears;
+  }
+  return "";
+}
+
 export function parseApplyExperience(experience: string | null | undefined): {
   background: ApplicantBackground | "";
   years: ApplicantYears | "";
@@ -61,8 +75,10 @@ export function parseApplyExperience(experience: string | null | undefined): {
 
   if (experience.startsWith("일반 수련자 · ")) {
     const raw = experience.replace("일반 수련자 · ", "");
-    const years = (raw === "1년 미만" ? "입문" : raw) as ApplicantYears;
-    return { background: "일반 수련자", years };
+    return {
+      background: "일반 수련자",
+      years: normalizeApplicantYears(raw),
+    };
   }
 
   if (experience.startsWith("일반 수련자")) {
@@ -70,6 +86,30 @@ export function parseApplyExperience(experience: string | null | undefined): {
   }
 
   return { background: "", years: "" };
+}
+
+export function getApplyFormDefaultsFromProfile(input: {
+  weightClass?: string | null;
+  experience?: string | null;
+  isGymOperator?: boolean;
+  gymAffiliation?: string | null;
+}) {
+  const profileExperience = input.isGymOperator
+    ? GYM_OPERATOR_EXPERIENCE
+    : input.experience;
+  const parsed = parseApplyExperience(profileExperience);
+  const isAthlete = isAthleteBackgroundProfile(profileExperience);
+
+  return {
+    weightClass: input.weightClass?.trim() ?? "",
+    background: (input.isGymOperator
+      ? "지도자"
+      : isAthlete
+        ? "선수 출신"
+        : parsed.background) as ApplicantBackground | "",
+    years: parsed.years,
+    gymAffiliation: input.gymAffiliation?.trim() ?? "",
+  };
 }
 
 export function formatApplyExperienceLabel(experience: string | null | undefined) {

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getEvent } from "@/lib/queries/events";
+import { getEventDisplayAddress } from "@/lib/utils/event-location";
 import { formatEventDetailDate, formatEventTimeDisplay } from "@/lib/utils/date";
 import { formatEventType } from "@/lib/constants/event-types";
 import {
@@ -26,7 +27,7 @@ export default async function ApplyCompletePage({ params }: PageProps) {
     getEvent(eventId),
     supabase
       .from("registrations")
-      .select("id, status, seeking_sparring_partner")
+      .select("id, status")
       .eq("user_id", user.id)
       .eq("event_id", eventId)
       .in("status", ["pending", "approved"])
@@ -40,14 +41,19 @@ export default async function ApplyCompletePage({ params }: PageProps) {
   const scheduleTab = getDefaultScheduleTabForEventDate(event.event_date);
   const timeLabel = formatEventTimeDisplay(event.event_time);
 
+  const gym = event.gyms as { name: string; address: string | null; region: string } | null;
+  const displayAddress = getEventDisplayAddress(event, gym);
+  const isApproved = registration.status === "approved";
+
   return (
     <div className="flex flex-col gap-6 py-4">
       <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-center">
         <p className="text-3xl">✅</p>
         <h1 className="mt-3 text-xl font-bold text-zinc-900">신청이 완료되었습니다</h1>
         <p className="mt-2 text-sm text-zinc-600">
-          호스트 승인 후 참가가 확정됩니다. 내 일정에서 상태를 확인할 수
-          있습니다.
+          {isApproved
+            ? "참가가 확정되었습니다. 내 일정에서 확인할 수 있습니다."
+            : "호스트 승인 후 참가가 확정됩니다. 내 일정에서 상태를 확인할 수 있습니다."}
         </p>
       </div>
 
@@ -60,17 +66,18 @@ export default async function ApplyCompletePage({ params }: PageProps) {
             {timeLabel ? ` · ${timeLabel}` : ""}
           </p>
           <p>
-            📍 {event.region}
-            {event.gyms?.name ? ` · ${event.gyms.name}` : ""}
+            📍 {displayAddress ?? event.region}
+            {gym?.name ? ` · ${gym.name}` : ""}
           </p>
           <p>{formatEventType(event.event_type)} · {event.sport}</p>
         </div>
-        <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">
-          🟡 승인 대기 중
-        </p>
-        {registration.seeking_sparring_partner && (
-          <p className="mt-2 text-sm text-zinc-600">
-            대련 상대 찾기도 함께 등록되었습니다.
+        {isApproved ? (
+          <p className="mt-4 rounded-lg bg-green-50 px-3 py-2 text-sm font-medium text-green-800">
+            🟢 참가 확정
+          </p>
+        ) : (
+          <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">
+            🟡 승인 대기 중
           </p>
         )}
       </section>

@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Alert } from "@/components/Alert";
-import { SignupField, SignupInput } from "@/components/SignupField";
+import { AuthBrandHero } from "@/components/auth/AuthBrandHero";
+import { PasswordInput, SignupField, SignupInput } from "@/components/SignupField";
 import { mapSignupError } from "@/lib/utils/auth-errors";
 
 export default function LoginForm() {
@@ -42,7 +43,9 @@ export default function LoginForm() {
 
   return (
     <div className="mx-auto max-w-md">
-      <h1 className="mb-6 text-2xl font-bold text-zinc-900">로그인</h1>
+      <AuthBrandHero />
+
+      <h2 className="mb-6 text-xl font-bold text-zinc-900">로그인</h2>
 
       {error && (
         <div className="mb-4">
@@ -62,8 +65,7 @@ export default function LoginForm() {
         </SignupField>
 
         <SignupField label="비밀번호" required>
-          <SignupInput
-            type="password"
+          <PasswordInput
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}

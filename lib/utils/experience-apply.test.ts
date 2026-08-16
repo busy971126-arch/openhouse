@@ -4,6 +4,7 @@ import {
   formatApplyBackground,
   formatParticipantExperienceSummary,
   getApplicantBackgroundOptions,
+  getApplyFormDefaultsFromProfile,
   isAthleteBackgroundProfile,
   parseApplyExperience,
 } from "./experience-apply";
@@ -77,6 +78,36 @@ describe("formatParticipantExperienceSummary", () => {
     expect(formatParticipantExperienceSummary("일반 수련자 · 3~5년", true)).toBe(
       "지도자",
     );
+  });
+});
+
+describe("getApplyFormDefaultsFromProfile", () => {
+  it("prefills apply fields from profile", () => {
+    expect(
+      getApplyFormDefaultsFromProfile({
+        weightClass: "-81kg",
+        experience: "일반 수련자 · 3~5년",
+        gymAffiliation: "OO 유도장",
+      }),
+    ).toEqual({
+      weightClass: "-81kg",
+      background: "일반 수련자",
+      years: "3~5년",
+      gymAffiliation: "OO 유도장",
+    });
+  });
+
+  it("maps signup year label to apply form", () => {
+    expect(
+      getApplyFormDefaultsFromProfile({
+        experience: "일반 수련자 · 1년 미만",
+      }),
+    ).toEqual({
+      weightClass: "",
+      background: "일반 수련자",
+      years: "입문",
+      gymAffiliation: "",
+    });
   });
 });
 

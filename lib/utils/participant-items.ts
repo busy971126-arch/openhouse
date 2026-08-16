@@ -18,7 +18,10 @@ export type ParticipantItem = {
   preferredSports: string[] | null;
   status: RegistrationStatus;
   operatorMemo: string | null;
+  autoApproved: boolean;
   createdAt: string;
+  partyId: string | null;
+  partyRepresentativeUserId: string | null;
 };
 
 type RegistrationRow = {
@@ -31,7 +34,10 @@ type RegistrationRow = {
   applicant_notes: string | null;
   seeking_sparring_partner: boolean | null;
   operator_memo: string | null;
+  auto_approved: boolean | null;
   created_at: string;
+  party_id: string | null;
+  party_representative_user_id: string | null;
   profiles: {
     display_name: string | null;
     nickname: string | null;
@@ -71,7 +77,10 @@ export function mapRegistrationToParticipantItem(
     preferredSports: reg.profiles?.preferred_sports ?? null,
     status: reg.status as RegistrationStatus,
     operatorMemo: reg.operator_memo ?? null,
+    autoApproved: reg.auto_approved ?? false,
     createdAt: reg.created_at,
+    partyId: reg.party_id ?? null,
+    partyRepresentativeUserId: reg.party_representative_user_id ?? null,
   };
 }
 

@@ -70,6 +70,7 @@ export function buildGymPreviewFromForm(
   | "gi_rental"
   | "visit_details"
   | "preparation_guide"
+  | "gym_tags"
   | "mat_photos"
   | "facility_photos"
   | "exterior_photos"

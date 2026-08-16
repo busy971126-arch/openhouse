@@ -39,7 +39,10 @@ export async function getProfileFeed(
   const participated =
     registrations
       ?.map((row) => {
-        const event = row.events as {
+        const eventRaw = row.events;
+        const event = (
+          Array.isArray(eventRaw) ? eventRaw[0] : eventRaw
+        ) as {
           title: string;
           event_date: string;
           event_type: string | null;

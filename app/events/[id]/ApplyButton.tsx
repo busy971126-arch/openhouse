@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { Alert } from "@/components/Alert";
+import { FieldLabel } from "@/components/FieldLabel";
 import { ApplyPreviewHintBox } from "@/components/events/ApplyPreviewHintBox";
+import { PartyFriendPicker } from "@/components/events/PartyFriendPicker";
+import { ParticipantPartySummary } from "@/components/participants/ParticipantPartyBadge";
 import {
   APPLICANT_BACKGROUND_OPTIONS,
   APPLICANT_YEARS_OPTIONS,
@@ -16,11 +18,17 @@ import { buildApplyPreviewHint } from "@/lib/utils/apply-preview-hint";
 import {
   buildApplyExperience,
   getApplicantBackgroundOptions,
+  getApplyFormDefaultsFromProfile,
   isAthleteBackgroundProfile,
-  parseApplyExperience,
+  type ApplicantBackground,
 } from "@/lib/utils/experience-apply";
 import type { ParticipantPreview } from "@/lib/utils/participant-preview";
+import {
+  parseRegistrationApplyError,
+} from "@/lib/utils/participant-party";
 import type { Registration } from "@/lib/types/database";
+
+type ApplyMode = "solo" | "party";
 
 type ApplyButtonProps = {
   eventId: string;
@@ -32,6 +40,7 @@ type ApplyButtonProps = {
   gender?: string | null;
   experience?: string | null;
   isGymOperator?: boolean;
+  gymAffiliationDefault?: string | null;
   preview?: ParticipantPreview | null;
 };
 
@@ -45,15 +54,22 @@ export function ApplyButton({
   gender,
   experience,
   isGymOperator = false,
+  gymAffiliationDefault,
   preview,
 }: ApplyButtonProps) {
   const router = useRouter();
   const profileExperience = isGymOperator
     ? GYM_OPERATOR_EXPERIENCE
     : experience;
-  const initial = useMemo(
-    () => parseApplyExperience(profileExperience),
-    [profileExperience],
+  const defaults = useMemo(
+    () =>
+      getApplyFormDefaultsFromProfile({
+        weightClass,
+        experience,
+        isGymOperator,
+        gymAffiliation: gymAffiliationDefault,
+      }),
+    [weightClass, experience, isGymOperator, gymAffiliationDefault],
   );
   const isAthleteProfile = useMemo(
     () => isAthleteBackgroundProfile(profileExperience),
@@ -67,23 +83,18 @@ export function ApplyButton({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedWeightClass, setSelectedWeightClass] = useState(
-    weightClass?.trim() ?? "",
+    defaults.weightClass,
   );
   const [background, setBackground] = useState<
     (typeof APPLICANT_BACKGROUND_OPTIONS)[number]["value"] | ""
-  >(() =>
-    isGymOperator
-      ? "지도자"
-      : isAthleteBackgroundProfile(profileExperience)
-        ? "선수 출신"
-        : initial.background,
-  );
+  >(defaults.background);
   const [years, setYears] = useState<
     (typeof APPLICANT_YEARS_OPTIONS)[number]["value"] | ""
-  >(initial.years);
-  const [gymAffiliation, setGymAffiliation] = useState("");
+  >(defaults.years);
+  const [gymAffiliation, setGymAffiliation] = useState(defaults.gymAffiliation);
   const [applicantNotes, setApplicantNotes] = useState("");
-  const [seekingSparring, setSeekingSparring] = useState(false);
+  const [applyMode, setApplyMode] = useState<ApplyMode>("solo");
+  const [companionIds, setCompanionIds] = useState<string[]>([]);
 
   const previewExperience = isGymOperator
     ? GYM_OPERATOR_EXPERIENCE
@@ -123,11 +134,13 @@ export function ApplyButton({
     return (
       <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-center">
         <p className="text-sm font-semibold text-green-800">{label}</p>
-        {existingRegistration.seeking_sparring_partner && (
-          <p className="mt-1 text-xs text-green-700">
-            대련 상대 찾기 등록됨
-          </p>
-        )}
+        <ParticipantPartySummary
+          partyId={existingRegistration.party_id}
+          partyRepresentativeUserId={
+            existingRegistration.party_representative_user_id
+          }
+          userId={userId}
+        />
         <Link
           href="/my/registrations"
           className="mt-3 inline-block text-sm font-medium text-orange-600 hover:text-orange-700"
@@ -169,37 +182,60 @@ export function ApplyButton({
 
     const applyExperience = isGymOperator
       ? GYM_OPERATOR_EXPERIENCE
-      : buildApplyExperience(background, years);
+      : buildApplyExperience(background as ApplicantBackground, years);
     if (!applyExperience) {
       setError("수련 정보를 확인해주세요.");
+      return;
+    }
+
+    if (applyMode === "party" && companionIds.length === 0) {
+      setError("동행할 운동 친구를 1명 이상 선택해주세요.");
       return;
     }
 
     setLoading(true);
     setError(null);
 
-    const supabase = createClient();
-    const { error: insertError } = await supabase.from("registrations").insert({
-      event_id: eventId,
-      user_id: userId,
-      status: "pending",
-      seeking_sparring_partner: seekingSparring,
-      sparring_intensity: null,
-      apply_weight_class: selectedWeightClass.trim(),
-      apply_experience: applyExperience,
-      gym_affiliation: gymAffiliation.trim() || null,
-      applicant_notes: applicantNotes.trim() || null,
-    });
+    try {
+      const response = await fetch(`/api/events/${eventId}/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: applyMode,
+          applyWeightClass: selectedWeightClass.trim(),
+          applyExperience,
+          gymAffiliation: gymAffiliation.trim() || null,
+          applicantNotes: applicantNotes.trim() || null,
+          companionUserIds: applyMode === "party" ? companionIds : undefined,
+        }),
+      });
 
-    setLoading(false);
+      const result = await response.json();
+      setLoading(false);
 
-    if (insertError) {
-      setError(insertError.message);
-      return;
+      if (!response.ok) {
+        setError(
+          parseRegistrationApplyError(
+            result.error ?? "참가 신청에 실패했습니다.",
+            applyMode === "party" ? "동행 신청에 실패했습니다." : "참가 신청에 실패했습니다.",
+          ),
+        );
+        return;
+      }
+
+      if (applyMode === "party") {
+        window.alert(
+          `동행 신청이 완료되었습니다.\n운동 친구 ${companionIds.length}명과 함께 신청했습니다.`,
+        );
+      } else {
+        window.alert("참가 신청이 완료되었습니다.");
+      }
+
+      router.push(`/events/${eventId}/apply/complete`);
+    } catch {
+      setLoading(false);
+      setError("참가 신청 요청에 실패했습니다. 잠시 후 다시 시도해주세요.");
     }
-
-    window.alert("참가 신청이 완료되었습니다.");
-    router.push(`/events/${eventId}/apply/complete`);
   }
 
   return (
@@ -209,15 +245,55 @@ export function ApplyButton({
       {error && <Alert message={error} />}
 
       <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+        <p className="text-sm font-medium text-zinc-900">참가 방식</p>
+        <div className="mt-3 flex gap-2">
+          <button
+            type="button"
+            onClick={() => setApplyMode("solo")}
+            className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium ${
+              applyMode === "solo"
+                ? "bg-orange-600 text-white"
+                : "border border-zinc-300 bg-white text-zinc-700"
+            }`}
+          >
+            혼자 신청
+          </button>
+          <button
+            type="button"
+            onClick={() => setApplyMode("party")}
+            className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium ${
+              applyMode === "party"
+                ? "bg-orange-600 text-white"
+                : "border border-zinc-300 bg-white text-zinc-700"
+            }`}
+          >
+            운동 친구와 동행
+          </button>
+        </div>
+      </div>
+
+      {applyMode === "party" && userId && (
+        <PartyFriendPicker
+          viewerId={userId}
+          selectedIds={companionIds}
+          onChange={setCompanionIds}
+        />
+      )}
+
+      <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
         <p className="text-sm font-medium text-zinc-900">참가 정보</p>
         <p className="mt-1 text-xs text-zinc-500">
-          체급·수련 정보는 다른 참가자에게 공개됩니다. 실명과 연락처는 공개되지
-          않습니다.
+          체급·수련 정보만 예정 참가자에게 공개됩니다.
+        </p>
+        <p className="mt-1 text-xs text-zinc-400">
+          🔒 실명과 연락처는 공개되지 않습니다.
         </p>
 
         <div className="mt-4 flex flex-col gap-3">
           <label className="flex flex-col gap-1 text-sm">
-            체급 <span className="text-red-600">*</span>
+            <FieldLabel required tone="red">
+              체급
+            </FieldLabel>
             <select
               required
               value={selectedWeightClass}
@@ -246,7 +322,9 @@ export function ApplyButton({
           ) : (
             <>
               <label className="flex flex-col gap-1 text-sm">
-                수련 배경 <span className="text-red-600">*</span>
+                <FieldLabel required tone="red">
+                  수련 배경
+                </FieldLabel>
                 <select
                   required
                   value={background}
@@ -276,7 +354,9 @@ export function ApplyButton({
 
               {background === "일반 수련자" && (
                 <label className="flex flex-col gap-1 text-sm">
-                  수련 기간 <span className="text-red-600">*</span>
+                  <FieldLabel required tone="red">
+                    수련 기간
+                  </FieldLabel>
                   <select
                     required
                     value={years}
@@ -322,40 +402,13 @@ export function ApplyButton({
         </div>
       </div>
 
-      <label className="flex items-start gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-3 text-sm">
-        <input
-          type="checkbox"
-          checked={seekingSparring}
-          onChange={(e) => setSeekingSparring(e.target.checked)}
-          className="mt-0.5 size-4 rounded border-zinc-300"
-        />
-        <span>
-          <span className="font-medium text-zinc-900">
-            대련 상대를 찾고 있어요
-          </span>
-          <span className="mt-1 block text-xs text-zinc-500">
-            체급·수련 경력·닉네임만 공개됩니다.
-          </span>
-        </span>
-      </label>
-
-      {seekingSparring && !selectedWeightClass.trim() && (
-        <p className="text-sm text-orange-800">
-          대련 찾기는 체급 선택이 필요합니다.{" "}
-          <Link href="/my/profile/edit" className="font-medium underline">
-            프로필
-          </Link>
-          에서 기본 체급을 저장해두면 편해요.
-        </p>
-      )}
-
       <button
         type="button"
         onClick={handleApply}
         disabled={loading}
         className="rounded-lg bg-orange-600 py-3 font-medium text-white hover:bg-orange-700 disabled:opacity-50"
       >
-        {loading ? "신청 중..." : "참가 신청"}
+        {loading ? "신청 중..." : applyMode === "party" ? "동행 신청" : "참가 신청"}
       </button>
     </div>
   );

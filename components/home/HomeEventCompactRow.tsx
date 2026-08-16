@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatEventListDate, formatEventTimeDisplay } from "@/lib/utils/date";
+import type { HomeEventPreviewItem } from "@/lib/utils/home-events";
 
 type HomeEventCompactRowProps = {
   item: HomeEventPreviewItem;

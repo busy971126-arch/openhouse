@@ -11,6 +11,7 @@ export type FriendListItem = {
   friendshipId: string;
   userId: string;
   nickname: string;
+  displayName: string | null;
   sport: string | null;
   photoUrl: string | null;
   weightClass: string | null;
@@ -76,6 +77,7 @@ function mapProfileRow(
       profile.nickname?.trim() ||
       profile.display_name?.trim() ||
       "회원",
+    displayName: profile.display_name?.trim() || null,
     sport: profile.preferred_sports?.[0] ?? null,
     photoUrl: profile.photo_url,
     weightClass: profile.weight_class,
@@ -117,6 +119,48 @@ export async function getFriendsList(userId: string): Promise<FriendListItem[]> 
       return mapProfileRow(profile, row.id);
     })
     .filter((item): item is FriendListItem => item != null);
+}
+
+export async function getOutgoingFriendRequests(
+  userId: string,
+): Promise<FriendRequestItem[]> {
+  const supabase = await createClient();
+  const { data: rows, error } = await supabase
+    .from("friendships")
+    .select("id, created_at, addressee_id")
+    .eq("requester_id", userId)
+    .eq("status", "pending")
+    .order("created_at", { ascending: false });
+
+  if (error || !rows?.length) return [];
+
+  const addresseeIds = rows.map((row) => row.addressee_id);
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, nickname, display_name, preferred_sports, photo_url")
+    .in("id", addresseeIds);
+
+  const profileMap = new Map(
+    (profiles ?? []).map((profile) => [profile.id, profile]),
+  );
+
+  return rows
+    .map((row) => {
+      const profile = profileMap.get(row.addressee_id);
+      if (!profile) return null;
+      return {
+        friendshipId: row.id,
+        userId: profile.id,
+        nickname:
+          profile.nickname?.trim() ||
+          profile.display_name?.trim() ||
+          "회원",
+        sport: profile.preferred_sports?.[0] ?? null,
+        photoUrl: profile.photo_url,
+        createdAt: row.created_at,
+      };
+    })
+    .filter((item): item is FriendRequestItem => item != null);
 }
 
 export async function getIncomingFriendRequests(

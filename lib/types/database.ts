@@ -39,6 +39,8 @@ export type Profile = {
   photo_url: string | null;
   bio: string | null;
   created_at: string;
+  visibility_settings?: Record<string, unknown> | null;
+  pending_gym_info?: Record<string, unknown> | null;
 };
 
 export type Gym = {
@@ -78,6 +80,8 @@ export type Gym = {
   created_at: string;
 };
 
+export type EventLifecycleStatus = "active" | "cancelled";
+
 export type Event = {
   id: string;
   gym_id: string;
@@ -87,13 +91,17 @@ export type Event = {
   event_type: EventType;
   sport: string;
   region: string;
+  address: string | null;
   event_date: string;
-  event_time: string | null;
+  event_time: string;
+  recurring_days: string[] | null;
   max_participants: number | null;
   fee_amount: number | null;
   registration_deadline: string | null;
   difficulty: EventDifficulty | null;
   recruitment_closed: boolean;
+  auto_approve?: boolean;
+  status?: EventLifecycleStatus;
   safety_rules: string | null;
   prohibited_techniques: string | null;
   requirements: string | null;
@@ -116,7 +124,10 @@ export type Registration = {
   apply_experience: string | null;
   gym_affiliation: string | null;
   applicant_notes: string | null;
+  auto_approved: boolean;
   created_at: string;
+  party_id: string | null;
+  party_representative_user_id: string | null;
 };
 
 export type Announcement = {
@@ -139,7 +150,7 @@ export type Notification = {
 };
 
 export type EventWithGym = Event & {
-  gyms: Pick<Gym, "name" | "region" | "photo_url"> | null;
+  gyms: Pick<Gym, "name" | "region" | "photo_url" | "owner_id"> | null;
 };
 
 export type RegistrationWithProfile = Registration & {
@@ -168,4 +179,33 @@ export type EventFilters = {
   includePast?: boolean;
   nearbyRegions?: string[];
   searchQuery?: string;
+};
+
+export type Report = {
+  id: string;
+  reporter_id: string;
+  reported_user_id: string | null;
+  event_id: string | null;
+  category: string;
+  description: string;
+  status: "received" | "reviewing" | "resolved";
+  admin_note: string | null;
+  created_at: string;
+  resolved_at: string | null;
+};
+
+export type Inquiry = {
+  id: string;
+  user_id: string;
+  category: string;
+  message: string;
+  status: "open" | "answered" | "closed";
+  admin_reply: string | null;
+  created_at: string;
+};
+
+export type EventInterest = {
+  user_id: string;
+  event_id: string;
+  created_at: string;
 };

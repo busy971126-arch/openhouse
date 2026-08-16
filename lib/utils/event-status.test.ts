@@ -26,12 +26,22 @@ describe("getEventRecruitmentStatus", () => {
     ).toBe("closed");
   });
 
-  it("returns closed when at capacity", () => {
+  it("returns closed when at capacity (pending + approved)", () => {
     expect(
       getEventRecruitmentStatus({
         eventDate: futureDate,
         maxParticipants: 5,
         approvedCount: 5,
+      }),
+    ).toBe("closed");
+  });
+
+  it("returns closed when pending fills remaining spots", () => {
+    expect(
+      getEventRecruitmentStatus({
+        eventDate: futureDate,
+        maxParticipants: 10,
+        approvedCount: 10,
       }),
     ).toBe("closed");
   });
@@ -53,6 +63,17 @@ describe("getEventRecruitmentStatus", () => {
         maxParticipants: 10,
         approvedCount: 0,
         registrationDeadline: "2020-01-01",
+      }),
+    ).toBe("closed");
+  });
+
+  it("returns closed when event is cancelled", () => {
+    expect(
+      getEventRecruitmentStatus({
+        eventDate: futureDate,
+        maxParticipants: 10,
+        approvedCount: 0,
+        eventStatus: "cancelled",
       }),
     ).toBe("closed");
   });

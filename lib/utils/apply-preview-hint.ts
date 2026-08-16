@@ -23,7 +23,7 @@ export function buildApplyPreviewHint(
 ): ApplyPreviewHint {
   if (!preview || preview.total === 0) {
     return {
-      title: "참가자가 모이면 체급·경력 분포를 미리 볼 수 있어요.",
+      title: "예정 참가자가 모이면 체급·경력 분포를 미리 볼 수 있어요.",
       detail: "실명·연락처는 공개되지 않습니다.",
     };
   }
@@ -54,11 +54,6 @@ export function buildApplyPreviewHint(
   const yearKey = getExperienceYearKey(experience);
   if (yearKey && preview.experience_years[yearKey]) {
     matches.push(`비슷한 경력(${yearKey}) ${preview.experience_years[yearKey]}명`);
-  }
-
-  const seekerCount = preview.sparring_seekers.length;
-  if (seekerCount > 0) {
-    matches.push(`대련 찾는 사람 ${seekerCount}명`);
   }
 
   if (matches.length > 0) {

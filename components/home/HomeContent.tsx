@@ -2,23 +2,17 @@ import Link from "next/link";
 import { HomeMyScheduleSection } from "@/components/home/HomeMyScheduleSection";
 import { HomeNearbyEventsSection } from "@/components/home/HomeNearbyEventsSection";
 import { HomeNotificationsSection } from "@/components/home/HomeNotificationsSection";
+import { HomeRecruitingEventsSection } from "@/components/home/HomeRecruitingEventsSection";
 import { HomeSearchBar } from "@/components/home/HomeSearchBar";
-import { HomeUpcomingEventsSection } from "@/components/home/HomeUpcomingEventsSection";
-import { HomeUrgentEventsSection } from "@/components/home/HomeUrgentEventsSection";
 import { HomeRecommendedGymsSection } from "@/components/home/HomeRecommendedGyms";
 
 function GuestHome() {
   return (
     <>
       <section>
-        <h1 className="text-3xl font-bold leading-tight text-zinc-900">
-          운동 이벤트,
-          <br />
-          한곳에서
+        <h1 className="text-2xl font-bold leading-tight text-zinc-900">
+          오늘 어떤 운동을 찾으세요?
         </h1>
-        <p className="mt-3 text-zinc-600">
-          오픈매트, 세미나, 대회를 찾고 참가하세요.
-        </p>
         <p className="mt-2 text-xs text-zinc-500">
           지금은 유도 이벤트부터 시작합니다.
         </p>
@@ -26,9 +20,7 @@ function GuestHome() {
 
       <HomeSearchBar />
 
-      <HomeUrgentEventsSection />
-
-      <HomeUpcomingEventsSection />
+      <HomeRecruitingEventsSection />
 
       <HomeNearbyEventsSection />
 
@@ -83,13 +75,11 @@ function MemberHome({ displayLabel }: MemberHomeProps) {
 
       <HomeSearchBar />
 
+      <HomeRecruitingEventsSection />
+
       <HomeMyScheduleSection />
 
       <HomeNotificationsSection />
-
-      <HomeUrgentEventsSection />
-
-      <HomeUpcomingEventsSection />
 
       <HomeNearbyEventsSection />
 

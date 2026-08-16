@@ -42,7 +42,7 @@ export default async function HostParticipantDetailPage({ params }: PageProps) {
         href={`/host/participants?${backParams.toString()}`}
         className="text-sm text-orange-600 hover:underline"
       >
-        ← 참가자 목록
+        ← 예정 참가자 목록
       </Link>
 
       <div>

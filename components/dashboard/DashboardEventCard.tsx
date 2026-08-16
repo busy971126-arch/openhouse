@@ -5,6 +5,7 @@ import {
   formatEventTimeDisplay,
 } from "@/lib/utils/date";
 import { EVENT_STATUS_LABELS } from "@/lib/utils/event-status";
+import { buildHostParticipantsUrl } from "@/lib/utils/host-participants-url";
 import { EventManageActions } from "@/components/events/EventManageActions";
 
 type DashboardEventCardProps = {
@@ -15,16 +16,13 @@ export function DashboardEventCard({ event }: DashboardEventCardProps) {
   const status = EVENT_STATUS_LABELS[event.recruitmentStatus];
   const participantLabel =
     event.max_participants != null
-      ? `${event.counts.approved}/${event.max_participants}명`
-      : `${event.counts.approved}명`;
+      ? `${event.counts.total}/${event.max_participants}명`
+      : `${event.counts.total}명`;
   const timeLabel = formatEventTimeDisplay(event.event_time);
 
-  const spotsLeft =
-    event.max_participants != null
-      ? event.max_participants - event.counts.approved
-      : null;
   const overWaitlist =
-    spotsLeft != null && spotsLeft >= 0 && event.counts.pending > spotsLeft;
+    event.max_participants != null &&
+    event.counts.total > event.max_participants;
 
   return (
     <li className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
@@ -55,14 +53,15 @@ export function DashboardEventCard({ event }: DashboardEventCardProps) {
 
         {overWaitlist && (
           <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-            정원 대비 대기 {event.counts.pending}명 — 승인 시 정원을 확인하세요.
+            정원({event.max_participants}명)을 초과한 신청이 있습니다. 참가자
+            관리에서 확인하세요.
           </p>
         )}
       </div>
 
       <div className="border-t border-zinc-100 px-4 pb-4 pt-4">
         <Link
-          href={`/events/${event.id}/participants`}
+          href={buildHostParticipantsUrl(event.gym_id, event.id)}
           className="block rounded-lg bg-orange-600 py-2.5 text-center text-sm font-semibold text-white hover:bg-orange-700"
         >
           참가자 관리

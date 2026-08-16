@@ -53,11 +53,13 @@ import {
   uploadOptionalGymPhotos,
 } from "@/lib/utils/gym-photo-upload";
 import { getGymProfileCompletion } from "@/lib/utils/gym-profile-completion";
+import type { PendingGymFormDefaults } from "@/lib/utils/pending-gym-info";
 import { formatPhoneInput, normalizePhone } from "@/lib/utils/phone";
 
 type GymFormProps = {
   mode: "create" | "edit";
   gymId?: string;
+  pendingDefaults?: PendingGymFormDefaults | null;
 };
 
 function createEmptyOptionalPending(): Record<
@@ -72,7 +74,7 @@ function createEmptyOptionalPending(): Record<
   };
 }
 
-export function GymForm({ mode, gymId }: GymFormProps) {
+export function GymForm({ mode, gymId, pendingDefaults = null }: GymFormProps) {
   const router = useRouter();
   const isEdit = mode === "edit";
 
@@ -116,6 +118,7 @@ export function GymForm({ mode, gymId }: GymFormProps) {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingPrefillApplied, setPendingPrefillApplied] = useState(false);
 
   const profileCompletion = useMemo(
     () =>
@@ -246,6 +249,28 @@ export function GymForm({ mode, gymId }: GymFormProps) {
 
       setUserId(user.id);
 
+      if (pendingDefaults) {
+        setName(pendingDefaults.name);
+        setGymAddress(pendingDefaults.gymAddress);
+        if (pendingDefaults.representativeName) {
+          setRepresentativeName(pendingDefaults.representativeName);
+        }
+        if (pendingDefaults.representativePhone) {
+          setRepresentativePhone(formatPhoneInput(pendingDefaults.representativePhone));
+        }
+        if (pendingDefaults.phone) {
+          setPhone(formatPhoneInput(pendingDefaults.phone));
+        }
+        if (pendingDefaults.representativeRole) {
+          setRepresentativeRole(pendingDefaults.representativeRole);
+        }
+        if (pendingDefaults.representativeRoleCustom) {
+          setRepresentativeRoleCustom(pendingDefaults.representativeRoleCustom);
+        }
+        setPendingPrefillApplied(true);
+        return;
+      }
+
       const { data: profile } = await supabase
         .from("profiles")
         .select("display_name, phone")
@@ -261,7 +286,7 @@ export function GymForm({ mode, gymId }: GymFormProps) {
     }
 
     loadUser();
-  }, [isEdit, router]);
+  }, [isEdit, pendingDefaults, router]);
 
   function handleRepresentativeSelect(file: File) {
     setRepresentativePreview((previous) => {
@@ -591,10 +616,10 @@ export function GymForm({ mode, gymId }: GymFormProps) {
 
     await supabase
       .from("profiles")
-      .update({ experience: "지도자" })
+      .update({ experience: "지도자", pending_gym_info: null })
       .eq("id", userId);
 
-    router.push(`/host/gyms/${inserted.id}`);
+    router.push(`/gym/${inserted.id}/edit`);
     router.refresh();
   }
 
@@ -654,6 +679,13 @@ export function GymForm({ mode, gymId }: GymFormProps) {
         </div>
       )}
 
+      {pendingPrefillApplied && !isEdit && (
+        <p className="mb-4 rounded-lg border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-900">
+          가입 시 입력한 체육관 정보가 자동으로 채워졌습니다. 확인 후 등록을
+          완료해주세요.
+        </p>
+      )}
+
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         <GymProfileCompletionBar completion={profileCompletion} />
 
@@ -702,7 +734,7 @@ export function GymForm({ mode, gymId }: GymFormProps) {
 
           <SignupField
             label="담당자 연락처"
-            hint="본인 확인용 · 참가자에게 공개되지 않습니다"
+            hint="본인 확인용 · 예정 참가자에게 공개되지 않습니다"
             required
           >
             <SignupInput
@@ -799,7 +831,7 @@ export function GymForm({ mode, gymId }: GymFormProps) {
           </GymFormBlock>
         </GymFormGroup>
 
-        <SignupSection title="참가자용 연락처">
+        <SignupSection title="예정 참가자용 연락처">
           <p className="mb-3 text-xs text-zinc-500">
             체육관 상세·이벤트 페이지에 표시됩니다.
           </p>

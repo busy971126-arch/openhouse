@@ -16,6 +16,8 @@ describe("home-events", () => {
     event_type: "open_mat" as const,
     sport: "유도",
     region: "경기 부천시",
+    address: null,
+    recurring_days: null,
     event_date: "2026-08-16",
     event_time: "19:00:00",
     max_participants: 40,
@@ -31,8 +33,8 @@ describe("home-events", () => {
     gi_rental: null,
     visit_details: null,
     created_at: "2026-08-01",
-    gyms: { name: "OpenHouse Judo", region: "경기 부천시", photo_url: null, is_public: true },
-  };
+    gyms: { name: "OpenHouse Judo", region: "경기 부천시", photo_url: null, owner_id: "u1" },
+  } satisfies import("@/lib/types/database").EventWithGym;
 
   it("detects closing today events", () => {
     expect(isClosingTodayEvent(baseEvent, 10, "2026-08-12")).toBe(true);

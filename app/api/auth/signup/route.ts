@@ -1,8 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { mapSignupError, sanitizeSignupMetadata } from "@/lib/utils/auth-errors";
 import { normalizePhone } from "@/lib/utils/phone";
+import { buildPendingGymInfo } from "@/lib/utils/pending-gym-info";
 import { GYM_OPERATOR_EXPERIENCE } from "@/lib/constants/profile";
 import { serializeRepresentativeRole } from "@/lib/constants/gym-representative";
 
@@ -55,6 +57,50 @@ async function createCookieClient() {
       },
     },
   });
+}
+
+async function savePendingGymInfo(
+  userId: string,
+  gym: SignupBody["gym"],
+): Promise<boolean> {
+  const payload = buildPendingGymInfo(gym);
+  if (!payload) return false;
+
+  const admin = createAdminClient();
+  if (!admin) {
+    console.error(
+      "pending_gym_info: SUPABASE_SERVICE_ROLE_KEY가 없어 임시 저장을 건너뜁니다.",
+    );
+    return false;
+  }
+
+  const { error } = await admin
+    .from("profiles")
+    .update({ pending_gym_info: payload })
+    .eq("id", userId);
+
+  if (error) {
+    console.error("pending_gym_info save error:", error);
+    return false;
+  }
+
+  return true;
+}
+
+function buildGymInsertPayload(gym: NonNullable<SignupBody["gym"]>) {
+  const rolePayload = serializeRepresentativeRole(
+    gym.representativeRole ?? "",
+    gym.representativeRoleCustom ?? "",
+  );
+
+  return {
+    name: gym.name?.trim() ?? "",
+    region: gym.region?.trim() || "미정",
+    address: gym.address?.trim() ?? "",
+    representative_name: gym.representativeName?.trim() ?? "",
+    representative_phone: normalizePhone(gym.representativePhone ?? ""),
+    ...rolePayload,
+  };
 }
 
 export async function POST(request: Request) {
@@ -210,34 +256,37 @@ export async function POST(request: Request) {
   }
 
   if (body.isGymOperator && data.session && body.gym) {
-    const rolePayload = serializeRepresentativeRole(
-      body.gym.representativeRole ?? "",
-      body.gym.representativeRoleCustom ?? "",
-    );
+    const { data: insertedGym, error: gymError } = await supabase
+      .from("gyms")
+      .insert({
+        owner_id: data.user.id,
+        ...buildGymInsertPayload(body.gym),
+      })
+      .select("id")
+      .single();
 
-    const { error: gymError } = await supabase.from("gyms").insert({
-      owner_id: data.user.id,
-      name: body.gym.name?.trim() ?? "",
-      region: body.gym.region?.trim() || "미정",
-      address: body.gym.address?.trim() ?? "",
-      representative_name: body.gym.representativeName?.trim() ?? "",
-      representative_phone: normalizePhone(body.gym.representativePhone ?? ""),
-      ...rolePayload,
-    });
-
-    if (gymError) {
+    if (gymError || !insertedGym) {
       console.error("signup gym error:", gymError);
       return NextResponse.json(
-        { error: mapSignupError(gymError) },
+        { error: mapSignupError(gymError ?? "체육관 등록에 실패했습니다.") },
         { status: 400 },
       );
     }
 
+    await supabase
+      .from("profiles")
+      .update({ pending_gym_info: null })
+      .eq("id", data.user.id);
+
     return NextResponse.json({
       success: true,
       hasSession: true,
-      redirectTo: "/my/profile",
+      redirectTo: `/gym/${insertedGym.id}/edit`,
     });
+  }
+
+  if (body.isGymOperator && !data.session && body.gym) {
+    await savePendingGymInfo(data.user.id, body.gym);
   }
 
   if (data.session) {

@@ -1,5 +1,6 @@
 import type { Event, Gym } from "@/lib/types/database";
 import { createClient } from "@/lib/supabase/server";
+import { getHostRegistrationCountsByEventIds } from "@/lib/queries/host-registration-stats";
 import { getTomorrowDateString, getTodayDateString } from "@/lib/utils/date";
 import { getEventRecruitmentStatus, isOperatingEvent } from "@/lib/utils/event-status";
 
@@ -21,6 +22,7 @@ export type DashboardGym = Gym & {
 
 export type DashboardData = {
   gyms: DashboardGym[];
+  allEvents: DashboardEvent[];
   operatingEvents: DashboardEvent[];
   stats: {
     gymCount: number;
@@ -37,26 +39,12 @@ export type DashboardData = {
 async function getRegistrationCountsByEvent(
   eventIds: string[],
 ): Promise<Map<string, EventRegistrationCounts>> {
+  const countsMap = await getHostRegistrationCountsByEventIds(eventIds);
   const map = new Map<string, EventRegistrationCounts>();
 
-  if (eventIds.length === 0) return map;
-
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("registrations")
-    .select("event_id, status")
-    .in("event_id", eventIds)
-    .in("status", ["pending", "approved"]);
-
   for (const id of eventIds) {
-    map.set(id, { approved: 0, pending: 0, total: 0 });
-  }
-
-  for (const row of data ?? []) {
-    const current = map.get(row.event_id)!;
-    if (row.status === "approved") current.approved += 1;
-    if (row.status === "pending") current.pending += 1;
-    current.total += 1;
+    const counts = countsMap.get(id) ?? { approved: 0, pending: 0, total: 0 };
+    map.set(id, counts);
   }
 
   return map;
@@ -106,7 +94,7 @@ export async function getDashboardData(
       recruitmentStatus: getEventRecruitmentStatus({
         eventDate: event.event_date,
         maxParticipants: event.max_participants,
-        approvedCount: counts.approved,
+        approvedCount: counts.total,
         recruitmentClosed: event.recruitment_closed ?? false,
       }),
     };
@@ -136,6 +124,7 @@ export async function getDashboardData(
   return {
     data: {
       gyms: dashboardGyms,
+      allEvents: dashboardEvents,
       operatingEvents,
       stats: {
         gymCount: dashboardGyms.length,

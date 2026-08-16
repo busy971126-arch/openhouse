@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { FieldLabel } from "@/components/FieldLabel";
 
 export type TreeNode = {
   id: string;
@@ -207,10 +208,7 @@ export function TreeMultiSelect({
   return (
     <fieldset className="flex flex-col gap-2">
       <legend className="text-sm font-semibold text-zinc-900">
-        <span>
-          {label}
-          {required && <span className="text-orange-600"> *</span>}
-        </span>
+        <FieldLabel required={required}>{label}</FieldLabel>
         {labelNote && (
           <span className="ml-2 text-xs font-normal text-zinc-600">
             {labelNote}

@@ -25,6 +25,11 @@ import {
   formatRepresentativeRoleLabel,
 } from "@/lib/constants/gym-representative";
 import {
+  canViewProfileField,
+  getProfileViewContext,
+  maskProfileValue,
+} from "@/lib/utils/profile-visibility";
+import {
   formatProfileJoinDate,
   formatProfileTrainingBackground,
   formatProfileTrainingYears,
@@ -94,22 +99,70 @@ export async function UserProfileContent({
     : null;
   const sport = profile.preferred_sports?.[0];
   const sportEmoji = sport ? getSportEmoji(sport) : "🥋";
-  const regions = formatProfileRegions(profile.regions);
-  const trainingYears = formatProfileTrainingYears(profile.experience);
-  const trainingBackground = formatProfileTrainingBackground(
+  const viewContext = getProfileViewContext({
+    isSelf: isOwner,
+    isFriend: friendshipState === "friends",
+  });
+  const visibilitySettings = profile.visibility_settings;
+
+  const visibleSport = maskProfileValue(
+    sport,
+    "preferred_sports",
+    visibilitySettings,
+    viewContext,
+  );
+  const visibleWeightClass = maskProfileValue(
+    profile.weight_class,
+    "weight_class",
+    visibilitySettings,
+    viewContext,
+  );
+  const visibleExperienceRaw = maskProfileValue(
     profile.experience,
-    operatorRoleLabel,
-    isGymOperator,
+    "experience",
+    visibilitySettings,
+    viewContext,
+  );
+  const regions = formatProfileRegions(profile.regions);
+  const visibleRegions = canViewProfileField(
+    "regions",
+    visibilitySettings,
+    viewContext,
+  )
+    ? regions
+    : null;
+  const trainingYears = visibleExperienceRaw
+    ? formatProfileTrainingYears(visibleExperienceRaw)
+    : null;
+  const trainingBackground = visibleExperienceRaw
+    ? formatProfileTrainingBackground(
+        visibleExperienceRaw,
+        operatorRoleLabel,
+        isGymOperator,
+      )
+    : null;
+  const visiblePrimaryGym = canViewProfileField(
+    "gym_affiliation",
+    visibilitySettings,
+    viewContext,
+  )
+    ? primaryGym
+    : null;
+  const visibleBio = maskProfileValue(
+    profile.bio,
+    "bio",
+    visibilitySettings,
+    viewContext,
   );
   const joinDate = formatProfileJoinDate(profile.created_at);
 
   const hasSportInfo =
-    sport ||
-    profile.weight_class ||
+    visibleSport ||
+    visibleWeightClass ||
     trainingYears ||
     trainingBackground ||
-    primaryGym ||
-    regions;
+    visiblePrimaryGym ||
+    visibleRegions;
 
   return (
     <div className="mx-auto flex max-w-md flex-col gap-4">
@@ -173,14 +226,14 @@ export async function UserProfileContent({
 
         {hasSportInfo && (
           <div className="mt-5 divide-y divide-zinc-100 border-t border-zinc-100 pt-4">
-            {sport && (
-              <ProfileInfoRow emoji="🥋" label="종목" value={sport} />
+            {visibleSport && (
+              <ProfileInfoRow emoji="🥋" label="종목" value={visibleSport} />
             )}
-            {profile.weight_class && (
+            {visibleWeightClass && (
               <ProfileInfoRow
                 emoji="⚖️"
                 label="체급"
-                value={profile.weight_class}
+                value={visibleWeightClass}
               />
             )}
             {trainingYears && (
@@ -197,15 +250,15 @@ export async function UserProfileContent({
                 value={trainingBackground}
               />
             )}
-            {primaryGym && (
+            {visiblePrimaryGym && (
               <ProfileInfoRow
                 emoji="🏠"
                 label={isGymOperator ? "체육관" : "소속 체육관"}
-                value={primaryGym.name}
+                value={visiblePrimaryGym.name}
               />
             )}
-            {regions && (
-              <ProfileInfoRow emoji="📍" label="활동 지역" value={regions} />
+            {visibleRegions && (
+              <ProfileInfoRow emoji="📍" label="활동 지역" value={visibleRegions} />
             )}
           </div>
         )}
@@ -227,7 +280,7 @@ export async function UserProfileContent({
           )}
           <ProfileStatRow
             emoji="🤝"
-            label="친구"
+            label="운동 친구"
             value={`${friendCount}명`}
           />
           {joinDate && (
@@ -237,9 +290,9 @@ export async function UserProfileContent({
       </ProfileSection>
 
       <ProfileSection title="소개">
-        {profile.bio?.trim() ? (
+        {visibleBio?.trim() ? (
           <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-700">
-            {profile.bio}
+            {visibleBio}
           </p>
         ) : (
           <p className="text-sm text-zinc-500">소개글이 없습니다.</p>
@@ -247,17 +300,17 @@ export async function UserProfileContent({
       </ProfileSection>
 
       {isOwner && (
-        <ProfileSection title="친구">
+        <ProfileSection title="운동 친구">
           <ProfileStatRow
             emoji="🤝"
-            label="친구"
+            label="운동 친구"
             value={`${friendCount}명`}
           />
           <Link
             href="/my/friends"
             className="mt-3 block w-full rounded-lg border border-zinc-200 py-2.5 text-center text-sm font-medium text-zinc-800 hover:bg-zinc-50"
           >
-            친구 관리
+            운동 친구 관리
           </Link>
         </ProfileSection>
       )}
@@ -278,7 +331,7 @@ export async function UserProfileContent({
                 label="운영한 이벤트"
               />
             )}
-            <ProfileLink href="/my/wishlist" label="관심 체육관" />
+            <ProfileLink href="/my/interests" label="관심" />
           </div>
         </ProfileSection>
       )}
@@ -308,7 +361,7 @@ export async function UserProfileContent({
             체육관 운영자이신가요?
           </p>
           <p className="mt-1 text-sm text-zinc-600">
-            체육관을 등록하면 이벤트를 만들고 참가자를 관리할 수 있습니다.
+            체육관을 등록하면 이벤트를 만들고 예정 참가자를 관리할 수 있습니다.
           </p>
           <Link
             href="/gym/new"

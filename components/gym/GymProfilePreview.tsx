@@ -2,10 +2,7 @@
 
 import { useState } from "react";
 import { GymPhotoCarousel } from "@/components/gym/GymPhotoCarousel";
-import {
-  GymCardPhotoFallback,
-  GymCardPhotoOverlay,
-} from "@/components/gym/GymCardPhotoOverlay";
+import { GymCardPhotoOverlay } from "@/components/gym/GymCardPhotoOverlay";
 import { collectGymPreviewPhotos } from "@/lib/utils/gym-display-photos";
 import type { OptionalCategoryPhotos } from "@/components/gym/GymPhotoCategoriesInput";
 
@@ -47,18 +44,14 @@ export function GymProfilePreview({
         />
 
         {photos.length > 0 && (
-          <GymCardPhotoOverlay
-            name={displayName}
-            address={displayAddress}
-            sport={displaySport}
-            activePhoto={activePhoto}
-          />
+          <GymCardPhotoOverlay sport={displaySport} activePhoto={activePhoto} />
         )}
       </div>
 
-      {photos.length === 0 && (
-        <GymCardPhotoFallback name={displayName} address={displayAddress} />
-      )}
+      <div className="px-3 py-3">
+        <p className="truncate text-lg font-semibold text-zinc-900">{displayName}</p>
+        <p className="mt-0.5 truncate text-sm text-zinc-600">{displayAddress}</p>
+      </div>
     </article>
   );
 
@@ -79,7 +72,7 @@ export function GymProfilePreview({
     <div className="mb-5 rounded-xl border border-orange-200 bg-orange-50/40 p-3">
       <div className="mb-3 flex items-center justify-between gap-2">
         <p className="text-sm font-semibold text-zinc-900">탐색 화면 미리보기</p>
-        <span className="text-xs text-zinc-500">참가자에게 이렇게 보여요</span>
+        <span className="text-xs text-zinc-500">예정 참가자에게 이렇게 보여요</span>
       </div>
 
       {card}

@@ -3,10 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { GymPhotoCarousel } from "@/components/gym/GymPhotoCarousel";
-import {
-  GymCardPhotoFallback,
-  GymCardPhotoOverlay,
-} from "@/components/gym/GymCardPhotoOverlay";
+import { GymCardPhotoOverlay } from "@/components/gym/GymCardPhotoOverlay";
 import type { Gym } from "@/lib/types/database";
 import { collectGymDisplayPhotos } from "@/lib/utils/gym-display-photos";
 
@@ -20,13 +17,11 @@ export function HostGymListCard({ gym }: HostGymListCardProps) {
   const photos = collectGymDisplayPhotos(gym);
   const activePhoto = photos[activePhotoIndex];
   const addressLine = gym.address?.trim() || gym.region;
+  const gymHref = `/host/gyms/${gym.id}`;
 
   return (
-    <Link
-      href={`/host/gyms/${gym.id}`}
-      className="block overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition hover:border-orange-300 hover:shadow-md"
-    >
-      <div className="relative">
+    <article className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition hover:border-orange-300 hover:shadow-md">
+      <Link href={gymHref} className="relative block">
         <GymPhotoCarousel
           photos={photos}
           alt={gym.name}
@@ -38,18 +33,27 @@ export function HostGymListCard({ gym }: HostGymListCardProps) {
 
         {photos.length > 0 && (
           <GymCardPhotoOverlay
-            name={gym.name}
-            address={addressLine}
             sport={sport}
             activePhoto={activePhoto}
             privateBadge={!gym.is_public}
           />
         )}
-      </div>
+      </Link>
 
-      {photos.length === 0 && (
-        <GymCardPhotoFallback name={gym.name} address={addressLine} />
-      )}
-    </Link>
+      <div className="px-3 py-3">
+        <Link
+          href={gymHref}
+          className="block truncate text-lg font-semibold text-zinc-900 hover:text-orange-700"
+        >
+          {gym.name}
+        </Link>
+        <Link
+          href={gymHref}
+          className="mt-0.5 block truncate text-sm text-zinc-600 hover:text-zinc-800"
+        >
+          {addressLine}
+        </Link>
+      </div>
+    </article>
   );
 }

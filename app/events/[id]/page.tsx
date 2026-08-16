@@ -11,6 +11,7 @@ import {
   getEventParticipantPreview,
   isGymFollowed,
 } from "@/lib/queries/participant-preview";
+import { isEventInterested } from "@/lib/queries/event-interests";
 import { getUpcomingEventsForGym } from "@/lib/queries/gyms";
 import { getEventRecruitmentStatus } from "@/lib/utils/event-status";
 import { AnnouncementForm } from "./AnnouncementForm";
@@ -21,6 +22,13 @@ import { EventGymSection } from "@/components/events/EventGymSection";
 import { EventParticipantPreview } from "@/components/events/EventParticipantPreview";
 import { EventSafetyInfo } from "@/components/events/EventSafetyInfo";
 import { EventVisitInfo } from "@/components/events/EventVisitInfo";
+import { InterestHeart } from "@/components/interest/InterestHeart";
+import {
+  getAcceptedFriendIdsForViewer,
+  getProfileVisibilitySettingsMap,
+} from "@/lib/queries/profile-visibility";
+import { getEventDisplayAddress } from "@/lib/utils/event-location";
+import { resolveViewerWeightClass } from "@/lib/utils/participant-preview";
 import type { Gym } from "@/lib/types/database";
 
 type PageProps = {
@@ -44,6 +52,8 @@ export default async function EventDetailPage({ params }: PageProps) {
     { data: preview },
     profileResult,
     gymOperatorResult,
+    ownedGymResult,
+    lastGymAffiliationResult,
   ] = await Promise.all([
     user
       ? getUserRegistrationForEvent(user.id, id)
@@ -64,9 +74,32 @@ export default async function EventDetailPage({ params }: PageProps) {
           .select("*", { count: "exact", head: true })
           .eq("owner_id", user.id)
       : Promise.resolve({ count: 0 }),
+    user
+      ? supabase
+          .from("gyms")
+          .select("name")
+          .eq("owner_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    user
+      ? supabase
+          .from("registrations")
+          .select("gym_affiliation")
+          .eq("user_id", user.id)
+          .not("gym_affiliation", "is", null)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
 
   const isGymOperator = (gymOperatorResult.count ?? 0) > 0;
+  const gymAffiliationDefault =
+    lastGymAffiliationResult.data?.gym_affiliation?.trim() ||
+    ownedGymResult.data?.name?.trim() ||
+    null;
 
   const gym = event.gyms as Pick<
     Gym,
@@ -96,10 +129,35 @@ export default async function EventDetailPage({ params }: PageProps) {
   > | null;
   const isOwner = !!(user && gym && gym.owner_id === user.id);
 
+  const participantUserIds = [
+    ...new Set([
+      ...(preview?.participants.map((participant) => participant.user_id) ?? []),
+      ...(preview?.sparring_seekers.map((seeker) => seeker.user_id) ?? []),
+    ]),
+  ];
+  const [friendUserIds, visibilitySettingsMap] = user
+    ? await Promise.all([
+        getAcceptedFriendIdsForViewer(user.id, participantUserIds),
+        getProfileVisibilitySettingsMap(participantUserIds),
+      ])
+    : [new Set<string>(), new Map()];
+  const visibilityByUserId = Object.fromEntries(visibilitySettingsMap);
+  const viewerWeightClass = user
+    ? resolveViewerWeightClass(
+        registration?.apply_weight_class,
+        profileResult.data?.weight_class,
+      )
+    : null;
+
   const { followed: isFollowed } =
     user && gym
       ? await isGymFollowed(user.id, gym.id)
       : { followed: false };
+
+  const { interested: isInterested } =
+    user && !isOwner
+      ? await isEventInterested(user.id, id)
+      : { interested: false };
 
   const { data: gymUpcomingEvents } = gym
     ? await getUpcomingEventsForGym(gym.id)
@@ -119,6 +177,7 @@ export default async function EventDetailPage({ params }: PageProps) {
     approvedCount,
     recruitmentClosed: event.recruitment_closed ?? false,
     registrationDeadline: event.registration_deadline ?? null,
+    eventStatus: event.status ?? "active",
   });
   const canApply =
     recruitmentStatus === "recruiting" ||
@@ -151,12 +210,24 @@ export default async function EventDetailPage({ params }: PageProps) {
           eventTime={event.event_time}
           region={event.region}
           gymName={gym?.name}
-          gymAddress={gym?.address}
+          gymAddress={getEventDisplayAddress(event, gym)}
           feeAmount={event.fee_amount}
           registrationDeadline={event.registration_deadline}
           difficulty={event.difficulty}
           approvedCount={approvedCount}
           maxParticipants={event.max_participants}
+          interestSlot={
+            !isOwner ? (
+              <InterestHeart
+                kind="event"
+                targetId={id}
+                initialInterested={isInterested}
+                userId={user?.id ?? null}
+                loginRedirect={`/events/${id}`}
+                size="sm"
+              />
+            ) : undefined
+          }
         />
 
         {event.description && (
@@ -171,7 +242,10 @@ export default async function EventDetailPage({ params }: PageProps) {
         <div className="mt-6">
           <EventParticipantPreview
             preview={preview}
-            currentUserSeeking={registration?.seeking_sparring_partner ?? false}
+            viewerId={user?.id ?? null}
+            viewerWeightClass={viewerWeightClass}
+            friendUserIds={[...friendUserIds]}
+            visibilityByUserId={visibilityByUserId}
           />
         </div>
 
@@ -188,9 +262,21 @@ export default async function EventDetailPage({ params }: PageProps) {
             gender={profileResult.data?.gender ?? null}
             experience={profileResult.data?.experience ?? null}
             isGymOperator={isGymOperator}
+            gymAffiliationDefault={gymAffiliationDefault}
             preview={preview}
           />
         </div>
+
+        {!isOwner && user && (
+          <div className="mt-4 border-t border-zinc-100 pt-4">
+            <Link
+              href={`/my/reports?eventId=${id}`}
+              className="block text-center text-xs text-zinc-500 hover:text-red-600"
+            >
+              이 이벤트 신고하기
+            </Link>
+          </div>
+        )}
       </article>
 
       <EventVisitInfo event={event} />
@@ -203,7 +289,7 @@ export default async function EventDetailPage({ params }: PageProps) {
           userId={user?.id ?? null}
           isFollowed={isFollowed}
           loginRedirect={`/events/${id}`}
-          showFollow={false}
+          showFollow
           variant="event"
           otherUpcomingEvents={otherUpcomingEvents}
         />

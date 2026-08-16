@@ -1,7 +1,29 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { GymForm } from "@/components/gym/GymForm";
+import { getPendingGymRegistration } from "@/lib/queries/pending-gym";
+import { createClient } from "@/lib/supabase/server";
+import { getPendingGymFormDefaults } from "@/lib/utils/pending-gym-info";
 
-export default function NewGymPage() {
+export default async function NewGymPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect("/login?redirect=/gym/new");
+
+  const pending = await getPendingGymRegistration(user.id);
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("display_name, phone")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const pendingDefaults = pending
+    ? getPendingGymFormDefaults(pending, profile ?? undefined)
+    : null;
+
   return (
     <div className="mx-auto max-w-md">
       <Link
@@ -18,7 +40,7 @@ export default function NewGymPage() {
         </p>
       </header>
 
-      <GymForm mode="create" />
+      <GymForm mode="create" pendingDefaults={pendingDefaults} />
     </div>
   );
 }

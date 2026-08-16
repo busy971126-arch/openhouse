@@ -1,8 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { HostHome } from "@/components/home/HostHome";
 import { GuestHome, MemberHome } from "@/components/home/HomeContent";
+import { PendingGymRegistrationBanner } from "@/components/home/PendingGymRegistrationBanner";
 import { getDashboardData } from "@/lib/queries/dashboard";
 import { getMyPageData } from "@/lib/queries/my-page";
+import { getPendingGymRegistration } from "@/lib/queries/pending-gym";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -22,6 +24,9 @@ export default async function Home() {
   }
 
   const { isOperator, pendingApprovals, profile } = await getMyPageData(user.id);
+  const pendingGym = isOperator
+    ? null
+    : await getPendingGymRegistration(user.id);
 
   const displayLabel =
     profile?.nickname?.trim() || profile?.displayName?.trim() || "회원";
@@ -33,9 +38,19 @@ export default async function Home() {
       <div className="flex flex-col gap-6 py-2">
         <HostHome
           displayLabel={displayLabel}
-          pendingApprovals={pendingApprovals}
+          pendingApprovals={dashboard?.stats.pendingApprovals ?? pendingApprovals}
+          tomorrowEvents={dashboard?.todos.tomorrowEvents ?? 0}
+          allEvents={dashboard?.allEvents ?? []}
           operatingEvents={dashboard?.operatingEvents ?? []}
           gyms={dashboard?.gyms ?? []}
+          stats={
+            dashboard?.stats ?? {
+              gymCount: 0,
+              operatingEventCount: 0,
+              totalApplications: 0,
+              pendingApprovals: 0,
+            }
+          }
         />
         <p className="text-center text-xs text-zinc-500">
           안전한 참가를 위해 필요한 정보만 이벤트 주최자에게 공유됩니다.
@@ -46,6 +61,7 @@ export default async function Home() {
 
   return (
     <div className="flex flex-col gap-6 py-2">
+      {pendingGym ? <PendingGymRegistrationBanner pendingGym={pendingGym} /> : null}
       <MemberHome displayLabel={displayLabel} />
       <p className="text-center text-xs text-zinc-500">
         안전한 참가를 위해 필요한 정보만 이벤트 주최자에게 공유됩니다.

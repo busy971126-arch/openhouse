@@ -9,6 +9,7 @@ import {
   HOST_STATUS_BADGE_CLASS,
   HOST_STATUS_LABELS,
 } from "@/lib/utils/host-participant-status";
+import { AutoApprovedBadge } from "@/components/participants/AutoApprovedBadge";
 import type { RegistrationStatus } from "@/lib/types/database";
 
 export type ParticipantLicenseCardProps = {
@@ -26,6 +27,7 @@ export type ParticipantLicenseCardProps = {
   parentPhone?: string | null;
   seekingSparring?: boolean;
   status?: RegistrationStatus;
+  autoApproved?: boolean;
   registrationId?: string;
   createdAt?: string;
   variant?: "full" | "compact";
@@ -110,6 +112,7 @@ export function ParticipantLicenseCard({
   parentPhone,
   seekingSparring,
   status,
+  autoApproved = false,
   registrationId,
   createdAt,
   variant = "full",
@@ -165,11 +168,14 @@ export function ParticipantLicenseCard({
             </p>
           </div>
           {status && (
-            <span
-              className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${HOST_STATUS_BADGE_CLASS[status]}`}
-            >
-              {HOST_STATUS_LABELS[status]}
-            </span>
+            <div className="flex shrink-0 flex-col items-end gap-1">
+              <span
+                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${HOST_STATUS_BADGE_CLASS[status]}`}
+              >
+                {HOST_STATUS_LABELS[status]}
+              </span>
+              {autoApproved && status === "approved" && <AutoApprovedBadge />}
+            </div>
           )}
         </div>
       </div>
@@ -179,14 +185,17 @@ export function ParticipantLicenseCard({
   return (
     <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
       <div className="flex items-center justify-between gap-3 border-b border-zinc-100 px-4 py-2.5">
-        <p className="text-xs font-medium text-zinc-500">참가자 정보</p>
-        {status && (
-          <span
-            className={`rounded-full px-2 py-0.5 text-xs font-semibold ${HOST_STATUS_BADGE_CLASS[status]}`}
-          >
-            {HOST_STATUS_LABELS[status]}
-          </span>
-        )}
+        <p className="text-xs font-medium text-zinc-500">예정 참가자 정보</p>
+        <div className="flex items-center gap-1.5">
+          {autoApproved && status === "approved" && <AutoApprovedBadge />}
+          {status && (
+            <span
+              className={`rounded-full px-2 py-0.5 text-xs font-semibold ${HOST_STATUS_BADGE_CLASS[status]}`}
+            >
+              {HOST_STATUS_LABELS[status]}
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="p-4">

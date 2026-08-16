@@ -35,9 +35,12 @@ export const EVENT_STATUS_LABELS: Record<
 type EventStatusInput = {
   eventDate: string;
   maxParticipants: number | null;
+  /** pending + approved (public registration count / capacity) */
   approvedCount: number;
   recruitmentClosed?: boolean;
   registrationDeadline?: string | null;
+  eventStatus?: string | null;
+  today?: string;
 };
 
 export function getEventRecruitmentStatus({
@@ -46,8 +49,12 @@ export function getEventRecruitmentStatus({
   approvedCount,
   recruitmentClosed = false,
   registrationDeadline = null,
+  eventStatus = "active",
+  today = getTodayDateString(),
 }: EventStatusInput): EventRecruitmentStatus {
-  const today = getTodayDateString();
+  if (eventStatus === "cancelled") {
+    return "closed";
+  }
 
   if (eventDate < today) {
     return "ended";

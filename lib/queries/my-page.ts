@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { countHostPendingRegistrationsByGymIds } from "@/lib/queries/host-registration-stats";
 import { getTodayDateString } from "@/lib/utils/date";
 
 export type MyPageData = {
@@ -14,7 +15,7 @@ export async function getMyPageData(userId: string): Promise<MyPageData> {
   const supabase = await createClient();
 
   const [{ data: gyms }, { data: profile }] = await Promise.all([
-    supabase.from("gyms").select("id").eq("owner_id", userId).limit(1),
+    supabase.from("gyms").select("id").eq("owner_id", userId),
     supabase
       .from("profiles")
       .select("nickname, display_name")
@@ -22,26 +23,11 @@ export async function getMyPageData(userId: string): Promise<MyPageData> {
       .single(),
   ]);
 
-  const isOperator = (gyms?.length ?? 0) > 0;
-  let pendingApprovals = 0;
-
-  if (isOperator) {
-    const { data: events } = await supabase
-      .from("events")
-      .select("id, gyms!inner(owner_id)")
-      .eq("gyms.owner_id", userId);
-
-    const eventIds = (events ?? []).map((event) => event.id);
-    if (eventIds.length > 0) {
-      const { count } = await supabase
-        .from("registrations")
-        .select("*", { count: "exact", head: true })
-        .in("event_id", eventIds)
-        .eq("status", "pending");
-
-      pendingApprovals = count ?? 0;
-    }
-  }
+  const gymIds = (gyms ?? []).map((gym) => gym.id);
+  const isOperator = gymIds.length > 0;
+  const pendingApprovals = isOperator
+    ? await countHostPendingRegistrationsByGymIds(gymIds)
+    : 0;
 
   return {
     isOperator,

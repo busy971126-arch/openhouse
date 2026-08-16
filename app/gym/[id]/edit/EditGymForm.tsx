@@ -20,7 +20,7 @@ export default function EditGymForm({ gymId }: EditGymPageProps) {
       <header className="mb-5 mt-4">
         <h1 className="text-2xl font-bold text-zinc-900">체육관 정보 수정</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          참가자에게 보이는 체육관 정보를 관리합니다
+          예정 참가자에게 보이는 체육관 정보를 관리합니다
         </p>
       </header>
 

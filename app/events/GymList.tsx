@@ -7,6 +7,10 @@ import {
   getPublicGyms,
   type GymFilters,
 } from "@/lib/queries/gyms";
+import {
+  getUserInterestedGymIds,
+} from "@/lib/queries/interests";
+import { createClient } from "@/lib/supabase/server";
 import { sortGyms } from "@/lib/utils/gym-search";
 
 type GymListProps = GymFilters & {
@@ -26,6 +30,12 @@ export async function GymList({
   sort = "recommended",
   profileRegions,
 }: GymListProps) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const interestedGymIds = await getUserInterestedGymIds(user?.id);
+
   const { data, error } = await getPublicGyms({
     region,
     sport,
@@ -65,7 +75,12 @@ export async function GymList({
     <div className="flex flex-col gap-4">
       <p className="text-sm text-zinc-600">총 {sorted.length}개 체육관</p>
       {sorted.map((gym) => (
-        <GymListCard key={gym.id} gym={gym} />
+        <GymListCard
+          key={gym.id}
+          gym={gym}
+          userId={user?.id ?? null}
+          initialInterested={interestedGymIds.has(gym.id)}
+        />
       ))}
     </div>
   );

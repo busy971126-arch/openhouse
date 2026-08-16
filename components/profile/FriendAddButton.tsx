@@ -32,6 +32,34 @@ export function FriendAddButton({
     setError(null);
     const supabase = createClient();
 
+    const { data: reverseRequest } = await supabase
+      .from("friendships")
+      .select("id")
+      .eq("requester_id", targetId)
+      .eq("addressee_id", viewerId)
+      .eq("status", "pending")
+      .maybeSingle();
+
+    if (reverseRequest) {
+      const { error: acceptError } = await supabase
+        .from("friendships")
+        .update({ status: "accepted", updated_at: new Date().toISOString() })
+        .eq("id", reverseRequest.id)
+        .eq("addressee_id", viewerId)
+        .eq("status", "pending");
+
+      if (acceptError) {
+        setError("운동 친구 요청에 실패했습니다.");
+        setLoading(false);
+        return;
+      }
+
+      setState("friends");
+      setLoading(false);
+      await refreshFriendship();
+      return;
+    }
+
     const { error: insertError } = await supabase.from("friendships").insert({
       requester_id: viewerId,
       addressee_id: targetId,
@@ -46,12 +74,12 @@ export function FriendAddButton({
         .eq("addressee_id", targetId);
 
       if (updateError) {
-        setError("친구 요청에 실패했습니다.");
+        setError("운동 친구 요청에 실패했습니다.");
         setLoading(false);
         return;
       }
     } else if (insertError) {
-      setError("친구 요청에 실패했습니다.");
+      setError("운동 친구 요청에 실패했습니다.");
       setLoading(false);
       return;
     }
@@ -110,7 +138,7 @@ export function FriendAddButton({
   if (state === "friends") {
     return (
       <span className="inline-flex items-center rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600">
-        친구
+        운동 친구
       </span>
     );
   }
@@ -140,7 +168,7 @@ export function FriendAddButton({
           onClick={acceptRequest}
           className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-50"
         >
-          친구 요청 수락
+          운동 친구 요청 수락
         </button>
         {error && <p className="text-xs text-red-600">{error}</p>}
       </div>
@@ -155,7 +183,7 @@ export function FriendAddButton({
         onClick={sendRequest}
         className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-50"
       >
-        친구 추가
+        운동 친구 요청
       </button>
       {error && <p className="text-xs text-red-600">{error}</p>}
     </div>

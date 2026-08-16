@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { Alert } from "@/components/Alert";
+import { AuthBrandHero } from "@/components/auth/AuthBrandHero";
 import { ChipMultiSelect } from "@/components/ChipMultiSelect";
 import { NicknameField } from "@/components/NicknameField";
 import { SignupField, SignupInput } from "@/components/SignupField";
@@ -255,7 +256,7 @@ export default function SignupPage() {
       setLoading(false);
       if (result.isGymOperator) {
         setSuccess(
-          "회원가입이 완료되었습니다. 이메일 인증 후 로그인하면 체육관 등록을 이어서 진행할 수 있습니다.",
+          "회원가입이 완료되었습니다. 이메일 인증 후 로그인하면 체육관 정보 수정을 이어서 진행할 수 있습니다.",
         );
       } else {
         setSuccess(
@@ -274,8 +275,10 @@ export default function SignupPage() {
 
   return (
     <div className="mx-auto max-w-md">
+      <AuthBrandHero />
+
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-zinc-900">회원가입</h1>
+        <h2 className="text-xl font-bold text-zinc-900">회원가입</h2>
         <p className="mt-1 text-xs text-zinc-600">
           안전한 참가를 위해 필요한 정보만 이벤트 주최자에게 공유됩니다.
         </p>
@@ -528,7 +531,7 @@ export default function SignupPage() {
           {isGymOperator && (
             <div className="mt-4 flex flex-col gap-4 border-t border-zinc-200 pt-4">
               <p className="text-xs text-zinc-600">
-                체육관을 등록하면 이벤트를 만들고 참가자를 관리할 수 있습니다.
+                체육관을 등록하면 이벤트를 만들고 예정 참가자를 관리할 수 있습니다.
               </p>
 
               <SignupField label="체육관명" required>

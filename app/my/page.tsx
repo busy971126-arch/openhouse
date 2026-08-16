@@ -26,9 +26,9 @@ export default async function MyPage() {
       </div>
 
       <MyMenuItem href="/my/profile" label="🥋 프로필" />
-      <MyMenuItem href="/my/friends" label="🤝 친구" />
-      <MyMenuItem href="/my/registrations" label="📅 내 일정" />
-      <MyMenuItem href="/my/wishlist" label="❤️ 관심 체육관" />
+      <MyMenuItem href="/my/registrations" label="📅 내 참가" />
+      <MyMenuItem href="/my/interests" label="❤️ 관심" />
+      <MyMenuItem href="/my/friends" label="🤝 운동 친구" />
 
       <MyMenuItem
         href="/my/notifications"
@@ -36,6 +36,7 @@ export default async function MyPage() {
         badge={unreadNotifications > 0 ? `${unreadNotifications}건` : undefined}
       />
       <MyMenuItem href="/my/settings" label="⚙️ 설정" />
+      <MyMenuItem href="/my/inquiries" label="💬 문의하기" />
       <MyMenuItem href="/my/terms" label="📄 약관" />
 
       <div className="mt-4 pt-2">
@@ -45,7 +46,7 @@ export default async function MyPage() {
       <MyMenuItem
         href="/my/withdraw"
         label="🗑 회원 탈퇴"
-        description="완전 삭제는 준비 중 · 로그아웃만 가능"
+        description="계정과 데이터를 영구 삭제합니다"
       />
     </div>
   );

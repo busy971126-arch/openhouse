@@ -8,9 +8,19 @@ export type SparringSeeker = {
   sparring_intensity: string | null;
 };
 
+export type PreviewParticipant = {
+  user_id: string;
+  nickname: string;
+  gender: string;
+  weight_class: string;
+  experience: string;
+};
+
 export type ParticipantPreview = {
   total: number;
   hidden: boolean;
+  genders: Record<string, number>;
+  participants: PreviewParticipant[];
   weight_classes: Record<string, number>;
   backgrounds: Record<string, number>;
   experience_years: Record<string, number>;
@@ -27,11 +37,95 @@ export function parseParticipantPreview(raw: unknown): ParticipantPreview | null
   return {
     total,
     hidden,
+    genders: parseCountMap(data.genders),
+    participants: parsePreviewParticipants(data.participants),
     weight_classes: parseCountMap(data.weight_classes),
     backgrounds: parseCountMap(data.backgrounds),
     experience_years: parseCountMap(data.experience_years),
     sparring_seekers: parseSparringSeekers(data.sparring_seekers),
   };
+}
+
+function parsePreviewParticipants(value: unknown): PreviewParticipant[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .filter((item): item is Record<string, unknown> => !!item && typeof item === "object")
+    .map((item) => ({
+      user_id: String(item.user_id ?? ""),
+      nickname: String(item.nickname ?? "익명"),
+      gender: String(item.gender ?? "미입력"),
+      weight_class: String(item.weight_class ?? "미입력"),
+      experience: String(item.experience ?? "미입력"),
+    }))
+    .filter((item) => item.user_id.length > 0);
+}
+
+export function normalizeWeightClassForFilter(
+  weightClass: string | null | undefined,
+): string | null {
+  const trimmed = weightClass?.trim();
+  if (!trimmed || trimmed === "미입력") return null;
+  return trimmed;
+}
+
+export function resolveViewerWeightClass(
+  registrationApplyWeightClass: string | null | undefined,
+  profileWeightClass: string | null | undefined,
+): string | null {
+  return (
+    normalizeWeightClassForFilter(registrationApplyWeightClass) ??
+    normalizeWeightClassForFilter(profileWeightClass)
+  );
+}
+
+export function participantMatchesViewerWeightClass(
+  participant: Pick<PreviewParticipant, "weight_class">,
+  viewerWeightClass: string | null,
+): boolean {
+  if (!viewerWeightClass) return true;
+  return (
+    normalizeWeightClassForFilter(participant.weight_class) === viewerWeightClass
+  );
+}
+
+export function filterParticipantsByViewerWeightClass(
+  participants: PreviewParticipant[],
+  viewerWeightClass: string | null,
+): PreviewParticipant[] {
+  if (!viewerWeightClass) return participants;
+  return participants.filter((participant) =>
+    participantMatchesViewerWeightClass(participant, viewerWeightClass),
+  );
+}
+
+export function computeGenderCountsFromParticipants(
+  participants: PreviewParticipant[],
+): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const participant of participants) {
+    const gender = participant.gender || "미입력";
+    counts[gender] = (counts[gender] ?? 0) + 1;
+  }
+  return counts;
+}
+
+export function formatGenderSummary(genders: Record<string, number>): string | null {
+  const male = genders["남성"] ?? 0;
+  const female = genders["여성"] ?? 0;
+
+  if (male === 0 && female === 0) return null;
+
+  const parts: string[] = [];
+  if (male > 0) parts.push(`남 ${male}명`);
+  if (female > 0) parts.push(`여 ${female}명`);
+  return parts.join(" / ");
+}
+
+export function formatPreviewParticipantGender(gender: string): string | null {
+  if (gender === "남성") return "남";
+  if (gender === "여성") return "여";
+  return null;
 }
 
 function parseCountMap(value: unknown): Record<string, number> {

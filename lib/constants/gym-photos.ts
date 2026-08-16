@@ -9,7 +9,7 @@ export const GYM_REPRESENTATIVE_PHOTO = {
   order: 1,
   title: "대표 단체사진",
   required: true,
-  hint: "참가자가 가장 먼저 보는 사진입니다. 체육관의 분위기가 잘 보이는 단체사진을 등록해 주세요.",
+  hint: "예정 참가자가 가장 먼저 보는 사진입니다. 체육관의 분위기가 잘 보이는 단체사진을 등록해 주세요.",
 };
 
 export const GYM_OPTIONAL_PHOTO_CATEGORIES: {

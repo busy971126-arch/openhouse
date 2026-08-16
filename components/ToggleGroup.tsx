@@ -1,5 +1,7 @@
 "use client";
 
+import { FieldLabel } from "@/components/FieldLabel";
+
 type ToggleGroupProps = {
   label?: string;
   ariaLabel?: string;
@@ -26,8 +28,7 @@ export function ToggleGroup({
     >
       {label && (
         <legend className="text-sm font-semibold text-zinc-900">
-          {label}
-          {required && <span className="text-orange-600"> *</span>}
+          <FieldLabel required={required}>{label}</FieldLabel>
         </legend>
       )}
       <div className="flex flex-wrap gap-2">
@@ -88,8 +89,7 @@ export function MultiToggleGroup({
   return (
     <fieldset className="flex flex-col gap-2">
       <legend className="text-sm font-semibold text-zinc-900">
-        {label}
-        {required && <span className="text-orange-600"> *</span>}
+        <FieldLabel required={required}>{label}</FieldLabel>
       </legend>
       {hint && <p className="text-xs text-zinc-600">{hint}</p>}
       <div className="flex flex-wrap gap-2">

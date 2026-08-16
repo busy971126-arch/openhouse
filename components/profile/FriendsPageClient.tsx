@@ -2,27 +2,37 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { FriendUserSearch } from "@/components/profile/FriendUserSearch";
 import { createClient } from "@/lib/supabase/client";
 import type {
   FriendListItem,
   FriendRequestItem,
 } from "@/lib/queries/friends";
+import { filterFriendsByQuery } from "@/lib/utils/friend-search";
 
 type FriendsPageClientProps = {
   friends: FriendListItem[];
-  requests: FriendRequestItem[];
+  incomingRequests: FriendRequestItem[];
+  outgoingRequests: FriendRequestItem[];
   viewerId: string;
 };
 
 export function FriendsPageClient({
   friends,
-  requests,
+  incomingRequests,
+  outgoingRequests,
   viewerId,
 }: FriendsPageClientProps) {
   const router = useRouter();
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [friendsQuery, setFriendsQuery] = useState("");
+
+  const filteredFriends = useMemo(
+    () => filterFriendsByQuery(friends, friendsQuery),
+    [friends, friendsQuery],
+  );
 
   async function respondToRequest(
     friendshipId: string,
@@ -51,6 +61,28 @@ export function FriendsPageClient({
     router.refresh();
   }
 
+  async function cancelSentRequest(friendshipId: string) {
+    setLoadingId(friendshipId);
+    setError(null);
+    const supabase = createClient();
+
+    const { error: deleteError } = await supabase
+      .from("friendships")
+      .delete()
+      .eq("id", friendshipId)
+      .eq("requester_id", viewerId)
+      .eq("status", "pending");
+
+    if (deleteError) {
+      setError("요청 취소에 실패했습니다.");
+      setLoadingId(null);
+      return;
+    }
+
+    setLoadingId(null);
+    router.refresh();
+  }
+
   return (
     <div className="flex flex-col gap-4">
       {error && (
@@ -59,13 +91,17 @@ export function FriendsPageClient({
         </p>
       )}
 
+      <FriendUserSearch viewerId={viewerId} />
+
       <section className="rounded-xl border border-zinc-200 bg-white p-5">
         <h2 className="text-sm font-semibold text-zinc-900">받은 요청</h2>
-        {requests.length === 0 ? (
-          <p className="mt-3 text-sm text-zinc-500">받은 친구 요청이 없습니다.</p>
+        {incomingRequests.length === 0 ? (
+          <p className="mt-3 text-sm text-zinc-500">
+            받은 운동 친구 요청이 없습니다.
+          </p>
         ) : (
           <ul className="mt-4 divide-y divide-zinc-100">
-            {requests.map((request) => (
+            {incomingRequests.map((request) => (
               <li
                 key={request.friendshipId}
                 className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
@@ -114,16 +150,72 @@ export function FriendsPageClient({
       </section>
 
       <section className="rounded-xl border border-zinc-200 bg-white p-5">
-        <h2 className="text-sm font-semibold text-zinc-900">
-          친구 {friends.length}명
-        </h2>
-        {friends.length === 0 ? (
+        <h2 className="text-sm font-semibold text-zinc-900">보낸 요청</h2>
+        {outgoingRequests.length === 0 ? (
           <p className="mt-3 text-sm text-zinc-500">
-            이벤트 참가자 프로필에서 친구를 추가할 수 있습니다.
+            보낸 운동 친구 요청이 없습니다.
           </p>
         ) : (
           <ul className="mt-4 divide-y divide-zinc-100">
-            {friends.map((friend) => (
+            {outgoingRequests.map((request) => (
+              <li
+                key={request.friendshipId}
+                className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
+              >
+                <FriendAvatar
+                  photoUrl={request.photoUrl}
+                  nickname={request.nickname}
+                />
+                <div className="min-w-0 flex-1">
+                  <Link
+                    href={`/users/${request.userId}`}
+                    className="text-sm font-medium text-zinc-900 hover:text-orange-600"
+                  >
+                    {request.nickname}
+                  </Link>
+                  {request.sport && (
+                    <p className="text-xs text-zinc-500">{request.sport}</p>
+                  )}
+                  <p className="text-xs text-zinc-400">수락 대기 중</p>
+                </div>
+                <button
+                  type="button"
+                  disabled={loadingId === request.friendshipId}
+                  onClick={() => void cancelSentRequest(request.friendshipId)}
+                  className="shrink-0 rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+                >
+                  취소
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="rounded-xl border border-zinc-200 bg-white p-5">
+        <h2 className="text-sm font-semibold text-zinc-900">
+          운동 친구 {friends.length}명
+        </h2>
+        {friends.length > 0 && (
+          <input
+            type="search"
+            value={friendsQuery}
+            onChange={(event) => setFriendsQuery(event.target.value)}
+            placeholder="닉네임 또는 이름 검색"
+            aria-label="내 운동 친구 닉네임 또는 이름 검색"
+            className="mt-3 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400"
+          />
+        )}
+        {friends.length === 0 ? (
+          <p className="mt-3 text-sm text-zinc-500">
+            닉네임이나 이름으로 검색하거나, 이벤트 예정 참가자 프로필에서 운동
+            친구를 추가할 수 있습니다.
+          </p>
+        ) : filteredFriends.length === 0 ? (
+          <p className="mt-3 text-sm text-zinc-500">검색 결과가 없습니다.</p>
+        ) : (
+          <ul className="mt-4 divide-y divide-zinc-100">
+            {filteredFriends.map((friend) => (
               <li key={friend.friendshipId}>
                 <Link
                   href={`/users/${friend.userId}`}

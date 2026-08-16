@@ -26,7 +26,7 @@ export default async function HostGymsPage() {
       {gyms.length === 0 ? (
         <div className="rounded-xl border border-zinc-200 bg-white p-6 text-center">
           <p className="text-sm text-zinc-600">
-            등록된 체육관이 없습니다. 체육관을 추가하면 이벤트와 참가자를
+            등록된 체육관이 없습니다. 체육관을 추가하면 이벤트와 예정 참가자를
             관리할 수 있습니다.
           </p>
           <Link

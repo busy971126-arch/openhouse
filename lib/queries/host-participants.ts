@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getUserGyms } from "@/lib/queries/events";
+import { getHostRegistrationCountsFullByEventIds } from "@/lib/queries/host-registration-stats";
+import { REGISTRATION_WITH_PROFILE_SELECT } from "@/lib/queries/registration-select";
 import { mapRegistrationToParticipantItem } from "@/lib/utils/participant-items";
 import type { ParticipantItem } from "@/lib/utils/participant-items";
 
@@ -27,35 +29,20 @@ export type HostEventOption = {
 async function getRegistrationCountsByEvent(
   eventIds: string[],
 ): Promise<Map<string, HostEventCounts>> {
+  const countsMap = await getHostRegistrationCountsFullByEventIds(eventIds);
   const map = new Map<string, HostEventCounts>();
 
-  if (eventIds.length === 0) return map;
-
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("registrations")
-    .select("event_id, status")
-    .in("event_id", eventIds);
-
   for (const id of eventIds) {
-    map.set(id, {
-      approved: 0,
-      pending: 0,
-      cancelled: 0,
-      rejected: 0,
-      total: 0,
-    });
-  }
-
-  for (const row of data ?? []) {
-    const current = map.get(row.event_id);
-    if (!current) continue;
-
-    current.total += 1;
-    if (row.status === "approved") current.approved += 1;
-    else if (row.status === "pending") current.pending += 1;
-    else if (row.status === "cancelled") current.cancelled += 1;
-    else if (row.status === "rejected") current.rejected += 1;
+    map.set(
+      id,
+      countsMap.get(id) ?? {
+        approved: 0,
+        pending: 0,
+        cancelled: 0,
+        rejected: 0,
+        total: 0,
+      },
+    );
   }
 
   return map;
@@ -120,13 +107,16 @@ export async function getHostParticipantsForEvent(
 
   const { data, error } = await supabase
     .from("registrations")
-    .select(
-      "*, profiles(display_name, nickname, gender, age_group, experience, weight_class, phone, parent_phone, regions, preferred_sports)",
-    )
+    .select(REGISTRATION_WITH_PROFILE_SELECT)
     .eq("event_id", eventId)
     .order("created_at", { ascending: false });
 
-  if (error || !data) return [];
+  if (error) {
+    console.error("getHostParticipantsForEvent error:", error.message);
+    return [];
+  }
+
+  if (!data) return [];
 
   return data.map(mapRegistrationToParticipantItem);
 }
@@ -150,9 +140,7 @@ export async function getHostRegistrationDetail(
       .single(),
     supabase
       .from("registrations")
-      .select(
-        "*, profiles(display_name, nickname, gender, age_group, experience, weight_class, phone, parent_phone, regions, preferred_sports)",
-      )
+      .select(REGISTRATION_WITH_PROFILE_SELECT)
       .eq("id", registrationId)
       .eq("event_id", eventId)
       .maybeSingle(),

@@ -18,13 +18,16 @@ type EventManageActionsProps = {
     | "event_type"
     | "sport"
     | "region"
+    | "address"
     | "event_date"
     | "event_time"
+    | "recurring_days"
     | "max_participants"
     | "recruitment_closed"
     | "fee_amount"
     | "registration_deadline"
     | "difficulty"
+    | "status"
   >;
   variant?: "inline" | "panel";
   className?: string;
@@ -74,19 +77,46 @@ export function EventManageActions({
       description: event.description,
       sport: event.sport,
       region: event.region,
+      address: event.address,
       event_date: event.event_date,
       event_time: event.event_time,
+      recurring_days: event.recurring_days,
       max_participants: event.max_participants,
       fee_amount: event.fee_amount,
       registration_deadline: event.registration_deadline,
       difficulty: event.difficulty,
       recruitment_closed: false,
+      status: "active",
     });
 
     setLoading(null);
 
     if (insertError) {
       setError(insertError.message);
+      return;
+    }
+
+    router.refresh();
+  }
+
+  async function cancelEvent() {
+    if (!confirm("이벤트를 취소하시겠습니까? 참가 신청은 더 이상 받지 않습니다.")) {
+      return;
+    }
+
+    setLoading("cancel");
+    setError(null);
+
+    const supabase = createClient();
+    const { error: updateError } = await supabase
+      .from("events")
+      .update({ status: "cancelled", recruitment_closed: true })
+      .eq("id", event.id);
+
+    setLoading(null);
+
+    if (updateError) {
+      setError(updateError.message);
       return;
     }
 
@@ -123,6 +153,7 @@ export function EventManageActions({
   }
 
   const recruitmentLabel = event.recruitment_closed ? "모집 재개" : "모집 마감";
+  const isCancelled = event.status === "cancelled";
   const linkClass =
     variant === "inline"
       ? "text-zinc-500 hover:text-orange-600 disabled:opacity-50"
@@ -149,13 +180,26 @@ export function EventManageActions({
           <span className="text-zinc-300">·</span>
           <button
             type="button"
-            disabled={loading !== null}
+            disabled={loading !== null || isCancelled}
             onClick={toggleRecruitment}
             className={linkClass}
           >
             {loading === "recruitment" ? "처리 중..." : recruitmentLabel}
           </button>
           <span className="text-zinc-300">·</span>
+          {!isCancelled && (
+            <>
+              <button
+                type="button"
+                disabled={loading !== null}
+                onClick={cancelEvent}
+                className="text-amber-600 hover:text-amber-700 disabled:opacity-50"
+              >
+                {loading === "cancel" ? "취소 중..." : "이벤트 취소"}
+              </button>
+              <span className="text-zinc-300">·</span>
+            </>
+          )}
           <button
             type="button"
             disabled={loading !== null}
@@ -183,12 +227,22 @@ export function EventManageActions({
           </button>
           <button
             type="button"
-            disabled={loading !== null}
+            disabled={loading !== null || isCancelled}
             onClick={toggleRecruitment}
             className={`col-span-2 ${linkClass}`}
           >
             {loading === "recruitment" ? "처리 중..." : recruitmentLabel}
           </button>
+          {!isCancelled && (
+            <button
+              type="button"
+              disabled={loading !== null}
+              onClick={cancelEvent}
+              className={`col-span-2 ${linkClass} text-amber-700 hover:bg-amber-50`}
+            >
+              {loading === "cancel" ? "취소 중..." : "이벤트 취소"}
+            </button>
+          )}
           <button
             type="button"
             disabled={loading !== null}

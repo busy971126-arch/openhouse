@@ -6,6 +6,7 @@ import { ApplyButton } from "@/app/events/[id]/ApplyButton";
 import { CancelButton } from "@/app/events/[id]/CancelButton";
 import { EventManageActions } from "@/components/events/EventManageActions";
 import type { Event } from "@/lib/types/database";
+import { buildHostParticipantsUrl } from "@/lib/utils/host-participants-url";
 import type { ParticipantPreview } from "@/lib/utils/participant-preview";
 
 type EventDetailActionsProps = {
@@ -20,13 +21,16 @@ type EventDetailActionsProps = {
     | "event_type"
     | "sport"
     | "region"
+    | "address"
     | "event_date"
     | "event_time"
+    | "recurring_days"
     | "max_participants"
     | "recruitment_closed"
     | "fee_amount"
     | "registration_deadline"
     | "difficulty"
+    | "status"
   >;
   userId: string | null;
   isOwner: boolean;
@@ -37,6 +41,7 @@ type EventDetailActionsProps = {
   gender?: string | null;
   experience?: string | null;
   isGymOperator?: boolean;
+  gymAffiliationDefault?: string | null;
   preview?: ParticipantPreview | null;
 };
 
@@ -52,13 +57,14 @@ export function EventDetailActions({
   gender,
   experience,
   isGymOperator,
+  gymAffiliationDefault,
   preview,
 }: EventDetailActionsProps) {
   if (isOwner) {
     return (
       <div className="flex flex-col gap-3">
         <Link
-          href={`/events/${eventId}/participants`}
+          href={buildHostParticipantsUrl(event.gym_id, eventId)}
           className="block rounded-lg bg-orange-600 py-3 text-center text-sm font-semibold text-white hover:bg-orange-700"
         >
           참가자 관리
@@ -86,6 +92,7 @@ export function EventDetailActions({
       gender={gender}
       experience={experience}
       isGymOperator={isGymOperator}
+      gymAffiliationDefault={gymAffiliationDefault}
       preview={preview}
     />
   );

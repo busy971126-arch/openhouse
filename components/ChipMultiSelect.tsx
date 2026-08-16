@@ -1,5 +1,7 @@
 "use client";
 
+import { FieldLabel } from "@/components/FieldLabel";
+
 export type ChipOption = {
   value: string;
   label: string;
@@ -41,10 +43,7 @@ export function ChipMultiSelect({
   return (
     <fieldset className="flex flex-col gap-2">
       <legend className="text-sm font-semibold text-zinc-900">
-        <span>
-          {label}
-          {required && <span className="text-orange-600"> *</span>}
-        </span>
+        <FieldLabel required={required}>{label}</FieldLabel>
         {labelNote && (
           <span className="ml-2 text-xs font-normal text-zinc-600">
             {labelNote}

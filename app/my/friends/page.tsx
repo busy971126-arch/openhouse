@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   getFriendsList,
   getIncomingFriendRequests,
+  getOutgoingFriendRequests,
 } from "@/lib/queries/friends";
 
 export default async function MyFriendsPage() {
@@ -15,9 +16,10 @@ export default async function MyFriendsPage() {
 
   if (!user) redirect("/login?redirect=/my/friends");
 
-  const [friends, requests] = await Promise.all([
+  const [friends, incomingRequests, outgoingRequests] = await Promise.all([
     getFriendsList(user.id),
     getIncomingFriendRequests(user.id),
+    getOutgoingFriendRequests(user.id),
   ]);
 
   return (
@@ -29,11 +31,12 @@ export default async function MyFriendsPage() {
         ← 프로필
       </Link>
 
-      <h1 className="text-2xl font-bold text-zinc-900">친구</h1>
+      <h1 className="text-2xl font-bold text-zinc-900">운동 친구</h1>
 
       <FriendsPageClient
         friends={friends}
-        requests={requests}
+        incomingRequests={incomingRequests}
+        outgoingRequests={outgoingRequests}
         viewerId={user.id}
       />
     </div>

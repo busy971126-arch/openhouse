@@ -5,6 +5,7 @@ import type { RegistrationStatus } from "@/lib/types/database";
 import { ALL_WEIGHT_CLASS_OPTIONS } from "@/lib/constants/profile";
 import { RegistrationRow } from "@/app/events/[id]/participants/RegistrationRow";
 import type { ParticipantItem } from "@/lib/utils/participant-items";
+import { organizeParticipantParties } from "@/lib/utils/participant-party";
 
 type ParticipantsPanelProps = {
   registrations: ParticipantItem[];
@@ -18,12 +19,6 @@ const STATUS_TABS: { value: StatusTab; label: string }[] = [
   { value: "approved", label: "확정" },
   { value: "pending", label: "대기" },
   { value: "cancelled", label: "취소" },
-];
-
-const SPARRING_FILTER_OPTIONS: { value: string; label: string }[] = [
-  { value: "all", label: "대련 전체" },
-  { value: "yes", label: "대련 찾기만" },
-  { value: "no", label: "대련 없음" },
 ];
 
 function matchesStatusTab(status: RegistrationStatus, tab: StatusTab): boolean {
@@ -41,7 +36,6 @@ export function ParticipantsPanel({
   const [statusTab, setStatusTab] = useState<StatusTab>("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [weightFilter, setWeightFilter] = useState("all");
-  const [sparringFilter, setSparringFilter] = useState("all");
 
   const weightOptions = useMemo(() => {
     const fromData = new Set(
@@ -66,14 +60,6 @@ export function ParticipantsPanel({
         return false;
       }
 
-      if (sparringFilter === "yes" && !reg.seekingSparring) {
-        return false;
-      }
-
-      if (sparringFilter === "no" && reg.seekingSparring) {
-        return false;
-      }
-
       if (!q) return true;
 
       const haystack = [
@@ -93,12 +79,16 @@ export function ParticipantsPanel({
   }, [
     query,
     registrations,
-    sparringFilter,
     statusFilter,
     statusTab,
     variant,
     weightFilter,
   ]);
+
+  const grouped = useMemo(
+    () => organizeParticipantParties(filtered),
+    [filtered],
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -106,7 +96,7 @@ export function ParticipantsPanel({
         type="search"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="참가자 검색"
+        placeholder="예정 참가자 검색"
         className="rounded-xl border border-zinc-300 px-3 py-2.5 text-sm"
       />
 
@@ -141,61 +131,50 @@ export function ParticipantsPanel({
         </select>
       )}
 
-      {variant === "tabs" && (
-        <div className="grid grid-cols-2 gap-2">
-          <select
-            value={weightFilter}
-            onChange={(e) => setWeightFilter(e.target.value)}
-            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm"
-          >
-            <option value="all">체급 전체</option>
-            {weightOptions
-              .filter((value) => value !== "all")
-              .map((value) => (
-                <option key={value} value={value}>
-                  {value}
-                </option>
-              ))}
-          </select>
-          <select
-            value={sparringFilter}
-            onChange={(e) => setSparringFilter(e.target.value)}
-            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm"
-          >
-            {SPARRING_FILTER_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
+      {variant === "tabs" && weightOptions.length > 1 && (
+        <select
+          value={weightFilter}
+          onChange={(e) => setWeightFilter(e.target.value)}
+          className="rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+        >
+          <option value="all">체급 전체</option>
+          {weightOptions
+            .filter((value) => value !== "all")
+            .map((value) => (
+              <option key={value} value={value}>
+                {value}
               </option>
             ))}
-          </select>
-        </div>
+        </select>
       )}
 
-      {filtered.length === 0 ? (
+      {grouped.length === 0 ? (
         <p className="text-sm text-zinc-500">검색 결과가 없습니다.</p>
       ) : (
         <ul className="flex flex-col gap-3">
-          {filtered.map((reg) => (
+          {grouped.map((group) => (
             <RegistrationRow
-              key={reg.id}
-              id={reg.id}
-              userId={reg.userId}
-              displayName={reg.displayName}
-              nickname={reg.nickname}
-              gender={reg.gender}
-              ageGroup={reg.ageGroup}
-              weightClass={reg.weightClass}
-              experience={reg.experience}
-              gymAffiliation={reg.gymAffiliation}
-              applicantNotes={reg.applicantNotes}
-              seekingSparring={reg.seekingSparring}
-              phone={reg.phone}
-              parentPhone={reg.parentPhone}
-              regions={reg.regions}
-              preferredSports={reg.preferredSports}
-              status={reg.status}
-              operatorMemo={reg.operatorMemo}
-              createdAt={reg.createdAt}
+              key={group.key}
+              id={group.leader.id}
+              userId={group.leader.userId}
+              displayName={group.leader.displayName}
+              nickname={group.leader.nickname}
+              gender={group.leader.gender}
+              ageGroup={group.leader.ageGroup}
+              weightClass={group.leader.weightClass}
+              experience={group.leader.experience}
+              gymAffiliation={group.leader.gymAffiliation}
+              applicantNotes={group.leader.applicantNotes}
+              seekingSparring={group.leader.seekingSparring}
+              phone={group.leader.phone}
+              parentPhone={group.leader.parentPhone}
+              regions={group.leader.regions}
+              preferredSports={group.leader.preferredSports}
+              status={group.leader.status}
+              autoApproved={group.leader.autoApproved}
+              operatorMemo={group.leader.operatorMemo}
+              createdAt={group.leader.createdAt}
+              partyGroup={group.companions.length > 0 ? group : undefined}
               isOwner
               showPhoneInSummary
             />

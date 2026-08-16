@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { getSportEmoji } from "@/lib/constants/profile";
 import {
   formatEventDifficulty,
@@ -28,6 +29,7 @@ type EventDetailHeaderProps = {
   difficulty?: EventDifficulty | null;
   approvedCount: number;
   maxParticipants: number | null;
+  interestSlot?: ReactNode;
 };
 
 export function EventDetailHeader({
@@ -44,6 +46,7 @@ export function EventDetailHeader({
   difficulty,
   approvedCount,
   maxParticipants,
+  interestSlot,
 }: EventDetailHeaderProps) {
   const status = EVENT_STATUS_LABELS[recruitmentStatus];
   const timeLabel = formatEventTimeDisplay(eventTime);
@@ -55,18 +58,21 @@ export function EventDetailHeader({
 
   return (
     <header className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-2 text-sm font-medium">
-        <span className="text-zinc-800">
-          {getSportEmoji(sport)} {sport}
-        </span>
-        <span className={`${status.className}`}>
-          {status.emoji} {status.label}
-        </span>
-        {difficultyLabel && (
-          <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-700">
-            {difficultyLabel}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2 text-sm font-medium">
+          <span className="text-zinc-800">
+            {getSportEmoji(sport)} {sport}
           </span>
-        )}
+          <span className={`${status.className}`}>
+            {status.emoji} {status.label}
+          </span>
+          {difficultyLabel && (
+            <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-700">
+              {difficultyLabel}
+            </span>
+          )}
+        </div>
+        {interestSlot}
       </div>
 
       <h1 className="text-2xl font-bold text-zinc-900">{title}</h1>
@@ -96,7 +102,7 @@ export function EventDetailHeader({
         {deadlineLabel && <p>📅 신청 마감 {deadlineLabel}</p>}
         {maxParticipants != null && (
           <p>
-            👥 {approvedCount} / {maxParticipants}명
+            👥 신청 {approvedCount} / {maxParticipants}명
           </p>
         )}
       </div>

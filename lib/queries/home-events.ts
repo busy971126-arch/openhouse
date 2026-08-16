@@ -36,6 +36,24 @@ async function loadRecruitingEvents(
     );
 }
 
+export async function getHomeRecruitingEvents(limit = 12) {
+  const items = await loadRecruitingEvents();
+
+  const sorted = [...items].sort((a, b) => {
+    const aClosing = isClosingTodayEvent(a.event, a.approvedCount) ? 0 : 1;
+    const bClosing = isClosingTodayEvent(b.event, b.approvedCount) ? 0 : 1;
+    if (aClosing !== bClosing) return aClosing - bClosing;
+
+    const aWeek = isStartingThisWeekEvent(a.event, a.approvedCount) ? 0 : 1;
+    const bWeek = isStartingThisWeekEvent(b.event, b.approvedCount) ? 0 : 1;
+    if (aWeek !== bWeek) return aWeek - bWeek;
+
+    return a.event.event_date.localeCompare(b.event.event_date);
+  });
+
+  return sorted.slice(0, limit);
+}
+
 export async function getHomeClosingTodayEvents(limit = PREVIEW_LIMIT) {
   const items = await loadRecruitingEvents();
   return items.filter(({ event, approvedCount }) =>

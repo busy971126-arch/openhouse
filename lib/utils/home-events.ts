@@ -20,6 +20,7 @@ export function isRecruitingEventStatus(status: EventRecruitmentStatus): boolean
 export function getEventRecruitmentStatusForEvent(
   event: EventWithGym,
   approvedCount: number,
+  today = getTodayDateString(),
 ): EventRecruitmentStatus {
   return getEventRecruitmentStatus({
     eventDate: event.event_date,
@@ -27,6 +28,8 @@ export function getEventRecruitmentStatusForEvent(
     approvedCount,
     recruitmentClosed: event.recruitment_closed ?? false,
     registrationDeadline: event.registration_deadline,
+    eventStatus: event.status ?? "active",
+    today,
   });
 }
 
@@ -37,7 +40,7 @@ export function isClosingTodayEvent(
 ): boolean {
   if (event.registration_deadline !== today) return false;
   return isRecruitingEventStatus(
-    getEventRecruitmentStatusForEvent(event, approvedCount),
+    getEventRecruitmentStatusForEvent(event, approvedCount, today),
   );
 }
 
@@ -46,11 +49,11 @@ export function isStartingThisWeekEvent(
   approvedCount: number,
   today = getTodayDateString(),
 ): boolean {
-  const { start, end } = getWeekDateRange();
+  const { start, end } = getWeekDateRange(new Date(`${today}T12:00:00`));
   if (event.event_date < today || event.event_date > end) return false;
   if (event.event_date < start) return false;
   return isRecruitingEventStatus(
-    getEventRecruitmentStatusForEvent(event, approvedCount),
+    getEventRecruitmentStatusForEvent(event, approvedCount, today),
   );
 }
 
@@ -83,4 +86,28 @@ export function formatClosingTodayHint(
 ): string {
   if (registrationDeadline === today) return "오늘까지 신청";
   return "마감 임박";
+}
+
+export function getHomeEventBadges(item: HomeEventPreviewItem): string[] {
+  const badges: string[] = [];
+  const status = getEventRecruitmentStatusForEvent(item.event, item.approvedCount);
+
+  if (isClosingTodayEvent(item.event, item.approvedCount)) {
+    badges.push("오늘 마감");
+  } else if (status === "closing_soon") {
+    badges.push("마감 임박");
+  }
+
+  if (
+    isStartingThisWeekEvent(item.event, item.approvedCount) &&
+    !isClosingTodayEvent(item.event, item.approvedCount)
+  ) {
+    badges.push("이번주");
+  }
+
+  if (item.event.difficulty === "beginner") {
+    badges.push("초보 환영");
+  }
+
+  return badges.slice(0, 2);
 }

@@ -6,9 +6,9 @@ export function formatParticipantCount(
   maxParticipants: number | null,
 ): string {
   if (maxParticipants != null && maxParticipants > 0) {
-    return `${approvedCount} / ${maxParticipants}명`;
+    return `신청 ${approvedCount} / ${maxParticipants}명`;
   }
-  return `${approvedCount}명`;
+  return `신청 ${approvedCount}명`;
 }
 
 export function formatEventTimeRange(time: string | null | undefined): string | null {

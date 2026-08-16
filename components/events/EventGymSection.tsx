@@ -14,14 +14,14 @@ import { getMapSearchUrl } from "@/lib/utils/date";
 import { sortFacilitiesForDisplay } from "@/lib/utils/gym-facility-display";
 import { collectGymDisplayPhotos } from "@/lib/utils/gym-display-photos";
 import { formatInstagramHandle } from "@/lib/utils/social";
-import { GymFollowButton } from "@/components/gym/GymFollowButton";
+import { GymPhotoCarousel } from "@/components/gym/GymPhotoCarousel";
 import { GymAddressCopy } from "@/components/gym/GymAddressCopy";
 import { GymContactLinks } from "@/components/gym/GymContactLinks";
 import {
   GymOtherEventsList,
   type GymOtherUpcomingEvent,
 } from "@/components/gym/GymOtherEventsList";
-import { GymPhotoCarousel } from "@/components/gym/GymPhotoCarousel";
+import { InterestHeart } from "@/components/interest/InterestHeart";
 
 type EventGymSectionProps = {
   gym: Pick<
@@ -110,30 +110,62 @@ export function EventGymSection({
 
   return (
     <section className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
-      <GymPhotoCarousel
-        photos={displayPhotos}
-        alt={gym.name}
-        aspect="portrait"
-        showPhotoLabels
-        dotPosition="raised"
-      />
+      {!isEventVariant && showFollow && !preview && (
+        <div className="flex justify-end px-3 pt-3">
+          <InterestHeart
+            kind="gym"
+            targetId={gym.id}
+            initialInterested={isFollowed}
+            userId={userId}
+            loginRedirect={loginRedirect}
+            size="sm"
+          />
+        </div>
+      )}
+
+      <div className="relative">
+        <GymPhotoCarousel
+          photos={displayPhotos}
+          alt={gym.name}
+          aspect="portrait"
+          showPhotoLabels
+          dotPosition="raised"
+        />
+      </div>
 
       <div className="p-5">
         <h2 className="font-semibold text-zinc-900">체육관 정보</h2>
 
         <div className="mt-4">
-          {isEventVariant ? (
-            <p className="font-semibold text-zinc-900">{gym.name}</p>
-          ) : preview ? (
-            <p className="font-semibold text-zinc-900">{gym.name}</p>
-          ) : (
-            <Link
-              href={`/gym/${gym.id}`}
-              className="font-semibold text-zinc-900 hover:text-orange-700"
-            >
-              {gym.name}
-            </Link>
-          )}
+          <div className="flex min-w-0 items-center">
+            {isEventVariant ? (
+              <p className="min-w-0 truncate font-semibold text-zinc-900">
+                {gym.name}
+              </p>
+            ) : preview ? (
+              <p className="min-w-0 truncate font-semibold text-zinc-900">
+                {gym.name}
+              </p>
+            ) : (
+              <Link
+                href={`/gym/${gym.id}`}
+                className="min-w-0 truncate font-semibold text-zinc-900 hover:text-orange-700"
+              >
+                {gym.name}
+              </Link>
+            )}
+            {isEventVariant && showFollow && !preview && (
+              <InterestHeart
+                kind="gym"
+                targetId={gym.id}
+                initialInterested={isFollowed}
+                userId={userId}
+                loginRedirect={loginRedirect}
+                size="xs"
+                className="-ml-1.5"
+              />
+            )}
+          </div>
           <p className="mt-1 text-sm text-zinc-600">
             {getSportEmoji(gym.sport ?? "유도")} {gym.sport ?? "유도"}
           </p>
@@ -306,15 +338,6 @@ export function EventGymSection({
               </div>
             )}
 
-            {showFollow && (
-              <GymFollowButton
-                gymId={gym.id}
-                gymName={gym.name}
-                userId={userId}
-                initialFollowed={isFollowed}
-                loginRedirect={loginRedirect}
-              />
-            )}
           </>
         )}
       </div>

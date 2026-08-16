@@ -47,7 +47,10 @@ export async function getUserHomeSchedule(
 
   const upcoming = data
     .map((reg) => {
-      const event = reg.events as {
+      const eventRaw = reg.events;
+      const event = (
+        Array.isArray(eventRaw) ? eventRaw[0] : eventRaw
+      ) as {
         title: string;
         event_date: string;
         event_time: string | null;

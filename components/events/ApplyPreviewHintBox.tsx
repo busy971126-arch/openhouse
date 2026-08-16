@@ -15,7 +15,7 @@ export function ApplyPreviewHintBox({ hint }: ApplyPreviewHintBoxProps) {
         href="#participant-preview"
         className="mt-2 inline-block text-xs font-medium text-orange-700 underline hover:text-orange-800"
       >
-        참가자 구성 미리보기 보기
+        예정 참가자 구성 미리보기 보기
       </a>
     </div>
   );

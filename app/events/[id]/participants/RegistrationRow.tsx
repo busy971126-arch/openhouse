@@ -6,8 +6,11 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { formatProfileField } from "@/lib/constants/profile";
 import { formatParticipantExperienceSummary } from "@/lib/utils/experience-apply";
+import type { ParticipantPartyGroup } from "@/lib/utils/participant-party";
 import { Alert } from "@/components/Alert";
 import { ParticipantLicenseCard } from "@/components/participants/ParticipantLicenseCard";
+import { AutoApprovedBadge } from "@/components/participants/AutoApprovedBadge";
+import { ParticipantPartyBadge } from "@/components/participants/ParticipantPartyBadge";
 import { ParticipantProfileLink } from "@/components/profile/ParticipantProfileLink";
 import type { RegistrationStatus } from "@/lib/types/database";
 
@@ -35,10 +38,12 @@ type RegistrationRowProps = {
   regions: string[] | null;
   preferredSports: string[] | null;
   status: RegistrationStatus;
+  autoApproved?: boolean;
   operatorMemo?: string | null;
   createdAt: string;
   isOwner: boolean;
   showPhoneInSummary?: boolean;
+  partyGroup?: ParticipantPartyGroup;
 };
 
 export function RegistrationRow({
@@ -58,10 +63,12 @@ export function RegistrationRow({
   regions,
   preferredSports,
   status,
+  autoApproved = false,
   operatorMemo,
   createdAt,
   isOwner,
   showPhoneInSummary = false,
+  partyGroup,
 }: RegistrationRowProps) {
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
@@ -81,10 +88,10 @@ export function RegistrationRow({
     setError(null);
 
     const supabase = createClient();
-    const { error: updateError } = await supabase
-      .from("registrations")
-      .update({ status: newStatus })
-      .eq("id", id);
+    const { error: updateError } = await supabase.rpc("update_registration_status", {
+      p_registration_id: id,
+      p_status: newStatus,
+    });
 
     setLoading(false);
 
@@ -142,13 +149,19 @@ export function RegistrationRow({
               대련 찾기
             </span>
           )}
+          {partyGroup && partyGroup.companions.length > 0 && (
+            <ParticipantPartyBadge group={partyGroup} />
+          )}
           {showPhoneInSummary && contactPhone && (
             <p className="mt-1 text-sm text-zinc-500">{contactPhone}</p>
           )}
         </div>
-        <span className="shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium">
-          {statusLabels[currentStatus]}
-        </span>
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium">
+            {statusLabels[currentStatus]}
+          </span>
+          {autoApproved && currentStatus === "approved" && <AutoApprovedBadge />}
+        </div>
       </div>
 
       <button
@@ -177,6 +190,7 @@ export function RegistrationRow({
             parentPhone={parentPhone}
             seekingSparring={seekingSparring}
             status={currentStatus}
+            autoApproved={autoApproved}
             registrationId={id}
             createdAt={createdAt}
           />
@@ -186,7 +200,7 @@ export function RegistrationRow({
               userId={userId}
               className="flex w-full items-center justify-center rounded-lg border border-zinc-200 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-50"
             >
-              프로필 · 친구 추가
+              프로필 · 운동 친구 요청
             </ParticipantProfileLink>
           )}
 
@@ -207,7 +221,7 @@ export function RegistrationRow({
                   value={memo}
                   onChange={(e) => setMemo(e.target.value)}
                   rows={2}
-                  placeholder="참가자 메모"
+                  placeholder="예정 참가자 메모"
                   className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
                 />
               </label>

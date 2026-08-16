@@ -1,14 +1,27 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Alert } from "@/components/Alert";
 import { GymSummaryCard } from "@/components/gym/GymSummaryCard";
+import { EventLocationFields } from "@/components/events/EventLocationFields";
+import { EventRecurringDaysField } from "@/components/events/EventRecurringDaysField";
 import type { Event, EventDifficulty, Gym } from "@/lib/types/database";
 import { EVENT_TYPE_OPTIONS } from "@/lib/constants/event-types";
 import { EVENT_DIFFICULTY_OPTIONS } from "@/lib/constants/event-meta";
+import {
+  normalizeRecurringDays,
+  serializeRecurringDays,
+  type EventRecurringDay,
+} from "@/lib/constants/event-recurring-days";
 import type { EventType } from "@/lib/types/database";
+import type { GymAddressValue } from "@/lib/utils/address-region";
+import {
+  eventLocationToPayload,
+  getEventLocationDefaults,
+  validateEventLocation,
+} from "@/lib/utils/event-location";
 
 type EventFormProps = {
   gyms: Gym[];
@@ -41,6 +54,9 @@ export function EventForm({
   const [eventTime, setEventTime] = useState(
     event?.event_time?.slice(0, 5) ?? "",
   );
+  const [recurringDays, setRecurringDays] = useState<EventRecurringDay[]>(() =>
+    normalizeRecurringDays(event?.recurring_days),
+  );
   const [maxParticipants, setMaxParticipants] = useState(
     event?.max_participants?.toString() ?? "",
   );
@@ -66,6 +82,13 @@ export function EventForm({
   const [emergencyContact, setEmergencyContact] = useState(
     event?.emergency_contact ?? "",
   );
+  const [autoApprove, setAutoApprove] = useState(event?.auto_approve ?? false);
+  const [eventLocation, setEventLocation] = useState<GymAddressValue>(() =>
+    getEventLocationDefaults(
+      event,
+      gyms.find((g) => g.id === initialGymId) ?? gyms[0],
+    ),
+  );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -73,6 +96,15 @@ export function EventForm({
     () => gyms.find((g) => g.id === gymId) ?? gyms[0],
     [gymId, gyms],
   );
+
+  useEffect(() => {
+    if (mode !== "create") return;
+
+    setEventLocation((current) => {
+      if (current.roadAddress.trim()) return current;
+      return getEventLocationDefaults(null, selectedGym);
+    });
+  }, [mode, selectedGym]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -96,8 +128,9 @@ export function EventForm({
       return;
     }
 
-    if (!selectedGym.address?.trim()) {
-      setError("체육관 주소가 없습니다. 체육관 정보에서 주소를 먼저 등록해주세요.");
+    const locationError = validateEventLocation(eventLocation);
+    if (locationError) {
+      setError(locationError);
       setLoading(false);
       return;
     }
@@ -112,15 +145,26 @@ export function EventForm({
       return;
     }
 
+    const trimmedEventTime = eventTime.trim();
+    if (!trimmedEventTime) {
+      setError("시작 시간을 입력해주세요.");
+      setLoading(false);
+      return;
+    }
+
+    const locationPayload = eventLocationToPayload(eventLocation);
+
     const payload = {
       gym_id: gymId,
       title: title.trim(),
       event_type: eventType,
       description: description.trim() || null,
       sport: (selectedGym.sport ?? "유도").trim(),
-      region: selectedGym.region.trim(),
+      region: locationPayload.region,
+      address: locationPayload.address,
       event_date: eventDate,
-      event_time: eventTime || null,
+      event_time: trimmedEventTime,
+      recurring_days: serializeRecurringDays(recurringDays),
       max_participants: maxParticipants ? parseInt(maxParticipants, 10) : null,
       fee_amount: parsedFee && parsedFee > 0 ? parsedFee : null,
       registration_deadline: registrationDeadline || null,
@@ -132,6 +176,7 @@ export function EventForm({
       visit_details: visitDetails.trim() || null,
       safety_notes: safetyNotes.trim() || null,
       emergency_contact: emergencyContact.trim() || null,
+      auto_approve: autoApprove,
     };
 
     if (mode === "create") {
@@ -183,6 +228,12 @@ export function EventForm({
 
       {selectedGym && <GymSummaryCard gym={selectedGym} compact />}
 
+      <EventLocationFields
+        value={eventLocation}
+        onChange={setEventLocation}
+        selectedGym={selectedGym}
+      />
+
       <p className="text-xs font-medium text-zinc-500">이번 일정 정보</p>
 
       <label className="flex flex-col gap-1 text-sm">
@@ -222,14 +273,20 @@ export function EventForm({
       </label>
 
       <label className="flex flex-col gap-1 text-sm">
-        시간 (선택)
+        시작 시간
         <input
           type="time"
+          required
           value={eventTime}
           onChange={(e) => setEventTime(e.target.value)}
           className="rounded-lg border border-zinc-300 px-3 py-2"
         />
       </label>
+
+      <EventRecurringDaysField
+        value={recurringDays}
+        onChange={setRecurringDays}
+      />
 
       <label className="flex flex-col gap-1 text-sm">
         참가 인원 제한 (선택)
@@ -265,6 +322,24 @@ export function EventForm({
         />
       </label>
 
+      <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+        <input
+          type="checkbox"
+          checked={autoApprove}
+          onChange={(e) => setAutoApprove(e.target.checked)}
+          className="mt-0.5 size-4 rounded border-zinc-300 text-orange-600 focus:ring-orange-500"
+        />
+        <span className="flex flex-col gap-1">
+          <span className="text-sm font-medium text-zinc-900">
+            참가 신청을 자동으로 승인
+          </span>
+          <span className="text-xs text-zinc-500">
+            켜면 정원 내에서 신청 즉시 참가 확정됩니다. 정원이 찼을 때는
+            승인 대기로 접수됩니다.
+          </span>
+        </span>
+      </label>
+
       <label className="flex flex-col gap-1 text-sm">
         난이도 (선택)
         <select
@@ -295,7 +370,7 @@ export function EventForm({
       <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
         <p className="text-sm font-medium text-zinc-900">참가 안내 (선택)</p>
         <p className="mt-1 text-xs text-zinc-500">
-          이번 일정 참가자에게 필요한 도복·출입 정보를 입력하세요.
+          이번 일정 예정 참가자에게 필요한 도복·출입 정보를 입력하세요.
         </p>
 
         <div className="mt-4 flex flex-col gap-3">
@@ -324,7 +399,7 @@ export function EventForm({
       <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
         <p className="text-sm font-medium text-zinc-900">안전 정보 (선택)</p>
         <p className="mt-1 text-xs text-zinc-500">
-          참가자가 미리 확인할 수 있는 대련 규칙과 안전 안내를 입력하세요.
+          예정 참가자가 미리 확인할 수 있는 대련 규칙과 안전 안내를 입력하세요.
         </p>
 
         <div className="mt-4 flex flex-col gap-3">

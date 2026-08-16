@@ -14,6 +14,7 @@ export type PublicProfile = {
   photo_url: string | null;
   bio: string | null;
   created_at: string;
+  visibility_settings?: Record<string, unknown> | null;
 };
 
 export type PublicProfileData = {
@@ -22,20 +23,13 @@ export type PublicProfileData = {
   primaryGym: Gym | null;
 };
 
-const PUBLIC_PROFILE_FIELDS =
-  "id, display_name, nickname, gender, experience, weight_class, regions, preferred_sports, photo_url, bio, created_at";
-
 export async function getPublicProfile(
   userId: string,
 ): Promise<PublicProfileData | null> {
   const supabase = await createClient();
 
-  const [{ data: profile }, stats, { data: gyms }] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select(PUBLIC_PROFILE_FIELDS)
-      .eq("id", userId)
-      .maybeSingle(),
+  const [{ data: profileJson }, stats, { data: gyms }] = await Promise.all([
+    supabase.rpc("get_public_profile", { p_user_id: userId }),
     getProfileStats(userId),
     supabase
       .from("gyms")
@@ -45,10 +39,13 @@ export async function getPublicProfile(
       .limit(1),
   ]);
 
-  if (!profile) return null;
+  if (!profileJson || typeof profileJson !== "object") return null;
+
+  const profile = profileJson as PublicProfile;
+  if (!profile.id) return null;
 
   return {
-    profile: profile as PublicProfile,
+    profile,
     stats,
     primaryGym: (gyms?.[0] as Gym | undefined) ?? null,
   };

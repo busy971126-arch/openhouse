@@ -33,7 +33,9 @@ export async function getUserGymFollows(userId: string) {
 
   const { data, error } = await supabase
     .from("gym_follows")
-    .select("gym_id, created_at, gyms(id, name, region, sport, photo_url)")
+    .select(
+      "gym_id, created_at, gyms(id, name, region, sport, photo_url, address, mat_photos, facility_photos, exterior_photos, parking_photos)",
+    )
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 

@@ -1,5 +1,7 @@
 import type { EventFilters } from "@/lib/types/database";
 import { createClient } from "@/lib/supabase/server";
+import { getApprovedCountsByEvent } from "@/lib/queries/event-counts";
+import { REGISTRATION_WITH_PROFILE_SELECT } from "@/lib/queries/registration-select";
 import { getTodayDateString } from "@/lib/utils/date";
 
 export async function getEvents(filters: EventFilters = {}) {
@@ -7,7 +9,7 @@ export async function getEvents(filters: EventFilters = {}) {
 
   let query = supabase
     .from("events")
-    .select("*, gyms!inner(name, region, photo_url, is_public)")
+    .select("*, gyms!inner(name, region, photo_url, is_public, owner_id)")
     .eq("gyms.is_public", true)
     .order("event_date", { ascending: true });
 
@@ -95,9 +97,7 @@ export async function getRegistrationsForEvent(eventId: string) {
 
   const { data, error } = await supabase
     .from("registrations")
-    .select(
-      "*, profiles(display_name, nickname, gender, age_group, experience, weight_class, phone, parent_phone, regions, preferred_sports)",
-    )
+    .select(REGISTRATION_WITH_PROFILE_SELECT)
     .eq("event_id", eventId)
     .order("created_at", { ascending: false });
 
@@ -146,13 +146,6 @@ export async function getAnnouncements(eventId: string) {
 }
 
 export async function getApprovedCount(eventId: string) {
-  const supabase = await createClient();
-
-  const { count, error } = await supabase
-    .from("registrations")
-    .select("*", { count: "exact", head: true })
-    .eq("event_id", eventId)
-    .eq("status", "approved");
-
-  return { count: count ?? 0, error };
+  const countsMap = await getApprovedCountsByEvent([eventId]);
+  return { count: countsMap.get(eventId) ?? 0, error: null };
 }
