@@ -11,46 +11,59 @@ export const size = {
 
 export const contentType = "image/png";
 
-export default function OpenGraphImage() {
+export default async function OpenGraphImage() {
+  const wordmark = await fetch(
+    new URL("../public/images/ohs-wordmark.png", import.meta.url),
+  ).then((response) => response.arrayBuffer());
+
   return new ImageResponse(
     (
       <div
         style={{
           display: "flex",
           flexDirection: "column",
+          alignItems: "center",
           justifyContent: "center",
           width: "100%",
           height: "100%",
-          padding: "72px 80px",
-          background: "linear-gradient(135deg, #18181b 0%, #27272a 55%, #1c1917 100%)",
-          color: "#fafafa",
+          background: "#e8e8e8",
+          color: "#111111",
         }}
       >
         <div
           style={{
             display: "flex",
-            alignItems: "baseline",
+            alignItems: "flex-end",
             gap: 20,
-            marginBottom: 28,
+            marginBottom: 36,
           }}
         >
-          <span
+          <div
             style={{
-              fontSize: 128,
-              fontWeight: 800,
-              letterSpacing: "-0.04em",
-              lineHeight: 1,
+              display: "flex",
+              height: 200,
+              overflow: "hidden",
             }}
           >
-            OHS
-          </span>
+            <img
+              alt=""
+              src={wordmark as unknown as string}
+              width={520}
+              height={520}
+              style={{
+                objectFit: "contain",
+                objectPosition: "top center",
+              }}
+            />
+          </div>
           <span
             style={{
-              fontSize: 44,
+              fontSize: 42,
               fontWeight: 500,
-              color: "#a1a1aa",
+              color: "#737373",
               letterSpacing: "-0.02em",
               lineHeight: 1,
+              marginBottom: 18,
             }}
           >
             openhouse
@@ -59,25 +72,16 @@ export default function OpenGraphImage() {
         <div
           style={{
             display: "flex",
-            fontSize: 36,
-            fontWeight: 600,
-            letterSpacing: "0.28em",
-            color: "#34d399",
+            fontSize: 34,
+            fontWeight: 700,
+            fontStyle: "italic",
+            letterSpacing: "0.22em",
+            color: "#111111",
             textTransform: "uppercase",
           }}
         >
           FIND · JOIN · PLAY
         </div>
-        <div
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 6,
-            background: "linear-gradient(90deg, #34d399 0%, #10b981 50%, #059669 100%)",
-          }}
-        />
       </div>
     ),
     {
