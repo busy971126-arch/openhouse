@@ -14,10 +14,14 @@ const geistMono = Geist_Mono({
 });
 
 const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  (process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : "https://openhouse-gilt.vercel.app");
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://openhouse-gilt.vercel.app";
+
+const ogImage = {
+  url: "/images/ohs-wordmark.jpg",
+  width: 1024,
+  height: 1024,
+  alt: "OHS openhouse — FIND · JOIN · PLAY",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -29,11 +33,13 @@ export const metadata: Metadata = {
     siteName: "OpenHouse",
     locale: "ko_KR",
     type: "website",
+    images: [ogImage],
   },
   twitter: {
     card: "summary_large_image",
     title: "OHS openhouse",
     description: "FIND · JOIN · PLAY",
+    images: [ogImage.url],
   },
 };
 
