@@ -13,9 +13,28 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : "https://openhouse-gilt.vercel.app");
+
 export const metadata: Metadata = {
-  title: "OpenHouse",
-  description: "운동 이벤트를 찾고 참가하세요",
+  metadataBase: new URL(siteUrl),
+  title: "OHS openhouse",
+  description: "FIND · JOIN · PLAY",
+  openGraph: {
+    title: "OHS openhouse",
+    description: "FIND · JOIN · PLAY",
+    siteName: "OpenHouse",
+    locale: "ko_KR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "OHS openhouse",
+    description: "FIND · JOIN · PLAY",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
