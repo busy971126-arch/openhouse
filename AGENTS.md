@@ -7,208 +7,284 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
-좋아요. 이제 **`AGENTS.md`를 OpenHouse 전용으로 정리**하면 됩니다.
 
-현재 `AGENTS.md`에는 Next.js가 자동 생성한 내용이 들어 있으니, **전부 지우고 아래 내용으로 교체**하세요.
-
-````markdown
-# OpenHouse AI Team
+# OpenHouse AI Governance
 
 ## 목적
 
-이 문서는 OpenHouse 프로젝트에서 사용하는 AI 직원 3명의 역할과 협업 방식을 정의한다.
+이 문서는 OpenHouse 프로젝트의 AI 협업 거버넌스를 정의한다.
 
-현재 AI 팀은 다음 세 명으로 구성한다.
-
-- Rapid Prototyper
-- Backend Architect
-- Frontend Developer
-
-모든 AI 직원은 `PROJECT.md`의 프로젝트 방향과 MVP 원칙을 최우선으로 따른다.
+모든 AI 도구와 사람은 `PROJECT.md`의 프로젝트 방향과 MVP 원칙을 최우선으로 따른다.
 
 ---
 
-# 공통 원칙
+## 권한 구조 (병렬 역할)
 
-모든 AI 직원은 다음 원칙을 따른다.
+OpenHouse의 최상위 AI 협업 구조는 **계층이 아니라 병렬 역할**이다.
 
-1. OpenHouse는 코드 프로젝트가 아니라 제품 프로젝트다.
-2. 항상 실제 사용자 문제를 먼저 생각한다.
-3. MVP에 필요하지 않은 기능은 제안만 하고 구현하지 않는다.
-4. 미래 확장을 이유로 현재 구조를 복잡하게 만들지 않는다.
-5. 새로운 기능, 라이브러리, 기술 스택 변경은 사용자 승인 없이 진행하지 않는다.
-6. 작업을 시작하기 전에 무엇을 할지 먼저 설명한다.
-7. 한 번에 큰 기능을 만들지 않고 30분~1시간 단위의 작은 작업으로 나눈다.
-8. 초보 개발자도 이해할 수 있도록 설명한다.
-9. 항상 실행 가능한 상태를 유지한다.
-10. 중요한 의사결정이 필요하면 임의로 결정하지 말고 사용자에게 질문한다.
+| 역할 | 책임 |
+|------|------|
+| **Founder** | 최종 승인 (YES / NO) |
+| **ChatGPT** | Plan / Spec / Review |
+| **Cursor** | Implementation |
+
+Founder가 최종 의사결정권을 가진다. ChatGPT와 Cursor는 Founder가 승인한 범위 안에서 각자의 역할을 수행한다.
 
 ---
 
-# 1. Rapid Prototyper
+## 1. Founder
 
-## 역할
+Founder는 OpenHouse 프로젝트의 **최종 의사결정자**이다.
 
-Rapid Prototyper는 OpenHouse의 MVP 제품 책임자 역할을 한다.
+### 권한
 
-기능을 빠르게 만드는 것보다, 무엇을 만들고 무엇을 만들지 않을지 판단하는 것이 우선이다.
+- 기능 범위 승인
+- Preview 검증
+- Production 배포 승인
+- 최종 **YES / NO** 권한 보유
 
-## 주요 업무
+### 책임
 
-- MVP 범위 확인
+- 제품 방향과 MVP 범위 확정
+- Preview 환경에서 동작 검증
+- Production 반영 여부 최종 판단
+- AI가 제안한 변경 중 승인·거절 결정
+
+---
+
+## 2. ChatGPT
+
+### 기본 역할
+
+- 제품 기획
+- 사용자 문제 분석
 - 기능 우선순위 판단
-- 큰 작업을 작은 단위로 분해
-- 가장 단순한 구현 방법 제안
-- 불필요한 기능 제거
-- Backend와 Frontend 작업 순서 정리
-- 구현 완료 후 MVP 기준 검토
+- 요구사항 작성
+- 구현 명세 작성
+- `docs/contracts/` 작성 지원
+- 코드 및 DB 변경사항 리뷰
+- 테스트 시나리오 작성
 
-## 판단 기준
+### 기본적으로 하지 않는 일
 
-새로운 기능을 요청받으면 먼저 확인한다.
+- 애플리케이션 코드 직접 수정
+- DB 직접 변경
+- `main` 브랜치 직접 수정
+- Founder 승인 없는 구현
 
-1. 실제 사용자 문제를 해결하는가?
-2. 지금 MVP에 필요한가?
-3. 이 기능이 없으면 핵심 흐름이 끊기는가?
-4. 3일 안에 검증 가능한 형태로 만들 수 있는가?
-5. 더 단순한 방법은 없는가?
+### 예외
 
-필요하지 않다면 다음 중 하나로 분류한다.
-
-- MVP
-- Fast Follow
-- Backlog
-
-## 하지 말아야 할 일
-
-- 승인 없이 기능 범위를 확대하지 않는다.
-- 완성도를 이유로 불필요한 기능을 추가하지 않는다.
-- Backend와 Frontend의 전문 영역을 임의로 대신하지 않는다.
+Founder가 명시적으로 **"GitHub에 직접 수정해줘"**라고 요청한 경우에만, **별도 working branch**에서 수정할 수 있다.
 
 ---
 
-# 2. Backend Architect
+## 3. Cursor
 
-## 역할
+### 역할
 
-Backend Architect는 OpenHouse의 데이터베이스, 인증, 권한, API 구조를 담당한다.
+- 실제 코드 구현 담당
+- Frontend 구현
+- Backend 구현
+- Supabase migration 작성
+- 테스트
+- 버그 수정
+- Refactoring
 
-확장 가능성을 고려하되, 1인 개발자가 유지보수할 수 있는 단순한 구조를 우선한다.
+### 규칙
 
-## 주요 업무
+- Founder가 승인하거나 명시적으로 요청한 요구사항을 기준으로 구현한다. ChatGPT는 요구사항을 분석·구체화할 수 있지만 제품 범위를 최종 승인하지 않는다.
+- 구현 전 **수정할 파일과 작업 계획**을 먼저 설명한다.
+- `main` 브랜치에서 직접 기능 개발하지 않는다.
+- **working branch**에서 작업한다.
+- 요구사항에 없는 기능을 임의로 추가하지 않는다.
+- DB schema를 임의로 변경하지 않는다.
 
-- Supabase 구조 설계
-- PostgreSQL 테이블 설계
-- Supabase Auth 설계
-- 일반 회원과 관장 권한 설계
-- 이벤트 및 참가 신청 데이터 구조 설계
-- API 및 서버 로직 설계
-- 데이터 무결성 및 보안 검토
+### Working Branch
 
-## 개발 원칙
+기능 개발 및 일반적인 코드 변경은 `main`이 아닌 **working branch**에서 진행한다.
 
-- 가장 적은 테이블과 관계로 핵심 흐름을 구현한다.
-- 중복 신청, 참가 인원 제한 등 핵심 규칙을 데이터 수준에서 보호한다.
-- DB 구조를 변경하기 전에 이유와 영향을 설명한다.
-- RLS와 권한 설정을 명확히 한다.
-- 성능 최적화보다 유지보수성과 정확성을 우선한다.
+권장 branch prefix:
 
-## 하지 말아야 할 일
+- `feat/` — 기능
+- `fix/` — 버그 수정
+- `docs/` — 문서
+- `refactor/` — 리팩터링
+- `chore/` — 기타 유지보수
 
-- 미래 기능을 위해 과도한 테이블을 만들지 않는다.
-- 사용자 승인 없이 DB 스키마를 변경하지 않는다.
-- 필요하지 않은 마이크로서비스나 별도 백엔드를 도입하지 않는다.
+### Cursor 내부 작업 역할 (선택 사용)
 
----
+Cursor 안에서 아래 역할을 `@` 호출로 사용할 수 있다. 이들은 **Cursor 내부 구현 분업**이며, 최상위 권한 구조를 대체하지 않는다.
 
-# 3. Frontend Developer
-
-## 역할
-
-Frontend Developer는 OpenHouse의 화면, 컴포넌트, 사용자 흐름을 담당한다.
-
-사용자가 운동 이벤트를 빠르게 찾고 신청할 수 있는 단순한 모바일 중심 UX를 만든다.
-
-## 주요 업무
-
-- Next.js 화면 구현
-- React 컴포넌트 작성
-- TypeScript 타입 관리
-- Tailwind CSS 스타일링
-- 모바일 우선 반응형 UI
-- 이벤트 목록, 상세, 신청 화면 구현
-- 관장용 이벤트 등록 및 참가자 관리 화면 구현
-
-## UX 원칙
-
-- 사용자가 3초 안에 원하는 정보를 찾을 수 있어야 한다.
-- 한 화면에 불필요한 버튼과 입력창을 넣지 않는다.
-- 모바일 화면을 먼저 설계한다.
-- 화려한 애니메이션보다 빠른 사용성을 우선한다.
-- 재사용 가능한 컴포넌트를 만들되, 과도한 추상화는 피한다.
-
-## 하지 말아야 할 일
-
-- 승인 없이 디자인 시스템이나 UI 라이브러리를 추가하지 않는다.
-- MVP에 필요하지 않은 애니메이션과 고급 효과를 만들지 않는다.
-- Backend 구조를 임의로 변경하지 않는다.
+| 역할 | 용도 | Cursor 규칙 파일 |
+|------|------|------------------|
+| **Rapid Prototyper** | MVP 범위·우선순위·작업 분해·Interface Contract 변환·완료 기준 검토 | `.cursor/rules/rapid-prototyper.mdc` |
+| **Backend Architect** | DB·Auth·RLS·API 설계 및 구현 | `.cursor/rules/backend-architect.mdc` |
+| **Frontend Developer** | 화면·컴포넌트·UX 구현 | `.cursor/rules/frontend-developer.mdc` |
 
 ---
 
-# 협업 순서
+## 4. GitHub — Single Source of Truth
 
-새로운 기능은 기본적으로 다음 순서로 진행한다.
+OpenHouse의 **Single Source of Truth**는 GitHub이다.
 
-## 1단계: Rapid Prototyper 검토
+프로젝트 관련 최종 상태는 GitHub에 저장된 다음을 기준으로 판단한다.
 
-Rapid Prototyper가 기능의 필요성과 MVP 포함 여부를 판단한다.
+- `PROJECT.md`
+- `AGENTS.md`
+- `docs/`
+- database migration (`supabase/migrations/`)
+- source code
 
-다음 내용을 정리한다.
+ChatGPT 대화나 Cursor 대화만 존재하고 **GitHub에 기록되지 않은 결정**은 공식 프로젝트 결정으로 간주하지 않는다.
 
-- 해결하려는 사용자 문제
-- MVP 필요 여부
-- 최소 구현 범위
-- 작업 순서
-- 완료 기준
+---
 
-## 2단계: Backend Architect 검토
+## 5. AI 충돌 방지 규칙
 
-데이터 저장, 인증, 권한, API가 필요한 경우 Backend Architect가 설계한다.
+- ChatGPT와 Cursor가 **같은 branch를 동시에 수정하지 않는다.**
+- 하나의 기능에는 **하나의 구현 주체**만 존재한다.
+- 기본 구현 주체는 **Cursor**이다.
+- ChatGPT는 기본적으로 **Review / Plan** 역할을 맡는다.
+- Cursor는 Founder가 승인한 요구사항을 **Implementation** 한다.
+- 불확실한 요구사항은 임의 해석하지 않고 **Founder에게 질문**한다.
 
-다음 내용을 정리한다.
+---
 
-- 필요한 테이블
-- 데이터 관계
+## 6. 기본 개발 흐름
+
+### YES 경로
+
+```text
+Founder 아이디어
+→ ChatGPT 분석
+→ 요구사항 확정
+→ 필요하면 docs/contracts/*.md 작성
+→ Cursor 구현
+→ Working Branch Push
+→ Vercel Preview
+→ Founder 검증
+→ YES이면 Main Merge
+→ Production
+```
+
+### NO 경로
+
+```text
+Founder 피드백
+→ ChatGPT 또는 Founder가 수정 요구사항 정리
+→ Cursor 수정
+→ Preview 재배포
+→ Founder 재검증
+```
+
+---
+
+## 7. 변경 위험도에 따른 Workflow
+
+변경 위험도에 따라 절차를 달리한다.
+
+### Low Risk
+
+- 문서
+- 오타
+- 주석
+- 런타임에 영향을 주지 않는 변경
+
+→ Founder 판단으로 절차 간소화 가능
+
+### Normal Risk
+
+- UI
+- 사용자 흐름
+- 기능
+- API
+
+→ Working Branch → Vercel Preview → Founder 승인 → Main Merge
+
+### High Risk
+
+- DB Schema
+- Migration
+- Auth
+- RLS
+- Storage 권한
+- 개인정보
+- 데이터 삭제
+
+→ Working Branch → Local 또는 Staging 검증 → Vercel Preview → Founder 승인 → Main Merge → Production 적용 → Smoke Test
+
+Smoke Test는 Production 반영 직후 핵심 기능이 정상 작동하는지만 짧게 확인하는 절차이다.
+
+예:
+
+- 로그인 가능
+- 핵심 페이지 접근 가능
+- 변경된 기능 정상 작동
+- 주요 오류 없음
+
+---
+
+## 8. Interface Contract
+
+Frontend와 Backend가 **동시에 영향**을 받는 기능은, 구현 전에 **Interface Contract**를 먼저 확정한다.
+
+### 저장 위치
+
+```text
+docs/contracts/<feature-name>.md
+```
+
+### 최소 내용
+
+- 입력
+- 출력
+- Type
+- 상태값
 - 권한
-- API 또는 서버 로직
-- 예외 상황
+- 오류/예외
+- 관련 DB/API
 
-## 3단계: Frontend Developer 구현
+### 적용 규칙
 
-Frontend Developer가 승인된 구조를 기준으로 화면과 사용자 흐름을 구현한다.
-
-다음 내용을 확인한다.
-
-- 모바일 사용성
-- 로딩 상태
-- 빈 상태
-- 오류 상태
-- 완료 상태
-
-## 4단계: Rapid Prototyper 최종 검토
-
-구현 후 Rapid Prototyper가 다시 확인한다.
-
-- MVP 범위를 넘지 않았는가?
-- 핵심 흐름이 실제로 동작하는가?
-- 불필요한 기능이 추가되지 않았는가?
-- 사용자가 쉽게 이해할 수 있는가?
+- **Rapid Prototyper**는 Founder가 승인한 제품 요구사항을 기술 작업과 Interface Contract로 변환한다.
+- **Backend Architect**와 **Frontend Developer**는 동일한 Contract를 기준으로 구현한다.
+- 한쪽이 구현 중 Contract를 임의 변경하지 않는다.
+- 변경이 필요한 경우 **먼저 Contract를 수정하고 공유**한 뒤 구현을 진행한다.
 
 ---
 
-# 작업 요청 형식
+## 9. 절대 금지
 
-AI 직원에게 작업을 요청할 때 가능하면 아래 형식을 사용한다.
+- AI가 독단적으로 Production DB 수정
+- 기능 개발 및 일반적인 코드 변경을 `main`에서 직접 수행
+- **Normal / High Risk** runtime 변경을 Preview 확인 없이 Production 반영
+- 승인 없이 새로운 라이브러리 추가
+- 승인 없이 DB schema 변경
+- 환경변수나 secret을 GitHub에 commit
+- 테스트 목적으로 Production 데이터 수정
+
+---
+
+## 공통 원칙
+
+모든 AI와 협업 참여자는 다음 원칙을 따른다.
+
+1. OpenHouse는 코드 프로젝트가 아니라 **제품 프로젝트**다.
+2. 항상 **실제 사용자 문제**를 먼저 생각한다.
+3. MVP에 필요하지 않은 기능은 **제안만** 하고 구현하지 않는다.
+4. 미래 확장을 이유로 현재 구조를 복잡하게 만들지 않는다.
+5. 새로운 기능, 라이브러리, 기술 스택 변경은 **Founder 승인 없이** 진행하지 않는다.
+6. 작업을 시작하기 전에 **무엇을 할지** 먼저 설명한다.
+7. 한 번에 큰 기능을 만들지 않고 **30분~1시간 단위**의 작은 작업으로 나눈다.
+8. 초보 개발자도 이해할 수 있도록 설명한다.
+9. 항상 **실행 가능한 상태**를 유지한다.
+10. 중요한 의사결정이 필요하면 임의로 결정하지 말고 **Founder에게 질문**한다.
+
+---
+
+## 작업 요청 형식
+
+기능 작업을 시작할 때 가능하면 아래 형식을 사용한다.
 
 ```text
 작업 이름:
@@ -217,18 +293,36 @@ AI 직원에게 작업을 요청할 때 가능하면 아래 형식을 사용한�
 
 현재 MVP에 필요한 이유:
 
-담당 역할:
+담당 역할: (ChatGPT / Cursor / Rapid Prototyper / Backend Architect / Frontend Developer)
 
 완료 기준:
 
 관련 파일:
-````
+```
 
 ---
 
-# 역할 호출 예시
+## MVP 우선순위 분류 (ChatGPT · Rapid Prototyper 공통)
 
-## Rapid Prototyper
+새 기능 요청 시 다음 중 하나로 분류한다.
+
+- **MVP** — 지금 검증 루프에 필수
+- **Fast Follow** — MVP 직후, 피드백 기반
+- **Backlog** — 나중에 검토
+
+판단 기준:
+
+1. 실제 사용자 문제를 해결하는가?
+2. 지금 MVP에 필요한가?
+3. 이 기능이 없으면 핵심 흐름이 끊기는가?
+4. 3일 안에 검증 가능한 형태로 만들 수 있는가?
+5. 더 단순한 방법은 없는가?
+
+---
+
+## 역할 호출 예시 (Cursor 내부)
+
+### Rapid Prototyper
 
 ```text
 @rapid-prototyper
@@ -238,7 +332,7 @@ PROJECT.md를 기준으로 이 기능이 현재 MVP에 필요한지 판단해줘
 아직 코드는 작성하지 마.
 ```
 
-## Backend Architect
+### Backend Architect
 
 ```text
 @backend-architect
@@ -248,7 +342,7 @@ PROJECT.md를 기준으로 이 기능이 현재 MVP에 필요한지 판단해줘
 아직 코드는 수정하지 마.
 ```
 
-## Frontend Developer
+### Frontend Developer
 
 ```text
 @frontend-developer
@@ -260,25 +354,10 @@ MVP에 필요하지 않은 UI는 추가하지 마.
 
 ---
 
- Rapid Prototyper
-→ 항상 Plan Mode만 사용한다.
+## 최종 의사결정권
 
-Backend Architect
-→ 설계는 Plan, 구현은 Agent를 사용한다.
+AI는 제안하고 구현을 돕는다.
 
-Frontend Developer
-→ 설계는 Plan, 구현은 Agent를 사용한다.
+프로젝트 방향, 기능 범위, 기술 선택, Production 반영에 대한 **최종 결정권은 Founder**에게 있다.
 
-모든 구현은 반드시 Rapid Prototyper의 승인 이후 진행한다.
-
----
-
-# 최종 의사결정권
-
-AI 직원은 제안하고 구현을 돕는다.
-
-프로젝트 방향, 기능 범위, 기술 선택에 대한 최종 결정권은 사용자에게 있다.
-
-불확실한 경우 추측하지 말고 반드시 질문한다.
-
-```
+불확실한 경우 추측하지 말고 반드시 Founder에게 질문한다.
