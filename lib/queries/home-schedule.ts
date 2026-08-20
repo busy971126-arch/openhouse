@@ -21,9 +21,20 @@ export type HomeSchedulePreview = {
   upcoming: HomeScheduleItem[];
 };
 
+export type HomeScheduleResult =
+  | { status: "error" }
+  | { status: "success"; data: HomeSchedulePreview };
+
+const EMPTY_SCHEDULE: HomeSchedulePreview = {
+  today: [],
+  thisWeekCount: 0,
+  next: null,
+  upcoming: [],
+};
+
 export async function getUserHomeSchedule(
   userId: string,
-): Promise<HomeSchedulePreview> {
+): Promise<HomeScheduleResult> {
   const supabase = await createClient();
   const today = getTodayDateString();
   const weekRange = getWeekRange();
@@ -36,13 +47,12 @@ export async function getUserHomeSchedule(
     .eq("user_id", userId)
     .in("status", ["pending", "approved"]);
 
-  if (error || !data?.length) {
-    return {
-      today: [],
-      thisWeekCount: 0,
-      next: null,
-      upcoming: [],
-    };
+  if (error) {
+    return { status: "error" };
+  }
+
+  if (!data?.length) {
+    return { status: "success", data: EMPTY_SCHEDULE };
   }
 
   const upcoming = data
@@ -85,9 +95,12 @@ export async function getUserHomeSchedule(
   ).length;
 
   return {
-    today: todayItems,
-    thisWeekCount,
-    next: upcoming[0] ?? null,
-    upcoming,
+    status: "success",
+    data: {
+      today: todayItems,
+      thisWeekCount,
+      next: upcoming[0] ?? null,
+      upcoming,
+    },
   };
 }

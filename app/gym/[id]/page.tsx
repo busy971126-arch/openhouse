@@ -9,6 +9,7 @@ import {
 } from "@/lib/queries/gyms";
 import { isGymFollowed } from "@/lib/queries/participant-preview";
 import { getApprovedCountsByEvent } from "@/lib/queries/event-counts";
+import { getApprovedCountFromResult } from "@/lib/utils/event-counts-map";
 import { formatEventDetailDate } from "@/lib/utils/date";
 import { formatEventFeeDisplay } from "@/lib/utils/event-display";
 import { formatEventType } from "@/lib/constants/event-types";
@@ -37,7 +38,7 @@ export default async function GymDetailPage({ params }: PageProps) {
       : Promise.resolve({ followed: false }),
   ]);
 
-  const countsMap = await getApprovedCountsByEvent(
+  const countsResult = await getApprovedCountsByEvent(
     (upcomingEvents ?? []).map((event) => event.id),
   );
 
@@ -107,11 +108,16 @@ export default async function GymDetailPage({ params }: PageProps) {
         ) : (
           <ul className="mt-4 flex flex-col gap-3">
             {upcomingEvents.map((event) => {
-              const approved = countsMap.get(event.id) ?? 0;
+              const approved = getApprovedCountFromResult(
+                countsResult,
+                event.id,
+              );
               const participantLine =
-                event.max_participants != null && event.max_participants > 0
-                  ? `${approved}/${event.max_participants}명`
-                  : `${approved}명`;
+                approved == null
+                  ? "인원 확인 불가"
+                  : event.max_participants != null && event.max_participants > 0
+                    ? `${approved}/${event.max_participants}명`
+                    : `${approved}명`;
 
               return (
                 <li key={event.id}>

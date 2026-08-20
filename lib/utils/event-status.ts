@@ -35,8 +35,8 @@ export const EVENT_STATUS_LABELS: Record<
 type EventStatusInput = {
   eventDate: string;
   maxParticipants: number | null;
-  /** pending + approved (public registration count / capacity) */
-  approvedCount: number;
+  /** pending + approved. null = count unavailable, skip capacity judgment */
+  approvedCount: number | null;
   recruitmentClosed?: boolean;
   registrationDeadline?: string | null;
   eventStatus?: string | null;
@@ -69,6 +69,7 @@ export function getEventRecruitmentStatus({
   }
 
   if (
+    approvedCount != null &&
     maxParticipants != null &&
     maxParticipants > 0 &&
     approvedCount >= maxParticipants
@@ -77,13 +78,27 @@ export function getEventRecruitmentStatus({
   }
 
   const spotsLeft =
-    maxParticipants != null ? maxParticipants - approvedCount : null;
+    approvedCount != null && maxParticipants != null
+      ? maxParticipants - approvedCount
+      : null;
 
   if (spotsLeft != null && spotsLeft > 0 && spotsLeft <= 3) {
     return "closing_soon";
   }
 
   return "recruiting";
+}
+
+export function isEventAtCapacity(
+  maxParticipants: number | null,
+  approvedCount: number | null,
+): boolean {
+  return (
+    approvedCount != null &&
+    maxParticipants != null &&
+    maxParticipants > 0 &&
+    approvedCount >= maxParticipants
+  );
 }
 
 export function isOperatingEvent(eventDate: string): boolean {

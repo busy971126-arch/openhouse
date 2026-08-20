@@ -2,9 +2,13 @@ import { formatEventFee } from "@/lib/constants/event-meta";
 import { formatEventTimeDisplay } from "@/lib/utils/date";
 
 export function formatParticipantCount(
-  approvedCount: number,
+  approvedCount: number | null,
   maxParticipants: number | null,
 ): string {
+  if (approvedCount == null) {
+    return "인원 확인 불가";
+  }
+
   if (maxParticipants != null && maxParticipants > 0) {
     return `신청 ${approvedCount} / ${maxParticipants}명`;
   }

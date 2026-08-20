@@ -7,6 +7,7 @@ import {
   formatScheduleCountdown,
   formatScheduleWhenLabel,
 } from "@/lib/utils/schedule-display";
+import { Alert } from "@/components/Alert";
 import { scheduleTabHref } from "@/lib/utils/my-schedule";
 
 export function HomeMyScheduleSection() {
@@ -25,7 +26,22 @@ async function HomeMySchedule() {
 
   if (!user) return null;
 
-  const schedule = await getUserHomeSchedule(user.id);
+  const scheduleResult = await getUserHomeSchedule(user.id);
+
+  if (scheduleResult.status === "error") {
+    return (
+      <section className="rounded-xl border border-zinc-200 bg-white">
+        <div className="border-b border-zinc-100 px-4 py-3">
+          <h2 className="text-sm font-semibold text-zinc-900">📅 내 일정</h2>
+        </div>
+        <div className="px-4 py-3">
+          <Alert message="참가 일정을 불러오지 못했습니다." />
+        </div>
+      </section>
+    );
+  }
+
+  const schedule = scheduleResult.data;
   const highlight = schedule.today[0] ?? schedule.next;
   const scheduleTab = schedule.today.length > 0 ? "today" : "week";
   const scheduleHref =

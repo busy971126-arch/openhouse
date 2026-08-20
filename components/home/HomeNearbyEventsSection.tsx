@@ -5,6 +5,7 @@ import { HomeEventCompactRow } from "@/components/home/HomeEventCompactRow";
 import { HomeNearbyLocationAction } from "@/components/home/HomeNearbyLocationAction";
 import { createClient } from "@/lib/supabase/server";
 import { getHomeNearbyEvents } from "@/lib/queries/home-events";
+import { Alert } from "@/components/Alert";
 
 export function HomeNearbyEventsSection() {
   return (
@@ -34,7 +35,7 @@ async function HomeNearbyEvents() {
     );
   }
 
-  const { items, regions } = await getHomeNearbyEvents(profileRegions, 3);
+  const { items, regions, error } = await getHomeNearbyEvents(profileRegions, 3);
   const regionSummary = regions.slice(0, 2).join(", ");
 
   return (
@@ -56,7 +57,11 @@ async function HomeNearbyEvents() {
         )}
       </div>
 
-      {items.length > 0 ? (
+      {error ? (
+        <div className="px-4 py-3">
+          <Alert message="이벤트를 불러오지 못했습니다." />
+        </div>
+      ) : items.length > 0 ? (
         <div className="divide-y divide-zinc-100 px-4 py-1">
           {items.map((item) => (
             <HomeEventCompactRow

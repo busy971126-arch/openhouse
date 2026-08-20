@@ -29,7 +29,9 @@ import type { RegistrationStatus } from "@/lib/types/database";
 type HostParticipantsManagerProps = {
   gyms: HostGymOption[];
   events: HostEventOption[];
+  eventsError?: boolean;
   registrations: ParticipantItem[];
+  registrationsError?: boolean;
   selectedGymId: string;
   selectedEventId: string | null;
   selectedEvent: HostEventOption | null;
@@ -58,7 +60,9 @@ function matchesNameQuery(participant: ParticipantItem, query: string): boolean 
 export function HostParticipantsManager({
   gyms,
   events,
+  eventsError = false,
   registrations,
+  registrationsError = false,
   selectedGymId,
   selectedEventId,
   selectedEvent,
@@ -211,9 +215,11 @@ export function HostParticipantsManager({
             value={selectedEventId ?? ""}
             onChange={(e) => navigate(selectedGymId, e.target.value || null)}
             className="rounded-lg border border-zinc-300 bg-white px-3 py-2"
-            disabled={events.length === 0}
+            disabled={eventsError || events.length === 0}
           >
-            {events.length === 0 ? (
+            {eventsError ? (
+              <option value="">일정을 불러오지 못했습니다</option>
+            ) : events.length === 0 ? (
               <option value="">등록된 일정이 없습니다</option>
             ) : (
               events.map((event) => (
@@ -291,7 +297,9 @@ export function HostParticipantsManager({
 
           {bulkError && <Alert message={bulkError} />}
 
-          {filtered.length === 0 ? (
+          {registrationsError ? (
+            <Alert message="참가자 정보를 불러오지 못했습니다." />
+          ) : filtered.length === 0 ? (
             <EmptyState
               message={
                 registrations.length === 0
@@ -328,9 +336,11 @@ export function HostParticipantsManager({
         </>
       )}
 
-      {!selectedEvent && events.length === 0 && (
-        <EmptyState message="이 체육관에 등록된 일정이 없습니다." />
-      )}
+      {eventsError ? (
+        <Alert message="일정을 불러오지 못했습니다." />
+      ) : !selectedEvent && events.length === 0 ? (
+        <EmptyState message="등록된 일정이 없습니다." />
+      ) : null}
 
       {selectedIds.size > 0 && (
         <div className="fixed inset-x-0 bottom-16 z-40 mx-auto w-full max-w-lg px-4">

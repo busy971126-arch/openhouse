@@ -52,7 +52,7 @@ export default async function HostParticipantsPage({ searchParams }: PageProps) 
       ? params.gym
       : gyms[0].id;
 
-  const events = await getHostEventsForGym(selectedGymId);
+  const { events, error: eventsError } = await getHostEventsForGym(selectedGymId);
 
   const selectedEventId =
     params.event && events.some((event) => event.id === params.event)
@@ -68,16 +68,18 @@ export default async function HostParticipantsPage({ searchParams }: PageProps) 
   const selectedEvent =
     events.find((event) => event.id === selectedEventId) ?? null;
 
-  const registrations = selectedEventId
+  const participantsResult = selectedEventId
     ? await getHostParticipantsForEvent(selectedEventId)
-    : [];
+    : { registrations: [], error: false };
 
   return (
     <Suspense fallback={<LoadingSpinner />}>
       <HostParticipantsManager
         gyms={gyms}
         events={events}
-        registrations={registrations}
+        eventsError={eventsError}
+        registrations={participantsResult.registrations}
+        registrationsError={participantsResult.error}
         selectedGymId={selectedGymId}
         selectedEventId={selectedEventId}
         selectedEvent={selectedEvent}

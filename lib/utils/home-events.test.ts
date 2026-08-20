@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   formatClosingTodayHint,
   formatNearbyEventLabel,
+  getEventRecruitmentStatusForEvent,
   isClosingTodayEvent,
+  isRecruitingEventStatus,
   isStartingThisWeekEvent,
 } from "@/lib/utils/home-events";
 
@@ -65,5 +67,23 @@ describe("home-events", () => {
     expect(formatClosingTodayHint("2026-08-12", "2026-08-12")).toBe(
       "오늘까지 신청",
     );
+  });
+
+  it("does not treat unavailable counts as full or zero-capacity recruiting", () => {
+    const unavailable = getEventRecruitmentStatusForEvent(
+      baseEvent,
+      null,
+      "2026-08-12",
+    );
+    const knownFull = getEventRecruitmentStatusForEvent(
+      { ...baseEvent, max_participants: 10 },
+      10,
+      "2026-08-12",
+    );
+
+    expect(unavailable).toBe("recruiting");
+    expect(isRecruitingEventStatus(unavailable)).toBe(true);
+    expect(knownFull).toBe("closed");
+    expect(isRecruitingEventStatus(knownFull)).toBe(false);
   });
 });

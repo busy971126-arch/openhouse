@@ -145,6 +145,10 @@ export async function getAnnouncements(eventId: string) {
 }
 
 export async function getApprovedCount(eventId: string) {
-  const countsMap = await getApprovedCountsByEvent([eventId]);
-  return { count: countsMap.get(eventId) ?? 0, error: null };
+  const result = await getApprovedCountsByEvent([eventId]);
+  if (result.status !== "success") {
+    return { count: null as number | null, error: true };
+  }
+
+  return { count: result.counts.get(eventId) ?? 0, error: false };
 }

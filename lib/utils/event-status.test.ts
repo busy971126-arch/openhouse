@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getEventRecruitmentStatus,
   getRegistrationApplyBlockMessage,
+  isEventAtCapacity,
 } from "./event-status";
 
 describe("getEventRecruitmentStatus", () => {
@@ -89,6 +90,18 @@ describe("getEventRecruitmentStatus", () => {
         approvedCount: 2,
       }),
     ).toBe("recruiting");
+  });
+
+  it("does not treat unavailable counts as zero capacity", () => {
+    expect(
+      getEventRecruitmentStatus({
+        eventDate: futureDate,
+        maxParticipants: 5,
+        approvedCount: null,
+      }),
+    ).toBe("recruiting");
+    expect(isEventAtCapacity(5, null)).toBe(false);
+    expect(isEventAtCapacity(5, 5)).toBe(true);
   });
 });
 

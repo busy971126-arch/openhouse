@@ -1,9 +1,9 @@
 # OpenHouse User Test QA Audit
 
 - Audit date: 2026-08-20
-- Updated: 2026-08-20 (STEP 4-5A — Registration Server Invariant)
-- Scope: STEP 4-1 Core Flow QA + STEP 4-2 local schema alignment + STEP 4-5A registration guards
-- Method: repository audit + local DB functional test. Production DB unchanged.
+- Updated: 2026-08-20 (STEP 4-5B — Pre-Beta Error State & Count Fallback)
+- Scope: STEP 4-1 Core Flow QA + STEP 4-2 address + STEP 4-5A registration guards + STEP 4-5B error/count
+- Method: repository audit + local DB functional test + code fix. Production DB unchanged.
 
 Status legend (code audit, not live tester run):
 
@@ -71,7 +71,7 @@ auto approval UI/RPC는 제거됨 (`docs/SECURITY_ADVISOR_EXCEPTIONS.md`, PR #8)
 | 19 | 승인 | RPC | `update_registration_status(..., approved)` |
 | 20 | 거절 | RPC | `update_registration_status(..., rejected)` |
 | 21 | 정원 제한 | UI + DB trigger | `getEventRecruitmentStatus`, `check_event_capacity` |
-| 22 | 신청 마감 | UI + API + RPC | `registration_deadline` / `recruitment_closed` / `status=cancelled` — local 가드 (`20260820141029`). Production 반영은 별도 승인 |
+| 22 | 신청 마감 | UI + API + RPC | `registration_deadline` / `recruitment_closed` / `status=cancelled` — **FIXED_PRODUCTION** (`20260820141029`) |
 | 23 | 친구 / 프로필 | `/my/friends`, `/users/[id]` | `search_profiles`, `get_public_profile` (로그인 필요) |
 | 24 | notification | `/my/notifications` | `notifications` 테이블, 신청/공지 트리거 |
 | 25 | visibility | `/my/settings/privacy` | `visibility_settings` + preview mask |
@@ -84,21 +84,21 @@ Auth guard: `middleware.ts` — `/dashboard`, `/gym/new`, `/events/new`, `/my`, 
 
 | ID | Role | Scenario | Precondition | Steps | Expected Result | Current Implementation | Automated Test | Manual Test Required | Risk | Status | Notes |
 |----|------|----------|--------------|-------|-----------------|------------------------|----------------|----------------------|------|--------|-------|
-| G01 | Guest | 로그아웃 홈 진입 | 세션 없음 | `/` 접속 | 게스트 홈, 모집 이벤트, 로그인/회원가입 CTA, 500 없음 | `app/page.tsx` `GuestHome` | PARTIAL (`home-events.test.ts`) | YES | — | CODE-PASS | 이벤트 로드 실패 시 빈 목록으로 침묵 (`loadRecruitingEvents`) |
+| G01 | Guest | 로그아웃 홈 진입 | 세션 없음 | `/` 접속 | 게스트 홈, 모집 이벤트, 로그인/회원가입 CTA, 500 없음 | `app/page.tsx` `GuestHome` | PARTIAL (`home-events.test.ts`, `data-load-state.test.ts`) | YES | — | CODE-PASS | 이벤트 query 실패 시 Alert. 성공 0건은 섹션 숨김 |
 | G02 | Guest | 회원가입 | 유효 이메일 | `/signup` 제출 | 계정 생성. 세션 있으면 홈, 없으면 이메일 인증 안내 | `POST /api/auth/signup` | PARTIAL (`auth-errors.test.ts`) | YES | MANUAL ENV QA | UNKNOWN | signup code supports no-session / email-confirmation flow. Hosted Confirm email setting is UNKNOWN and must be checked manually. Confirmation email delivery must be tested before external beta |
 | G03 | Guest | 로그인 | 확인된 계정 | `/login` | 세션 생성 후 `redirect` 또는 `/` | `LoginForm` | PARTIAL | YES | — | CODE-PASS | 실패 시 `mapSignupError` |
-| G04 | Guest | 이벤트 목록 | 공개 이벤트 존재 | `/events` | 공개 체육관 이벤트 목록, 정원 숫자 | `EventList` + `get_event_registration_counts` | PARTIAL (`event-status`, `home-events`) | YES | — | CODE-PASS | RPC 실패 시 정원 0으로 silent fallback |
+| G04 | Guest | 이벤트 목록 | 공개 이벤트 존재 | `/events` | 공개 체육관 이벤트 목록, 정원 숫자 | `EventList` + `get_event_registration_counts` | PARTIAL (`event-status`, `event-counts-map`) | YES | — | CODE-PASS | RPC 실패 시 0명으로 변환하지 않음. `인원 확인 불가` |
 | G05 | Guest | 이벤트 상세 | 유효 event id | `/events/[id]` | 상세, 정원, 로그인 후 신청 CTA | `app/events/[id]/page.tsx` | PARTIAL | YES | — | CODE-PASS | preview는 로그인 유도 (`requiresAuth`) |
 | G06 | Member | solo 참가 신청 | 로그인, 모집 중 | 상세에서 체급·수련 입력 → 신청 | `registrations.status = pending` | `create_solo_registration` | PARTIAL (`participant-party.test.ts` 에러 매핑) | YES | — | CODE-PASS | 버튼 `disabled={loading}`. fallback insert는 pending |
-| G07 | Member | 신청 상태 확인 | G06 완료 | `/my/registrations` | 승인 대기 표시, 완료 배너(`applied=1`) | `MyRegistrationCard` + `REGISTRATION_STATUS_DISPLAY` | PARTIAL (`registration-status` 로직은 unit 없음에 가깝고 display util만) | YES | — | CODE-PASS | `getUserRegistrations` error 무시하고 빈 목록 가능 |
+| G07 | Member | 신청 상태 확인 | G06 완료 | `/my/registrations` | 승인 대기 표시, 완료 배너(`applied=1`) | `MyRegistrationCard` + `REGISTRATION_STATUS_DISPLAY` | PARTIAL (`data-load-state.test.ts`) | YES | — | CODE-PASS | query 실패 시 Alert. 성공 0건만 empty |
 | H01 | Host | host 로그인 | gym owner 계정 | `/login` | HostHome 또는 운영자 홈 | `getMyPageData` `isOperator` | PARTIAL (`host-home.test.ts`) | YES | — | CODE-PASS | 체육관 없으면 회원 홈 |
-| H02 | Host | 신청자 확인 | 본인 이벤트에 pending | `/host/participants` | 신청자 목록 | `getHostParticipantsForEvent` RLS | PARTIAL (`host-participant-*.test.ts`) | YES | — | CODE-PASS | gym 없으면 등록 CTA. 일정 0이면 EmptyState |
+| H02 | Host | 신청자 확인 | 본인 이벤트에 pending | `/host/participants` | 신청자 목록 | `getHostParticipantsForEvent` RLS | PARTIAL (`host-participant-*.test.ts`) | YES | — | CODE-PASS | 일정/참가자 query 실패는 Alert. 성공 0건만 empty |
 | H03 | Host | pending 승인 | H02 | 참가 확정 | `pending → approved` | `update_registration_status` + `is_event_owner` | NO | YES | — | CODE-PASS | 에러 시 RPC raw message |
 | G08 | Member | approved 확인 | H03 | 내 일정 / 상세 | 참가 확정 | display util + 상세는 pending/approved만 조회 | PARTIAL | YES | — | CODE-PASS | 알림 트리거 `notify_on_registration` |
 | G09 | Member | 참가 취소 | pending 또는 approved | 내 일정 취소 | `cancelled`, 정원 재개방 | `MyRegistrationCard` / `CancelButton` RLS | NO | YES | — | CODE-PASS | RPC가 아니라 table UPDATE. 종료일 지난 일정은 취소 버튼 숨김 |
 | S01 | Member | party 신청 | accepted 친구 | 동행 선택 후 신청 | 전원 pending, 동일 `party_id` | `create_party_registration` | PARTIAL (`participant-party.test.ts`) | YES | — | CODE-PASS | ALL OR NOTHING verified. 정원 부족 시 `Event is full`로 전체 rollback. 부분 registration 없음 |
 | S02 | Member | 정원 초과 차단 | 정원 가득 | 신청 | UI 마감 + DB `Event is full` | `canApply` + `check_event_capacity` | PARTIAL (`event-status.test.ts`) | YES | — | CODE-PASS | UI와 DB 이중 |
-| S03 | Member | 마감 이후 신청 | deadline 지남 | UI 신청 불가 | 마감 메시지 | UI + `POST /api/events/[id]/register` + 두 RPC | PARTIAL (`event-status.test.ts`) | YES | **P0** | **FIXED_LOCAL / AWAITING_PRODUCTION** | `registration_deadline < CURRENT_DATE`, `recruitment_closed`, `status=cancelled`를 API/RPC에서 차단. Production DB unchanged |
+| S03 | Member | 마감 이후 신청 | deadline 지남 | UI 신청 불가 | 마감 메시지 | UI + `POST /api/events/[id]/register` + 두 RPC | PARTIAL (`event-status.test.ts`) | YES | **P0** | **FIXED_PRODUCTION** | STEP 4-5A Production 반영. `registration_deadline` / `recruitment_closed` / `status=cancelled` 서버 가드 |
 | S04 | Member | 타인 이벤트 수정 | 다른 사람 이벤트 | `/events/[id]/edit` | 상세로 redirect | `edit/page.tsx` owner 체크 + middleware 로그인 | NO | YES | — | CODE-PASS | RLS `is_gym_owner`도 INSERT/UPDATE 차단 |
 | S05 | Member | 타인 신청 승인 | 남의 registration | RPC 호출 | `NOT_EVENT_OWNER` | `update_registration_status` | NO | YES | — | CODE-PASS | 앱 UI는 호스트 목록에만 버튼 |
 | S06 | Guest | 보호 페이지 | 로그아웃 | `/my`, `/host`, `/events/new` | `/login?redirect=` | `middleware.ts` | PARTIAL (`bottom-nav.test.ts`) | YES | P1 | CODE-RISK | **`/gym/[id]`도 로그인 필수** — 문서상 공개와 불일치 |
@@ -139,19 +139,19 @@ H04/H05 `events.address` drift는 local schema에서 해제됨 (`FIXED_LOCAL / A
 
 | Screen | loading | empty | error | unauthorized | not found |
 |--------|---------|-------|-------|--------------|-----------|
-| 홈 | Suspense spinner (섹션) | 빈 리스트에 가깝게 침묵 | 이벤트 fetch 실패 시 empty로 흡수 | — | — |
+| 홈 | Suspense spinner (섹션) | 성공 0건: 모집 섹션 숨김 / 일정 empty 문구 | 모집·일정 query 실패 시 Alert | — | — |
 | 이벤트 목록 | `LoadingSpinner` (page Suspense) | EmptyState | Alert | — | — |
 | 체육관 목록 | 동일 | EmptyState | Alert | — | — |
 | 이벤트 상세 | 서버 렌더 (페이지급 spinner 약함) | — | getEvent 실패 `notFound()` | 신청은 로그인 CTA | `notFound()` |
 | 체육관 상세 | — | 예정 이벤트 EmptyState | gym 없으면 notFound | **미로그인 시 login redirect** | notFound |
-| 내 신청 | — | EmptyState + 이벤트 찾기 | query error 무시 → empty | middleware | — |
-| host 참가자 | Suspense | 일정 없음 / 신청자 EmptyState | 일부 silent 0 | middleware | gym/event 쿼리 없으면 빈 선택 |
+| 내 신청 | — | EmptyState + 이벤트 찾기 | Alert (query 실패 ≠ empty) | middleware | — |
+| host 참가자 | Suspense | 일정 없음 / 신청자 EmptyState | 일정·참가자 query 실패 Alert | middleware | gym/event 쿼리 없으면 빈 선택 |
 | 관심 | “불러오는 중” | 이벤트/체육관 각각 empty 문구 | 관심 API 500 raw | middleware | — |
 | 친구 | — | empty 안내 문구 | 검색 결과 없음 | middleware | — |
 | 알림 | 읽음 처리 중 | “새로운 알림이 없습니다” | 조회 실패 empty | middleware | — |
 | 로그인/회원가입 | 버튼 disabled + 문구 | — | Alert | — | — |
 
-빈 상태 자체는 주요 리스트에 있다. **홈 모집 이벤트와 내 신청/알림의 query error는 실패가 empty로 보인다.**
+빈 상태 자체는 주요 리스트에 있다. 홈 모집·내 신청·홈 일정·host 참가자는 query 실패와 정상 empty를 구분한다. 알림 조회 실패는 이번 범위 밖이다.
 
 ---
 
@@ -239,7 +239,7 @@ Golden Path automated:
 ### P0
 
 1. **Host 이벤트 생성/수정 payload `events.address`** — **FIXED_LOCAL / AWAITING_PRODUCTION**. Local에 nullable `public.events.address`를 추가해 EventForm / Event type과 정렬했다. 기존 row는 backfill 없이 `address = null`로 유효하다. Production DB는 이 PR만으로 변경되지 않는다.
-2. **registration_deadline / recruitment_closed / cancelled 서버 가드** — **FIXED_LOCAL / AWAITING_PRODUCTION**. UI뿐 아니라 `POST /api/events/[id]/register`와 `create_solo_registration` / `create_party_registration`에서 신청을 차단한다. Production DB unchanged until separate migration approval.
+2. **registration_deadline / recruitment_closed / cancelled 서버 가드** — **FIXED_PRODUCTION**. STEP 4-5A. UI + API + RPC에서 신청을 차단한다.
 
 ### MANUAL ENV QA
 
@@ -249,8 +249,8 @@ Golden Path automated:
 
 1. 로그아웃 시 체육관 상세 `/gym/[id]` 로그인 강제 (`middleware` `startsWith("/gym/")`). 목록은 공개.
 2. 공개 프로필 `/users/[id]`도 로그인 redirect.
-3. 공개 정원 RPC 실패 시 0명으로 표시.
-4. 일부 목록 query 실패 = empty.
+3. 공개 정원 RPC 실패 시 0명으로 표시. — **FIXED_CODE / AWAITING_PRODUCTION**
+4. 일부 목록 query 실패 = empty. — **FIXED_CODE / AWAITING_PRODUCTION** (홈 모집, 내 일정, host 참가자)
 5. Host 승인 오류가 RPC 영문 원문.
 6. 이벤트 상세 신청 CTA가 화면 하단 스크롤 뒤에 있음.
 7. 회원가입 폼이 매우 길어 모바일에서 이탈 가능.
@@ -264,7 +264,7 @@ Golden Path automated:
 
 ---
 
-## 11. STEP 4-2 / 4-5A status
+## 11. STEP 4-2 / 4-5A / 4-5B status
 
 STEP 4-2 완료 (local):
 
@@ -272,12 +272,17 @@ STEP 4-2 완료 (local):
 2. 기존 이벤트 backfill 없음. `address = null` row 조회 가능.
 3. Production DB / hosted Auth 설정 변경 없음.
 
-STEP 4-5A 완료 (local):
+STEP 4-5A 완료 (**FIXED_PRODUCTION**):
 
 1. `POST /api/events/[id]/register`가 deadline / `recruitment_closed` / `status=cancelled`를 RPC 호출 전에 검사.
 2. `create_solo_registration` / `create_party_registration`에 동일 invariant. Direct RPC bypass도 차단.
 3. party 정원 부족은 ALL OR NOTHING verified.
-4. Production DB unchanged. PR merge와 Production migration 승인은 별도.
+
+STEP 4-5B 완료 (code, **FIXED_CODE / AWAITING_PRODUCTION**):
+
+1. 홈 모집 / 내 신청 / 홈 일정 / host 참가자: query 실패와 정상 empty 구분.
+2. `get_event_registration_counts` 실패를 0명으로 변환하지 않음.
+3. DB capacity trigger 변경 없음. schema/migration 없음.
 
 다음 (Production 반영은 별도 승인):
 
@@ -285,7 +290,7 @@ STEP 4-5A 완료 (local):
 2. Hosted Confirm email ON/OFF 기록. 테스터 안내문 작성 (메일 인증 / 테스트 계정 지급).
 3. 수동 Golden Path 스크립트: 위 G01–G09를 Preview에서 체크리스트로 실행. Playwright 설치는 그 다음.
 4. P1 중 테스트 당일 UX: 체육관 상세 로그인 벽은 testers에게 “체육관 탭은 목록까지, 상세는 로그인”으로 안내하거나, Founder가 공개 여부 결정.
-5. error-state / count fallback은 별도 PR.
+5. error-state / count fallback은 STEP 4-5B에서 코드 수정. Preview 배포 후 수동 확인.
 
 이번 단계에서는 Playwright를 설치하지 않았다.
 
