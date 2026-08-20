@@ -17,6 +17,8 @@ import { EventParticipantGenderAccordion } from "@/components/events/EventPartic
 type EventParticipantPreviewProps = {
   preview: ParticipantPreview | null;
   previewAnchorId?: string;
+  requiresAuth?: boolean;
+  loginHref?: string;
   viewerId?: string | null;
   /** 로그인 유저의 체급. null이면 필터 없이 전체 표시 */
   viewerWeightClass?: string | null;
@@ -100,11 +102,33 @@ function CountList({
 export function EventParticipantPreview({
   preview,
   previewAnchorId = "participant-preview",
+  requiresAuth = false,
+  loginHref = "/login",
   viewerId = null,
   viewerWeightClass = null,
   friendUserIds = [],
   visibilityByUserId = {},
 }: EventParticipantPreviewProps) {
+  if (requiresAuth) {
+    return (
+      <section
+        id={previewAnchorId}
+        className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 shadow-sm scroll-mt-4"
+      >
+        <h2 className="font-semibold text-zinc-900">예정 참가자 현황</h2>
+        <p className="mt-2 text-sm text-zinc-600">
+          로그인 후 참가자 정보를 확인할 수 있습니다.
+        </p>
+        <Link
+          href={loginHref}
+          className="mt-3 inline-block text-sm font-medium text-orange-600 hover:text-orange-700"
+        >
+          로그인
+        </Link>
+      </section>
+    );
+  }
+
   if (!preview || preview.total === 0) {
     return (
       <section
