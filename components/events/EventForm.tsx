@@ -82,7 +82,6 @@ export function EventForm({
   const [emergencyContact, setEmergencyContact] = useState(
     event?.emergency_contact ?? "",
   );
-  const [autoApprove, setAutoApprove] = useState(event?.auto_approve ?? false);
   const [eventLocation, setEventLocation] = useState<GymAddressValue>(() =>
     getEventLocationDefaults(
       event,
@@ -176,7 +175,6 @@ export function EventForm({
       visit_details: visitDetails.trim() || null,
       safety_notes: safetyNotes.trim() || null,
       emergency_contact: emergencyContact.trim() || null,
-      auto_approve: autoApprove,
     };
 
     if (mode === "create") {
@@ -320,24 +318,6 @@ export function EventForm({
           onChange={(e) => setRegistrationDeadline(e.target.value)}
           className="rounded-lg border border-zinc-300 px-3 py-2"
         />
-      </label>
-
-      <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-        <input
-          type="checkbox"
-          checked={autoApprove}
-          onChange={(e) => setAutoApprove(e.target.checked)}
-          className="mt-0.5 size-4 rounded border-zinc-300 text-orange-600 focus:ring-orange-500"
-        />
-        <span className="flex flex-col gap-1">
-          <span className="text-sm font-medium text-zinc-900">
-            참가 신청을 자동으로 승인
-          </span>
-          <span className="text-xs text-zinc-500">
-            켜면 정원 내에서 신청 즉시 참가 확정됩니다. 정원이 찼을 때는
-            승인 대기로 접수됩니다.
-          </span>
-        </span>
       </label>
 
       <label className="flex flex-col gap-1 text-sm">
