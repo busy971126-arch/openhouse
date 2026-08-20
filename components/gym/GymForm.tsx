@@ -56,7 +56,7 @@ import { getGymProfileCompletion } from "@/lib/utils/gym-profile-completion";
 import type { PendingGymFormDefaults } from "@/lib/utils/pending-gym-info";
 import { formatPhoneInput, normalizePhone } from "@/lib/utils/phone";
 import {
-  GYM_OWNER_EDIT_SELECT,
+  PUBLIC_GYM_SELECT,
   GYM_PRIVATE_CONTACT_SELECT,
 } from "@/lib/queries/gym-select";
 
@@ -122,6 +122,7 @@ export function GymForm({ mode, gymId, pendingDefaults = null }: GymFormProps) {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editLoadFailed, setEditLoadFailed] = useState(false);
   const [pendingPrefillApplied, setPendingPrefillApplied] = useState(false);
 
   const profileCompletion = useMemo(
@@ -164,11 +165,10 @@ export function GymForm({ mode, gymId, pendingDefaults = null }: GymFormProps) {
 
       setUserId(user.id);
 
-      const [{ data, error: fetchError }, { data: privateContact }] =
-        await Promise.all([
+      const [{ data, error: fetchError }, contactResult] = await Promise.all([
           supabase
             .from("gyms")
-            .select(GYM_OWNER_EDIT_SELECT)
+            .select(PUBLIC_GYM_SELECT)
             .eq("id", gymId)
             .eq("owner_id", user.id)
             .single(),
@@ -184,28 +184,26 @@ export function GymForm({ mode, gymId, pendingDefaults = null }: GymFormProps) {
         return;
       }
 
+      const { data: privateContact, error: contactError } = contactResult;
+      if (contactError || !privateContact) {
+        setError(
+          "담당자 정보를 불러오지 못했습니다. 잘못된 빈 값으로 저장하지 않습니다. 페이지를 새로고침해 주세요.",
+        );
+        setEditLoadFailed(true);
+        setLoading(false);
+        return;
+      }
+
       setName(data.name);
       setSport(data.sport ? [data.sport] : []);
       setGymAddress(gymAddressFromStored(data.address, data.region));
-      // Legacy gyms.representative_* is a transition fallback until STEP C.
-      setRepresentativeName(
-        privateContact?.representative_name ?? data.representative_name ?? "",
-      );
-      setRepresentativeRole(
-        privateContact?.representative_role ?? data.representative_role ?? "",
-      );
+      setRepresentativeName(privateContact.representative_name ?? "");
+      setRepresentativeRole(privateContact.representative_role ?? "");
       setRepresentativeRoleCustom(
-        privateContact?.representative_role_custom ??
-          data.representative_role_custom ??
-          "",
+        privateContact.representative_role_custom ?? "",
       );
       setRepresentativePhone(
-        formatPhoneInput(
-          privateContact?.representative_phone ??
-            data.representative_phone ??
-            data.phone ??
-            "",
-        ),
+        formatPhoneInput(privateContact.representative_phone ?? ""),
       );
       setPhone(data.phone ? formatPhoneInput(data.phone) : "");
       setInstagramUrl(data.instagram_url ?? data.sns_url ?? "");
@@ -538,6 +536,11 @@ export function GymForm({ mode, gymId, pendingDefaults = null }: GymFormProps) {
     e.preventDefault();
     setError(null);
 
+    if (isEdit && editLoadFailed) {
+      setError("담당자 정보를 불러오지 못해 저장할 수 없습니다.");
+      return;
+    }
+
     const validationError = validateForm();
     if (validationError) {
       setError(validationError);
@@ -724,6 +727,19 @@ export function GymForm({ mode, gymId, pendingDefaults = null }: GymFormProps) {
 
   if (loading) {
     return <p className="text-sm text-zinc-600">불러오는 중...</p>;
+  }
+
+  if (isEdit && editLoadFailed) {
+    return (
+      <div className="mb-4">
+        <Alert
+          message={
+            error ??
+            "담당자 정보를 불러오지 못했습니다. 페이지를 새로고침해 주세요."
+          }
+        />
+      </div>
+    );
   }
 
   return (

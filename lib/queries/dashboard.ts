@@ -4,7 +4,6 @@ import { getHostRegistrationCountsByEventIds } from "@/lib/queries/host-registra
 import { getTomorrowDateString, getTodayDateString } from "@/lib/utils/date";
 import { getEventRecruitmentStatus, isOperatingEvent } from "@/lib/utils/event-status";
 import { PUBLIC_GYM_SELECT } from "@/lib/queries/gym-select";
-import { applyPrivateContactToGym } from "@/lib/queries/gym-private-contacts";
 
 export type EventRegistrationCounts = {
   approved: number;
@@ -115,7 +114,7 @@ export async function getDashboardData(
   }
 
   const dashboardGyms: DashboardGym[] = (gyms ?? []).map((gym) => ({
-    ...applyPrivateContactToGym(gym, null),
+    ...gym,
     eventCount: eventCountByGym.get(gym.id) ?? 0,
   }));
 

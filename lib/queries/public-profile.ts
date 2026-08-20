@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfileStats, type ProfileStats } from "@/lib/queries/profile";
 import type { Gym } from "@/lib/types/database";
 import { PUBLIC_GYM_SELECT } from "@/lib/queries/gym-select";
-import { applyPrivateContactToGym } from "@/lib/queries/gym-private-contacts";
 
 export type PublicProfile = {
   id: string;
@@ -51,8 +50,6 @@ export async function getPublicProfile(
   return {
     profile,
     stats,
-    primaryGym: primaryGymRow
-      ? applyPrivateContactToGym(primaryGymRow, null)
-      : null,
+    primaryGym: primaryGymRow,
   };
 }

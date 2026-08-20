@@ -22,7 +22,6 @@ import {
 } from "@/lib/constants/profile";
 import {
   formatHostIdentitySubtitle,
-  formatRepresentativeRoleLabel,
 } from "@/lib/constants/gym-representative";
 import {
   canViewProfileField,
@@ -85,17 +84,9 @@ export async function UserProfileContent({
   const publicLabel = nicknameTrim || displayNameTrim || "회원";
   const isGymOperator = stats.isGymOperator;
 
-  const operatorRoleLabel = primaryGym
-    ? formatRepresentativeRoleLabel(
-        primaryGym.representative_role,
-        primaryGym.representative_role_custom,
-      )
-    : null;
+  const operatorRoleLabel = null;
   const hostSubtitle = isGymOperator
-    ? formatHostIdentitySubtitle(
-        primaryGym?.representative_role,
-        primaryGym?.representative_role_custom,
-      )
+    ? formatHostIdentitySubtitle(null, null)
     : null;
   const sport = profile.preferred_sports?.[0];
   const sportEmoji = sport ? getSportEmoji(sport) : "🥋";

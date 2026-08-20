@@ -1,13 +1,6 @@
-/** Public gym columns. Excludes owner-only representative_* contact fields. */
+/** Public gym columns. Includes public phone. Excludes private representative contact. */
 export const PUBLIC_GYM_SELECT =
   "id, owner_id, name, sport, region, address, photo_url, description, phone, instagram_url, homepage_url, sns_url, operating_hours, class_schedule, closed_days, facilities, facility_notes, first_visit_welcome, walk_in_visits, gi_rental, visit_details, preparation_guide, training_styles, gym_tags, mat_photos, facility_photos, exterior_photos, parking_photos, is_public, created_at" as const;
-
-/**
- * Owner edit load only. Legacy gyms.representative_* is a transition fallback
- * until STEP C drops those columns. Do not use in public queries.
- */
-export const GYM_OWNER_EDIT_SELECT =
-  `${PUBLIC_GYM_SELECT}, representative_name, representative_phone, representative_role, representative_role_custom` as const;
 
 export const GYM_PRIVATE_CONTACT_SELECT =
   "representative_name, representative_phone, representative_role, representative_role_custom" as const;

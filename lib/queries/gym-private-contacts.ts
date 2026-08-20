@@ -1,16 +1,14 @@
-import type { Gym, GymPrivateContact } from "@/lib/types/database";
+import type {
+  Gym,
+  GymPrivateContactFields,
+  GymWithPrivateContact,
+} from "@/lib/types/database";
 import {
   GYM_PRIVATE_CONTACT_SELECT,
   GYM_PRIVATE_CONTACT_WITH_ID_SELECT,
 } from "@/lib/queries/gym-select";
 
-export type GymPrivateContactFields = Pick<
-  GymPrivateContact,
-  | "representative_name"
-  | "representative_phone"
-  | "representative_role"
-  | "representative_role_custom"
->;
+export type { GymPrivateContactFields };
 
 type LooseSupabase = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -18,28 +16,15 @@ type LooseSupabase = {
 };
 
 export function applyPrivateContactToGym(
-  gym: Omit<
-    Gym,
-    | "representative_name"
-    | "representative_phone"
-    | "representative_role"
-    | "representative_role_custom"
-  > &
-    Partial<GymPrivateContactFields>,
+  gym: Gym,
   contact: GymPrivateContactFields | null | undefined,
-): Gym {
+): GymWithPrivateContact {
   return {
     ...gym,
-    representative_name:
-      contact?.representative_name ?? gym.representative_name ?? null,
-    representative_phone:
-      contact?.representative_phone ?? gym.representative_phone ?? null,
-    representative_role:
-      contact?.representative_role ?? gym.representative_role ?? null,
-    representative_role_custom:
-      contact?.representative_role_custom ??
-      gym.representative_role_custom ??
-      null,
+    representative_name: contact?.representative_name ?? null,
+    representative_phone: contact?.representative_phone ?? null,
+    representative_role: contact?.representative_role ?? null,
+    representative_role_custom: contact?.representative_role_custom ?? null,
   };
 }
 
