@@ -1,0 +1,1 @@
+-- OpenHouse local development seed data will be added later.
