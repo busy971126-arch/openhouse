@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserRegistrations } from "@/lib/queries/events";
 import { MyRegistrationsList } from "@/components/my/MyRegistrationsList";
 import { EmptyState } from "@/components/EmptyState";
+import { Alert } from "@/components/Alert";
 import { parseMyScheduleTab } from "@/lib/utils/my-schedule";
 import type { RegistrationStatus } from "@/lib/types/database";
 
@@ -23,9 +24,30 @@ export default async function MyRegistrationsPage({ searchParams }: PageProps) {
 
   if (!user) redirect("/login?redirect=/my/registrations");
 
-  const { data: registrations } = await getUserRegistrations(user.id);
+  const { data: registrations, error: registrationsError } =
+    await getUserRegistrations(user.id);
   const initialTab = parseMyScheduleTab(params.tab);
   const showAppliedBanner = params.applied === "1";
+
+  if (registrationsError) {
+    return (
+      <div className="flex flex-col gap-6">
+        <Link
+          href="/"
+          className="text-sm font-medium text-orange-600 hover:text-orange-700"
+        >
+          ← 홈
+        </Link>
+        <div>
+          <h1 className="text-2xl font-bold text-zinc-900">내 일정</h1>
+          <p className="mt-1 text-sm text-zinc-600">
+            오늘·이번주 운동 일정과 신청 상태를 확인하세요.
+          </p>
+        </div>
+        <Alert message="참가 신청 내역을 불러오지 못했습니다." />
+      </div>
+    );
+  }
 
   const items =
     registrations

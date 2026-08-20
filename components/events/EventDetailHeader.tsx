@@ -27,7 +27,7 @@ type EventDetailHeaderProps = {
   feeAmount?: number | null;
   registrationDeadline?: string | null;
   difficulty?: EventDifficulty | null;
-  approvedCount: number;
+  approvedCount: number | null;
   maxParticipants: number | null;
   interestSlot?: ReactNode;
 };
@@ -102,7 +102,10 @@ export function EventDetailHeader({
         {deadlineLabel && <p>📅 신청 마감 {deadlineLabel}</p>}
         {maxParticipants != null && (
           <p>
-            👥 신청 {approvedCount} / {maxParticipants}명
+            👥{" "}
+            {approvedCount == null
+              ? "인원 확인 불가"
+              : `신청 ${approvedCount} / ${maxParticipants}명`}
           </p>
         )}
       </div>

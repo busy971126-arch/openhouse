@@ -55,7 +55,7 @@ export async function getHostGyms(userId: string): Promise<HostGymOption[]> {
 
 export async function getHostEventsForGym(
   gymId: string,
-): Promise<HostEventOption[]> {
+): Promise<{ events: HostEventOption[]; error: boolean }> {
   const supabase = await createClient();
 
   const { data: events, error } = await supabase
@@ -64,24 +64,28 @@ export async function getHostEventsForGym(
     .eq("gym_id", gymId)
     .order("event_date", { ascending: false });
 
-  if (error || !events?.length) return [];
+  if (error) return { events: [], error: true };
+  if (!events?.length) return { events: [], error: false };
 
   const eventIds = events.map((event) => event.id);
   const countsMap = await getRegistrationCountsByEvent(eventIds);
 
-  return events.map((event) => ({
-    id: event.id,
-    title: event.title,
-    eventDate: event.event_date,
-    maxParticipants: event.max_participants,
-    counts: countsMap.get(event.id) ?? {
-      approved: 0,
-      pending: 0,
-      cancelled: 0,
-      rejected: 0,
-      total: 0,
-    },
-  }));
+  return {
+    error: false,
+    events: events.map((event) => ({
+      id: event.id,
+      title: event.title,
+      eventDate: event.event_date,
+      maxParticipants: event.max_participants,
+      counts: countsMap.get(event.id) ?? {
+        approved: 0,
+        pending: 0,
+        cancelled: 0,
+        rejected: 0,
+        total: 0,
+      },
+    })),
+  };
 }
 
 export async function verifyHostOwnsEvent(
@@ -102,7 +106,7 @@ export async function verifyHostOwnsEvent(
 
 export async function getHostParticipantsForEvent(
   eventId: string,
-): Promise<ParticipantItem[]> {
+): Promise<{ registrations: ParticipantItem[]; error: boolean }> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -113,12 +117,13 @@ export async function getHostParticipantsForEvent(
 
   if (error) {
     console.error("getHostParticipantsForEvent error:", error.message);
-    return [];
+    return { registrations: [], error: true };
   }
 
-  if (!data) return [];
-
-  return data.map(mapRegistrationToParticipantItem);
+  return {
+    error: false,
+    registrations: (data ?? []).map(mapRegistrationToParticipantItem),
+  };
 }
 
 export async function getHostRegistrationDetail(

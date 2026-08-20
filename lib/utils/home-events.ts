@@ -9,7 +9,7 @@ import { regionMatchScore } from "@/lib/utils/gym-search";
 
 export type HomeEventPreviewItem = {
   event: EventWithGym;
-  approvedCount: number;
+  approvedCount: number | null;
   nearbyLabel?: string;
 };
 
@@ -19,7 +19,7 @@ export function isRecruitingEventStatus(status: EventRecruitmentStatus): boolean
 
 export function getEventRecruitmentStatusForEvent(
   event: EventWithGym,
-  approvedCount: number,
+  approvedCount: number | null,
   today = getTodayDateString(),
 ): EventRecruitmentStatus {
   return getEventRecruitmentStatus({
@@ -35,7 +35,7 @@ export function getEventRecruitmentStatusForEvent(
 
 export function isClosingTodayEvent(
   event: EventWithGym,
-  approvedCount: number,
+  approvedCount: number | null,
   today = getTodayDateString(),
 ): boolean {
   if (event.registration_deadline !== today) return false;
@@ -46,7 +46,7 @@ export function isClosingTodayEvent(
 
 export function isStartingThisWeekEvent(
   event: EventWithGym,
-  approvedCount: number,
+  approvedCount: number | null,
   today = getTodayDateString(),
 ): boolean {
   const { start, end } = getWeekDateRange(new Date(`${today}T12:00:00`));

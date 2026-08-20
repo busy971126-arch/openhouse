@@ -18,8 +18,12 @@ async function HomeRecruitingEvents() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const items = await getHomeRecruitingEvents(12);
+  const { items, error } = await getHomeRecruitingEvents(12);
   return (
-    <HomeRecruitingEventsPanel items={items} isLoggedIn={Boolean(user)} />
+    <HomeRecruitingEventsPanel
+      items={items}
+      isLoggedIn={Boolean(user)}
+      error={error}
+    />
   );
 }

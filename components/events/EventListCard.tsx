@@ -37,14 +37,14 @@ function EventEditButton({ eventId }: { eventId: string }) {
 
 type EventListCardProps = {
   event: EventWithGym;
-  approvedCount?: number;
+  approvedCount?: number | null;
   userId?: string | null;
   initialInterested?: boolean;
 };
 
 export function EventListCard({
   event,
-  approvedCount = 0,
+  approvedCount = null,
   userId = null,
   initialInterested = false,
 }: EventListCardProps) {

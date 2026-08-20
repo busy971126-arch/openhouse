@@ -1,21 +1,21 @@
 import { createClient } from "@/lib/supabase/server";
+import {
+  buildApprovedCountsResult,
+  type ApprovedCountsResult,
+  type RegistrationCountRow,
+} from "@/lib/utils/event-counts-map";
+
+export type { ApprovedCountsResult, RegistrationCountRow };
+export { buildApprovedCountsResult, getApprovedCountFromResult } from "@/lib/utils/event-counts-map";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
-
-type RegistrationCountRow = {
-  event_id: string;
-  approved_count: number;
-};
 
 async function fetchApprovedCountsByRpc(
   supabase: SupabaseServerClient,
   eventIds: string[],
-): Promise<Map<string, number>> {
-  const map = new Map<string, number>();
-  if (eventIds.length === 0) return map;
-
-  for (const id of eventIds) {
-    map.set(id, 0);
+): Promise<ApprovedCountsResult> {
+  if (eventIds.length === 0) {
+    return { status: "success", counts: new Map() };
   }
 
   const { data, error } = await supabase.rpc("get_event_registration_counts", {
@@ -24,30 +24,27 @@ async function fetchApprovedCountsByRpc(
 
   if (error) {
     console.error("get_event_registration_counts error:", error);
-    return map;
   }
 
-  // RPC approved_count = pending + approved (public display / capacity)
-  for (const row of (data ?? []) as RegistrationCountRow[]) {
-    if (row?.event_id != null && typeof row.approved_count === "number") {
-      map.set(row.event_id, row.approved_count);
-    }
-  }
-
-  return map;
+  return buildApprovedCountsResult(
+    eventIds,
+    data as RegistrationCountRow[] | null,
+    error,
+  );
 }
 
 export async function getApprovedCountByRpc(
   supabase: SupabaseServerClient,
   eventId: string,
-): Promise<number> {
-  const map = await fetchApprovedCountsByRpc(supabase, [eventId]);
-  return map.get(eventId) ?? 0;
+): Promise<number | null> {
+  const result = await fetchApprovedCountsByRpc(supabase, [eventId]);
+  if (result.status !== "success") return null;
+  return result.counts.get(eventId) ?? 0;
 }
 
 export async function getApprovedCountsByEvent(
   eventIds: string[],
-): Promise<Map<string, number>> {
+): Promise<ApprovedCountsResult> {
   const supabase = await createClient();
   return fetchApprovedCountsByRpc(supabase, eventIds);
 }

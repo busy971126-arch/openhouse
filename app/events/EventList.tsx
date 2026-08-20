@@ -7,13 +7,14 @@ import {
 } from "@/lib/constants/event-recruitment-filter";
 import { getApprovedCountsByEvent } from "@/lib/queries/event-counts";
 import { getEvents } from "@/lib/queries/events";
+import { getApprovedCountFromResult } from "@/lib/utils/event-counts-map";
 import {
-  getUserInterestedEventIds,
-  getUserInterestedGymIds,
-} from "@/lib/queries/interests";
+  getEventRecruitmentStatus,
+  isEventAtCapacity,
+} from "@/lib/utils/event-status";
+import { getUserInterestedEventIds } from "@/lib/queries/interests";
 import { createClient } from "@/lib/supabase/server";
 import type { EventType } from "@/lib/types/database";
-import { getEventRecruitmentStatus } from "@/lib/utils/event-status";
 
 type EventListProps = {
   region?: string;
@@ -70,10 +71,12 @@ export async function EventList({
     );
   }
 
-  const countsMap = await getApprovedCountsByEvent(data.map((event) => event.id));
+  const countsResult = await getApprovedCountsByEvent(
+    data.map((event) => event.id),
+  );
 
   const visible = data.filter((event) => {
-    const approved = countsMap.get(event.id) ?? 0;
+    const approved = getApprovedCountFromResult(countsResult, event.id);
     const status = getEventRecruitmentStatus({
       eventDate: event.event_date,
       maxParticipants: event.max_participants,
@@ -89,9 +92,7 @@ export async function EventList({
     if (
       !includePast &&
       recruitmentStatus === "recruiting" &&
-      event.max_participants != null &&
-      event.max_participants > 0 &&
-      approved >= event.max_participants
+      isEventAtCapacity(event.max_participants, approved)
     ) {
       return false;
     }
@@ -109,7 +110,7 @@ export async function EventList({
         <EventListCard
           key={event.id}
           event={event}
-          approvedCount={countsMap.get(event.id) ?? 0}
+          approvedCount={getApprovedCountFromResult(countsResult, event.id)}
           userId={user?.id ?? null}
           initialInterested={interestedEventIds.has(event.id)}
         />

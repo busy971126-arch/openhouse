@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/EmptyState";
+import { Alert } from "@/components/Alert";
 import { getHostGymById } from "@/lib/queries/host-gyms";
 import { getHostEventsForGym } from "@/lib/queries/host-participants";
 import { formatEventDetailDate } from "@/lib/utils/date";
@@ -25,7 +26,7 @@ export default async function HostGymEventsPage({ params }: PageProps) {
   const gym = await getHostGymById(user.id, gymId);
   if (!gym) notFound();
 
-  const events = await getHostEventsForGym(gymId);
+  const { events, error: eventsError } = await getHostEventsForGym(gymId);
 
   return (
     <div className="flex flex-col gap-6">
@@ -48,7 +49,9 @@ export default async function HostGymEventsPage({ params }: PageProps) {
         + 이벤트 추가
       </Link>
 
-      {events.length === 0 ? (
+      {eventsError ? (
+        <Alert message="일정을 불러오지 못했습니다." />
+      ) : events.length === 0 ? (
         <EmptyState message="등록된 이벤트가 없습니다." />
       ) : (
         <ul className="flex flex-col gap-3">

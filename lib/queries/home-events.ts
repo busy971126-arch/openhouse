@@ -1,6 +1,7 @@
 import { getApprovedCountsByEvent } from "@/lib/queries/event-counts";
 import { getEvents } from "@/lib/queries/events";
 import type { EventWithGym } from "@/lib/types/database";
+import { getApprovedCountFromResult } from "@/lib/utils/event-counts-map";
 import {
   formatNearbyEventLabel,
   getEventRecruitmentStatusForEvent,
@@ -13,33 +14,44 @@ import {
 
 const PREVIEW_LIMIT = 3;
 
+export type HomeEventsLoadResult = {
+  error: boolean;
+  items: HomeEventPreviewItem[];
+};
+
 async function loadRecruitingEvents(
   filters: Parameters<typeof getEvents>[0] = {},
-): Promise<HomeEventPreviewItem[]> {
+): Promise<HomeEventsLoadResult> {
   const { data, error } = await getEvents(filters);
 
-  if (error || !data?.length) return [];
+  if (error) return { error: true, items: [] };
+  if (!data?.length) return { error: false, items: [] };
 
-  const countsMap = await getApprovedCountsByEvent(
+  const countsResult = await getApprovedCountsByEvent(
     data.map((event) => event.id),
   );
 
-  return data
+  const items = data
     .map((event) => ({
       event: event as EventWithGym,
-      approvedCount: countsMap.get(event.id) ?? 0,
+      approvedCount: getApprovedCountFromResult(countsResult, event.id),
     }))
     .filter(({ event, approvedCount }) =>
       isRecruitingEventStatus(
         getEventRecruitmentStatusForEvent(event, approvedCount),
       ),
     );
+
+  return { error: false, items };
 }
 
-export async function getHomeRecruitingEvents(limit = 12) {
-  const items = await loadRecruitingEvents();
+export async function getHomeRecruitingEvents(
+  limit = 12,
+): Promise<HomeEventsLoadResult> {
+  const loaded = await loadRecruitingEvents();
+  if (loaded.error) return loaded;
 
-  const sorted = [...items].sort((a, b) => {
+  const sorted = [...loaded.items].sort((a, b) => {
     const aClosing = isClosingTodayEvent(a.event, a.approvedCount) ? 0 : 1;
     const bClosing = isClosingTodayEvent(b.event, b.approvedCount) ? 0 : 1;
     if (aClosing !== bClosing) return aClosing - bClosing;
@@ -51,25 +63,35 @@ export async function getHomeRecruitingEvents(limit = 12) {
     return a.event.event_date.localeCompare(b.event.event_date);
   });
 
-  return sorted.slice(0, limit);
+  return { error: false, items: sorted.slice(0, limit) };
 }
 
 export async function getHomeClosingTodayEvents(limit = PREVIEW_LIMIT) {
-  const items = await loadRecruitingEvents();
-  return items.filter(({ event, approvedCount }) =>
-    isClosingTodayEvent(event, approvedCount),
-  ).slice(0, limit);
+  const loaded = await loadRecruitingEvents();
+  if (loaded.error) return loaded;
+  return {
+    error: false,
+    items: loaded.items
+      .filter(({ event, approvedCount }) =>
+        isClosingTodayEvent(event, approvedCount),
+      )
+      .slice(0, limit),
+  };
 }
 
 export async function getHomeStartingThisWeekEvents(limit = PREVIEW_LIMIT) {
-  const items = await loadRecruitingEvents();
-  return items
-    .filter(
-      ({ event, approvedCount }) =>
-        isStartingThisWeekEvent(event, approvedCount) &&
-        !isClosingTodayEvent(event, approvedCount),
-    )
-    .slice(0, limit);
+  const loaded = await loadRecruitingEvents();
+  if (loaded.error) return loaded;
+  return {
+    error: false,
+    items: loaded.items
+      .filter(
+        ({ event, approvedCount }) =>
+          isStartingThisWeekEvent(event, approvedCount) &&
+          !isClosingTodayEvent(event, approvedCount),
+      )
+      .slice(0, limit),
+  };
 }
 
 export async function getHomeNearbyEvents(
@@ -78,13 +100,22 @@ export async function getHomeNearbyEvents(
 ) {
   const regions = profileRegions.filter((region) => region !== "전국");
   if (!regions.length) {
-    return { items: [] as HomeEventPreviewItem[], regions: [] as string[] };
+    return {
+      error: false,
+      items: [] as HomeEventPreviewItem[],
+      regions: [] as string[],
+    };
   }
 
-  const items = await loadRecruitingEvents({ nearbyRegions: regions });
-  const sorted = sortNearbyEventItems(items, regions).slice(0, limit);
+  const loaded = await loadRecruitingEvents({ nearbyRegions: regions });
+  if (loaded.error) {
+    return { error: true, items: [] as HomeEventPreviewItem[], regions };
+  }
+
+  const sorted = sortNearbyEventItems(loaded.items, regions).slice(0, limit);
 
   return {
+    error: false,
     items: sorted.map((item) => ({
       ...item,
       nearbyLabel: formatNearbyEventLabel(item.event.region, regions),
@@ -98,13 +129,20 @@ export async function getHomeNearbyEventsByRegion(
   limit = PREVIEW_LIMIT,
 ) {
   const trimmed = region.trim();
-  if (!trimmed) return [] as HomeEventPreviewItem[];
+  if (!trimmed) {
+    return { error: false, items: [] as HomeEventPreviewItem[] };
+  }
 
-  const items = await loadRecruitingEvents({ nearbyRegions: [trimmed] });
-  return sortNearbyEventItems(items, [trimmed])
-    .slice(0, limit)
-    .map((item) => ({
-      ...item,
-      nearbyLabel: formatNearbyEventLabel(item.event.region, [trimmed]),
-    }));
+  const loaded = await loadRecruitingEvents({ nearbyRegions: [trimmed] });
+  if (loaded.error) return loaded;
+
+  return {
+    error: false,
+    items: sortNearbyEventItems(loaded.items, [trimmed])
+      .slice(0, limit)
+      .map((item) => ({
+        ...item,
+        nearbyLabel: formatNearbyEventLabel(item.event.region, [trimmed]),
+      })),
+  };
 }

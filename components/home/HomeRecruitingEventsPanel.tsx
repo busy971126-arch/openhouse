@@ -16,6 +16,7 @@ import {
 } from "@/lib/utils/home-events";
 import { formatEventListDate, formatEventTimeDisplay } from "@/lib/utils/date";
 import { formatParticipantCount } from "@/lib/utils/event-display";
+import { Alert } from "@/components/Alert";
 
 type EventTypeFilter = "all" | EventType;
 
@@ -27,6 +28,7 @@ const FILTER_OPTIONS: { value: EventTypeFilter; label: string }[] = [
 type HomeRecruitingEventsPanelProps = {
   items: HomeEventPreviewItem[];
   isLoggedIn: boolean;
+  error?: boolean;
 };
 
 function HomeEventScrollCard({ item }: { item: HomeEventPreviewItem }) {
@@ -73,6 +75,7 @@ function HomeEventScrollCard({ item }: { item: HomeEventPreviewItem }) {
 export function HomeRecruitingEventsPanel({
   items,
   isLoggedIn,
+  error = false,
 }: HomeRecruitingEventsPanelProps) {
   const [filter, setFilter] = useState<EventTypeFilter>("all");
 
@@ -80,6 +83,19 @@ export function HomeRecruitingEventsPanel({
     if (filter === "all") return items;
     return items.filter((item) => item.event.event_type === filter);
   }, [filter, items]);
+
+  if (error) {
+    return (
+      <section className="rounded-xl border border-orange-200 bg-orange-50/60">
+        <div className="border-b border-orange-100 px-4 py-3">
+          <h2 className="text-sm font-semibold text-zinc-900">🔥 오늘 모집중</h2>
+        </div>
+        <div className="px-4 py-3">
+          <Alert message="이벤트를 불러오지 못했습니다." />
+        </div>
+      </section>
+    );
+  }
 
   if (items.length === 0) return null;
 
