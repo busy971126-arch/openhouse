@@ -86,6 +86,12 @@ describe("parseRegistrationApplyError", () => {
     expect(parseRegistrationApplyError("ALREADY_REGISTERED")).toBe(
       "이미 이 이벤트에 신청했습니다.",
     );
+    expect(parseRegistrationApplyError("REGISTRATION_CLOSED")).toBe(
+      "신청이 마감된 이벤트입니다.",
+    );
+    expect(parseRegistrationApplyError("EVENT_CANCELLED")).toBe(
+      "취소된 이벤트입니다.",
+    );
   });
 
   it("maps missing rpc function errors", () => {

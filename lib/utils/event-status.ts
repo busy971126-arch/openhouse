@@ -89,3 +89,32 @@ export function getEventRecruitmentStatus({
 export function isOperatingEvent(eventDate: string): boolean {
   return eventDate >= getTodayDateString();
 }
+
+type RegistrationApplyGuardInput = {
+  status?: string | null;
+  recruitment_closed: boolean;
+  registration_deadline: string | null;
+  today?: string;
+};
+
+/** Server/API closure rule. Does not include capacity (DB trigger is authoritative). */
+export function getRegistrationApplyBlockMessage({
+  status,
+  recruitment_closed,
+  registration_deadline,
+  today = getTodayDateString(),
+}: RegistrationApplyGuardInput): string | null {
+  if ((status ?? "active") !== "active") {
+    return "취소된 이벤트입니다.";
+  }
+
+  if (recruitment_closed) {
+    return "신청이 마감된 이벤트입니다.";
+  }
+
+  if (registration_deadline && registration_deadline < today) {
+    return "신청이 마감된 이벤트입니다.";
+  }
+
+  return null;
+}

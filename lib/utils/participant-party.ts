@@ -74,6 +74,9 @@ const REGISTRATION_APPLY_ERROR_CODES = [
   "ALREADY_REGISTERED",
   "NOT_FRIENDS",
   "COMPANION_ALREADY_REGISTERED",
+  "EVENT_NOT_FOUND",
+  "EVENT_CANCELLED",
+  "REGISTRATION_CLOSED",
 ] as const;
 
 export function mapRegistrationApplyError(
@@ -97,6 +100,12 @@ export function mapRegistrationApplyError(
       return "운동 친구만 동행 신청할 수 있습니다.";
     case "COMPANION_ALREADY_REGISTERED":
       return "선택한 운동 친구 중 이미 신청한 사람이 있습니다.";
+    case "EVENT_NOT_FOUND":
+      return "이벤트를 찾을 수 없습니다.";
+    case "EVENT_CANCELLED":
+      return "취소된 이벤트입니다.";
+    case "REGISTRATION_CLOSED":
+      return "신청이 마감된 이벤트입니다.";
     default:
       return fallback;
   }
