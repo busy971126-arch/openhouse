@@ -116,7 +116,10 @@ as $$
 begin
   -- New application does not write representative_* onto gyms.
   -- An INSERT with all-null contact fields does not need a sync row.
-  if new.representative_name is null
+  -- An UPDATE that clears those fields must still sync NULLs onto
+  -- the existing gym_private_contacts row.
+  if TG_OP = 'INSERT'
+     and new.representative_name is null
      and new.representative_phone is null
      and new.representative_role is null
      and new.representative_role_custom is null then
