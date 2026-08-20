@@ -3,16 +3,27 @@ import { parseParticipantPreview } from "@/lib/utils/participant-preview";
 
 export async function getEventParticipantPreview(eventId: string) {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { data: null, error: null, requiresAuth: true as const };
+  }
 
   const { data, error } = await supabase.rpc("get_event_participant_preview", {
     p_event_id: eventId,
   });
 
   if (error) {
-    return { data: null, error };
+    return { data: null, error, requiresAuth: false as const };
   }
 
-  return { data: parseParticipantPreview(data), error: null };
+  return {
+    data: parseParticipantPreview(data),
+    error: null,
+    requiresAuth: false as const,
+  };
 }
 
 export async function isGymFollowed(userId: string, gymId: string) {

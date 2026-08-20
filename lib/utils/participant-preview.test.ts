@@ -50,8 +50,20 @@ describe("participant-preview", () => {
   });
 
   it("marks hidden preview when total is low", () => {
-    const preview = parseParticipantPreview({ total: 2, hidden: true });
+    const preview = parseParticipantPreview({
+      total: 2,
+      hidden: true,
+      participants: [],
+      genders: {},
+      weight_classes: {},
+      backgrounds: {},
+      experience_years: {},
+      sparring_seekers: [],
+    });
     expect(preview?.hidden).toBe(true);
+    expect(preview?.participants).toEqual([]);
+    expect(preview?.genders).toEqual({});
+    expect(preview?.sparring_seekers).toEqual([]);
   });
 
   it("formats experience and intensity labels", () => {

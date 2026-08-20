@@ -49,7 +49,7 @@ export default async function EventDetailPage({ params }: PageProps) {
     { data: registration },
     { data: announcements },
     { count: approvedCount },
-    { data: preview },
+    { data: preview, requiresAuth: previewRequiresAuth },
     profileResult,
     gymOperatorResult,
     ownedGymResult,
@@ -242,6 +242,8 @@ export default async function EventDetailPage({ params }: PageProps) {
         <div className="mt-6">
           <EventParticipantPreview
             preview={preview}
+            requiresAuth={previewRequiresAuth}
+            loginHref={`/login?redirect=${encodeURIComponent(`/events/${id}`)}`}
             viewerId={user?.id ?? null}
             viewerWeightClass={viewerWeightClass}
             friendUserIds={[...friendUserIds]}
