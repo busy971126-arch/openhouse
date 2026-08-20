@@ -88,18 +88,28 @@ async function savePendingGymInfo(
 }
 
 function buildGymInsertPayload(gym: NonNullable<SignupBody["gym"]>) {
+  return {
+    name: gym.name?.trim() ?? "",
+    region: gym.region?.trim() || "미정",
+    address: gym.address?.trim() ?? "",
+  };
+}
+
+function buildPrivateContactPayload(
+  gymId: string,
+  gym: NonNullable<SignupBody["gym"]>,
+) {
   const rolePayload = serializeRepresentativeRole(
     gym.representativeRole ?? "",
     gym.representativeRoleCustom ?? "",
   );
 
   return {
-    name: gym.name?.trim() ?? "",
-    region: gym.region?.trim() || "미정",
-    address: gym.address?.trim() ?? "",
+    gym_id: gymId,
     representative_name: gym.representativeName?.trim() ?? "",
     representative_phone: normalizePhone(gym.representativePhone ?? ""),
     ...rolePayload,
+    updated_at: new Date().toISOString(),
   };
 }
 
@@ -269,6 +279,23 @@ export async function POST(request: Request) {
       console.error("signup gym error:", gymError);
       return NextResponse.json(
         { error: mapSignupError(gymError ?? "체육관 등록에 실패했습니다.") },
+        { status: 400 },
+      );
+    }
+
+    const { error: contactError } = await supabase
+      .from("gym_private_contacts")
+      .insert(buildPrivateContactPayload(insertedGym.id, body.gym));
+
+    if (contactError) {
+      await supabase.from("gyms").delete().eq("id", insertedGym.id);
+      console.error("signup gym private contact error:", contactError);
+      return NextResponse.json(
+        {
+          error: mapSignupError(
+            contactError ?? "담당자 정보 저장에 실패했습니다.",
+          ),
+        },
         { status: 400 },
       );
     }

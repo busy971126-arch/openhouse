@@ -1,6 +1,8 @@
 import type { Gym } from "@/lib/types/database";
 import { createClient } from "@/lib/supabase/server";
 import { getTodayDateString } from "@/lib/utils/date";
+import { PUBLIC_GYM_SELECT } from "@/lib/queries/gym-select";
+import { applyPrivateContactToGym } from "@/lib/queries/gym-private-contacts";
 
 export type GymFilters = {
   region?: string;
@@ -70,7 +72,7 @@ export async function getPublicGyms(
 
   let query = supabase
     .from("gyms")
-    .select("*")
+    .select(PUBLIC_GYM_SELECT)
     .eq("is_public", true)
     .order("created_at", { ascending: false });
 
@@ -110,7 +112,10 @@ export async function getPublicGyms(
     gymMatchesFacilities(gym.facilities, filters.facilities),
   );
 
-  return { data: filtered, error: null };
+  return {
+    data: filtered.map((gym) => applyPrivateContactToGym(gym, null)),
+    error: null,
+  };
 }
 
 export async function getPublicGymById(id: string) {
@@ -118,12 +123,15 @@ export async function getPublicGymById(id: string) {
 
   const { data, error } = await supabase
     .from("gyms")
-    .select("*")
+    .select(PUBLIC_GYM_SELECT)
     .eq("id", id)
     .eq("is_public", true)
     .maybeSingle();
 
-  return { data, error };
+  return {
+    data: data ? applyPrivateContactToGym(data, null) : data,
+    error,
+  };
 }
 
 export async function getUpcomingEventCountsByGym(
