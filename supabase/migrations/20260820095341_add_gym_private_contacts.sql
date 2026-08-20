@@ -104,3 +104,61 @@ select
   representative_role_custom
 from public.gyms
 on conflict (gym_id) do nothing;
+
+-- Temporary cutover compatibility until STEP C drops gyms.representative_*.
+-- Keeps gym_private_contacts in sync while the old app still writes
+-- representative_* onto public.gyms. Remove this trigger in STEP C.
+create or replace function public.sync_gym_private_contacts_from_legacy()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  -- New application does not write representative_* onto gyms.
+  -- An INSERT with all-null contact fields does not need a sync row.
+  if new.representative_name is null
+     and new.representative_phone is null
+     and new.representative_role is null
+     and new.representative_role_custom is null then
+    return new;
+  end if;
+
+  insert into public.gym_private_contacts (
+    gym_id,
+    representative_name,
+    representative_phone,
+    representative_role,
+    representative_role_custom,
+    updated_at
+  )
+  values (
+    new.id,
+    new.representative_name,
+    new.representative_phone,
+    new.representative_role,
+    new.representative_role_custom,
+    now()
+  )
+  on conflict (gym_id)
+  do update set
+    representative_name = excluded.representative_name,
+    representative_phone = excluded.representative_phone,
+    representative_role = excluded.representative_role,
+    representative_role_custom = excluded.representative_role_custom,
+    updated_at = now();
+
+  return new;
+end;
+$$;
+
+drop trigger if exists sync_gym_private_contacts_from_legacy on public.gyms;
+
+create trigger sync_gym_private_contacts_from_legacy
+  after insert or update of
+    representative_name,
+    representative_phone,
+    representative_role,
+    representative_role_custom
+  on public.gyms
+  for each row
+  execute function public.sync_gym_private_contacts_from_legacy();
