@@ -36,7 +36,6 @@ function makeEvent(
     gi_rental: null,
     visit_details: null,
     status: "active",
-    auto_approve: false,
     created_at: "",
     gyms: { name: "Test Gym", owner_id: "user-1" },
     counts: { approved: 0, pending: 0, total: 0 },
