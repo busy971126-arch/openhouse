@@ -1,6 +1,7 @@
 -- Harden two functions missing a fixed search_path, and revoke
 -- direct RPC execute on trigger-only SECURITY DEFINER helpers.
--- Does not change business logic or recreate triggers.
+-- Does not change function business logic.
+-- Recreates auth.users.on_auth_user_created so local/staging match Production.
 
 create or replace function public.age_to_age_group(age_val integer)
 returns text
@@ -87,3 +88,10 @@ revoke all on function public.notify_on_announcement() from authenticated;
 revoke all on function public.notify_on_registration() from public;
 revoke all on function public.notify_on_registration() from anon;
 revoke all on function public.notify_on_registration() from authenticated;
+
+drop trigger if exists on_auth_user_created on auth.users;
+
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row
+  execute function public.handle_new_user();
