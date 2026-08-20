@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { getRegistrationApplyBlockMessage } from "@/lib/utils/event-status";
 import {
   isMissingRegistrationRpc,
   parseRegistrationApplyError,
@@ -22,6 +23,9 @@ const SOLO_BUSINESS_ERROR_CODES = [
   "LOGIN_REQUIRED",
   "WEIGHT_CLASS_REQUIRED",
   "EXPERIENCE_REQUIRED",
+  "EVENT_NOT_FOUND",
+  "EVENT_CANCELLED",
+  "REGISTRATION_CLOSED",
 ] as const;
 
 function isSoloBusinessError(message: string): boolean {
@@ -102,6 +106,31 @@ export async function POST(request: Request, context: RouteContext) {
       { error: "수련 정보를 확인해주세요." },
       { status: 400 },
     );
+  }
+
+  const { data: event, error: eventError } = await supabase
+    .from("events")
+    .select("id, registration_deadline, recruitment_closed, status")
+    .eq("id", eventId)
+    .maybeSingle();
+
+  if (eventError) {
+    return NextResponse.json(
+      { error: "이벤트를 불러오지 못했습니다." },
+      { status: 500 },
+    );
+  }
+
+  if (!event) {
+    return NextResponse.json(
+      { error: "이벤트를 찾을 수 없습니다." },
+      { status: 400 },
+    );
+  }
+
+  const closedMessage = getRegistrationApplyBlockMessage(event);
+  if (closedMessage) {
+    return NextResponse.json({ error: closedMessage }, { status: 400 });
   }
 
   const mode = body.mode ?? "solo";

@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { getEventRecruitmentStatus } from "./event-status";
+import {
+  getEventRecruitmentStatus,
+  getRegistrationApplyBlockMessage,
+} from "./event-status";
 
 describe("getEventRecruitmentStatus", () => {
   const futureDate = "2099-12-31";
@@ -86,5 +89,63 @@ describe("getEventRecruitmentStatus", () => {
         approvedCount: 2,
       }),
     ).toBe("recruiting");
+  });
+});
+
+describe("getRegistrationApplyBlockMessage", () => {
+  const today = "2026-08-20";
+
+  it("allows today and future deadlines and null deadline", () => {
+    expect(
+      getRegistrationApplyBlockMessage({
+        status: "active",
+        recruitment_closed: false,
+        registration_deadline: "2026-08-21",
+        today,
+      }),
+    ).toBeNull();
+    expect(
+      getRegistrationApplyBlockMessage({
+        status: "active",
+        recruitment_closed: false,
+        registration_deadline: today,
+        today,
+      }),
+    ).toBeNull();
+    expect(
+      getRegistrationApplyBlockMessage({
+        status: "active",
+        recruitment_closed: false,
+        registration_deadline: null,
+        today,
+      }),
+    ).toBeNull();
+  });
+
+  it("blocks past deadline, closed recruitment, and cancelled status", () => {
+    expect(
+      getRegistrationApplyBlockMessage({
+        status: "active",
+        recruitment_closed: false,
+        registration_deadline: "2026-08-19",
+        today,
+      }),
+    ).toBe("신청이 마감된 이벤트입니다.");
+    expect(
+      getRegistrationApplyBlockMessage({
+        status: "active",
+        recruitment_closed: true,
+        registration_deadline: null,
+        today,
+      }),
+    ).toBe("신청이 마감된 이벤트입니다.");
+    expect(
+      getRegistrationApplyBlockMessage({
+        status: "cancelled",
+        recruitment_closed: false,
+        registration_deadline: null,
+        today,
+      }),
+    ).toBe("취소된 이벤트입니다.");
   });
 });
