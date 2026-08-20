@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getHostRegistrationCountsByEventIds } from "@/lib/queries/host-registration-stats";
 import { getTomorrowDateString, getTodayDateString } from "@/lib/utils/date";
 import { getEventRecruitmentStatus, isOperatingEvent } from "@/lib/utils/event-status";
+import { PUBLIC_GYM_SELECT } from "@/lib/queries/gym-select";
+import { applyPrivateContactToGym } from "@/lib/queries/gym-private-contacts";
 
 export type EventRegistrationCounts = {
   approved: number;
@@ -57,7 +59,7 @@ export async function getDashboardData(
 
   const { data: gyms, error: gymsError } = await supabase
     .from("gyms")
-    .select("*")
+    .select(PUBLIC_GYM_SELECT)
     .eq("owner_id", userId)
     .order("created_at", { ascending: false });
 
@@ -113,7 +115,7 @@ export async function getDashboardData(
   }
 
   const dashboardGyms: DashboardGym[] = (gyms ?? []).map((gym) => ({
-    ...gym,
+    ...applyPrivateContactToGym(gym, null),
     eventCount: eventCountByGym.get(gym.id) ?? 0,
   }));
 

@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { getProfileStats, type ProfileStats } from "@/lib/queries/profile";
 import type { Gym } from "@/lib/types/database";
+import { PUBLIC_GYM_SELECT } from "@/lib/queries/gym-select";
+import { applyPrivateContactToGym } from "@/lib/queries/gym-private-contacts";
 
 export type PublicProfile = {
   id: string;
@@ -33,7 +35,7 @@ export async function getPublicProfile(
     getProfileStats(userId),
     supabase
       .from("gyms")
-      .select("*")
+      .select(PUBLIC_GYM_SELECT)
       .eq("owner_id", userId)
       .order("created_at", { ascending: false })
       .limit(1),
@@ -44,9 +46,13 @@ export async function getPublicProfile(
   const profile = profileJson as PublicProfile;
   if (!profile.id) return null;
 
+  const primaryGymRow = gyms?.[0] ?? null;
+
   return {
     profile,
     stats,
-    primaryGym: (gyms?.[0] as Gym | undefined) ?? null,
+    primaryGym: primaryGymRow
+      ? applyPrivateContactToGym(primaryGymRow, null)
+      : null,
   };
 }

@@ -71,7 +71,7 @@ export default async function EventDetailPage({ params }: PageProps) {
     user
       ? supabase
           .from("gyms")
-          .select("*", { count: "exact", head: true })
+          .select("id", { count: "exact", head: true })
           .eq("owner_id", user.id)
       : Promise.resolve({ count: 0 }),
     user

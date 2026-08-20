@@ -1,5 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Gym } from "@/lib/types/database";
+import { PUBLIC_GYM_SELECT } from "@/lib/queries/gym-select";
+import {
+  applyPrivateContactToGym,
+  fetchGymPrivateContact,
+  fetchGymPrivateContactsByGymIds,
+} from "@/lib/queries/gym-private-contacts";
 
 export async function verifyHostOwnsGym(
   userId: string,
@@ -25,12 +31,15 @@ export async function getHostGymById(
 
   const { data } = await supabase
     .from("gyms")
-    .select("*")
+    .select(PUBLIC_GYM_SELECT)
     .eq("id", gymId)
     .eq("owner_id", userId)
     .maybeSingle();
 
-  return data;
+  if (!data) return null;
+
+  const contact = await fetchGymPrivateContact(supabase, gymId);
+  return applyPrivateContactToGym(data, contact);
 }
 
 export async function getHostGymsWithDetails(userId: string): Promise<Gym[]> {
@@ -38,9 +47,17 @@ export async function getHostGymsWithDetails(userId: string): Promise<Gym[]> {
 
   const { data } = await supabase
     .from("gyms")
-    .select("*")
+    .select(PUBLIC_GYM_SELECT)
     .eq("owner_id", userId)
     .order("created_at", { ascending: false });
 
-  return data ?? [];
+  const gyms = data ?? [];
+  const contacts = await fetchGymPrivateContactsByGymIds(
+    supabase,
+    gyms.map((gym) => gym.id),
+  );
+
+  return gyms.map((gym) =>
+    applyPrivateContactToGym(gym, contacts.get(gym.id) ?? null),
+  );
 }

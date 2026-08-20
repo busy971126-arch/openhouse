@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getApprovedCountsByEvent } from "@/lib/queries/event-counts";
 import { REGISTRATION_WITH_PROFILE_SELECT } from "@/lib/queries/registration-select";
 import { getTodayDateString } from "@/lib/utils/date";
+import { PUBLIC_GYM_SELECT, EVENT_WITH_PUBLIC_GYM_SELECT } from "@/lib/queries/gym-select";
+import { applyPrivateContactToGym } from "@/lib/queries/gym-private-contacts";
 
 export async function getEvents(filters: EventFilters = {}) {
   const supabase = await createClient();
@@ -59,9 +61,7 @@ export async function getEvent(id: string) {
 
   const { data, error } = await supabase
     .from("events")
-    .select(
-      "*, gyms(*)",
-    )
+    .select(EVENT_WITH_PUBLIC_GYM_SELECT)
     .eq("id", id)
     .single();
 
@@ -73,11 +73,14 @@ export async function getUserGyms(userId: string) {
 
   const { data, error } = await supabase
     .from("gyms")
-    .select("*")
+    .select(PUBLIC_GYM_SELECT)
     .eq("owner_id", userId)
     .order("created_at", { ascending: false });
 
-  return { data, error };
+  return {
+    data: (data ?? []).map((gym) => applyPrivateContactToGym(gym, null)),
+    error,
+  };
 }
 
 export async function getOwnerEvents(userId: string) {

@@ -55,6 +55,10 @@ import {
 import { getGymProfileCompletion } from "@/lib/utils/gym-profile-completion";
 import type { PendingGymFormDefaults } from "@/lib/utils/pending-gym-info";
 import { formatPhoneInput, normalizePhone } from "@/lib/utils/phone";
+import {
+  GYM_OWNER_EDIT_SELECT,
+  GYM_PRIVATE_CONTACT_SELECT,
+} from "@/lib/queries/gym-select";
 
 type GymFormProps = {
   mode: "create" | "edit";
@@ -160,12 +164,20 @@ export function GymForm({ mode, gymId, pendingDefaults = null }: GymFormProps) {
 
       setUserId(user.id);
 
-      const { data, error: fetchError } = await supabase
-        .from("gyms")
-        .select("*")
-        .eq("id", gymId)
-        .eq("owner_id", user.id)
-        .single();
+      const [{ data, error: fetchError }, { data: privateContact }] =
+        await Promise.all([
+          supabase
+            .from("gyms")
+            .select(GYM_OWNER_EDIT_SELECT)
+            .eq("id", gymId)
+            .eq("owner_id", user.id)
+            .single(),
+          supabase
+            .from("gym_private_contacts")
+            .select(GYM_PRIVATE_CONTACT_SELECT)
+            .eq("gym_id", gymId)
+            .maybeSingle(),
+        ]);
 
       if (fetchError || !data) {
         router.push("/my/profile");
@@ -175,11 +187,25 @@ export function GymForm({ mode, gymId, pendingDefaults = null }: GymFormProps) {
       setName(data.name);
       setSport(data.sport ? [data.sport] : []);
       setGymAddress(gymAddressFromStored(data.address, data.region));
-      setRepresentativeName(data.representative_name ?? "");
-      setRepresentativeRole(data.representative_role ?? "");
-      setRepresentativeRoleCustom(data.representative_role_custom ?? "");
+      // Legacy gyms.representative_* is a transition fallback until STEP C.
+      setRepresentativeName(
+        privateContact?.representative_name ?? data.representative_name ?? "",
+      );
+      setRepresentativeRole(
+        privateContact?.representative_role ?? data.representative_role ?? "",
+      );
+      setRepresentativeRoleCustom(
+        privateContact?.representative_role_custom ??
+          data.representative_role_custom ??
+          "",
+      );
       setRepresentativePhone(
-        formatPhoneInput(data.representative_phone ?? data.phone ?? ""),
+        formatPhoneInput(
+          privateContact?.representative_phone ??
+            data.representative_phone ??
+            data.phone ??
+            "",
+        ),
       );
       setPhone(data.phone ? formatPhoneInput(data.phone) : "");
       setInstagramUrl(data.instagram_url ?? data.sns_url ?? "");
@@ -536,9 +562,6 @@ export function GymForm({ mode, gymId, pendingDefaults = null }: GymFormProps) {
       sport: sportValue,
       region,
       address,
-      representative_name: representativeName.trim(),
-      representative_phone: normalizePhone(representativePhone),
-      ...rolePayload,
       description: null,
       phone: phone.trim() ? normalizePhone(phone) : null,
       instagram_url: instagramUrl.trim() || null,
@@ -558,11 +581,29 @@ export function GymForm({ mode, gymId, pendingDefaults = null }: GymFormProps) {
       is_public: visibility === "public",
     };
 
+    const buildPrivateContactPayload = (targetGymId: string) => ({
+      gym_id: targetGymId,
+      representative_name: representativeName.trim(),
+      representative_phone: normalizePhone(representativePhone),
+      ...rolePayload,
+      updated_at: new Date().toISOString(),
+    });
+
     if (isEdit && gymId) {
       const photoPayload = await buildPhotoPayload(gymId, userId);
       if ("error" in photoPayload) {
         setSaving(false);
         setError(photoPayload.error ?? "사진 업로드에 실패했습니다.");
+        return;
+      }
+
+      const { error: contactError } = await supabase
+        .from("gym_private_contacts")
+        .upsert(buildPrivateContactPayload(gymId), { onConflict: "gym_id" });
+
+      if (contactError) {
+        setSaving(false);
+        setError(contactError.message);
         return;
       }
 
@@ -592,6 +633,20 @@ export function GymForm({ mode, gymId, pendingDefaults = null }: GymFormProps) {
     if (insertError || !inserted) {
       setSaving(false);
       setError(insertError?.message ?? "체육관 등록에 실패했습니다.");
+      return;
+    }
+
+    const { error: contactError } = await supabase
+      .from("gym_private_contacts")
+      .insert(buildPrivateContactPayload(inserted.id));
+
+    if (contactError) {
+      await supabase.from("gyms").delete().eq("id", inserted.id);
+      setSaving(false);
+      setError(
+        contactError.message ||
+          "담당자 정보 저장에 실패하여 체육관 등록을 취소했습니다.",
+      );
       return;
     }
 

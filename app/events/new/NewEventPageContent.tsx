@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { EventForm } from "@/components/events/EventForm";
 import type { Gym } from "@/lib/types/database";
+import { PUBLIC_GYM_SELECT } from "@/lib/queries/gym-select";
+import { applyPrivateContactToGym } from "@/lib/queries/gym-private-contacts";
 
 export function NewEventPageContent() {
   const router = useRouter();
@@ -28,10 +30,10 @@ export function NewEventPageContent() {
 
       const { data } = await supabase
         .from("gyms")
-        .select("*")
+        .select(PUBLIC_GYM_SELECT)
         .eq("owner_id", user.id);
 
-      setGyms(data ?? []);
+      setGyms((data ?? []).map((gym) => applyPrivateContactToGym(gym, null)));
       setLoading(false);
     }
 

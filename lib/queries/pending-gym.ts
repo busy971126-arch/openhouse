@@ -12,7 +12,7 @@ export async function getPendingGymRegistration(
   const [{ count: gymCount }, { data: pendingRaw }] = await Promise.all([
     supabase
       .from("gyms")
-      .select("*", { count: "exact", head: true })
+      .select("id", { count: "exact", head: true })
       .eq("owner_id", userId),
     supabase.rpc("get_my_pending_gym_info"),
   ]);

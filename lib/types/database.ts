@@ -80,6 +80,16 @@ export type Gym = {
   created_at: string;
 };
 
+export type GymPrivateContact = {
+  gym_id: string;
+  representative_name: string | null;
+  representative_phone: string | null;
+  representative_role: string | null;
+  representative_role_custom: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type EventLifecycleStatus = "active" | "cancelled";
 
 export type Event = {
