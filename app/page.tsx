@@ -6,6 +6,28 @@ import { getDashboardData } from "@/lib/queries/dashboard";
 import { getMyPageData } from "@/lib/queries/my-page";
 import { getPendingGymRegistration } from "@/lib/queries/pending-gym";
 
+function HomePrivacyNotice() {
+  return (
+    <p
+      role="note"
+      className="flex items-start gap-2 rounded-xl bg-zinc-50 px-3.5 py-3 text-xs leading-relaxed text-zinc-500"
+    >
+      <svg
+        className="mt-0.5 h-3.5 w-3.5 shrink-0 text-zinc-400"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        aria-hidden
+      >
+        <rect x="5" y="11" width="14" height="10" rx="2" />
+        <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+      </svg>
+      <span>안전한 참가를 위해 필요한 정보만 이벤트 주최자에게 공유됩니다.</span>
+    </p>
+  );
+}
+
 export default async function Home() {
   const supabase = await createClient();
   const {
@@ -16,9 +38,7 @@ export default async function Home() {
     return (
       <div className="flex flex-col gap-6 py-2">
         <GuestHome />
-        <p className="text-center text-xs text-zinc-500">
-          안전한 참가를 위해 필요한 정보만 이벤트 주최자에게 공유됩니다.
-        </p>
+        <HomePrivacyNotice />
       </div>
     );
   }
@@ -52,9 +72,7 @@ export default async function Home() {
             }
           }
         />
-        <p className="text-center text-xs text-zinc-500">
-          안전한 참가를 위해 필요한 정보만 이벤트 주최자에게 공유됩니다.
-        </p>
+        <HomePrivacyNotice />
       </div>
     );
   }
@@ -63,9 +81,7 @@ export default async function Home() {
     <div className="flex flex-col gap-6 py-2">
       {pendingGym ? <PendingGymRegistrationBanner pendingGym={pendingGym} /> : null}
       <MemberHome displayLabel={displayLabel} />
-      <p className="text-center text-xs text-zinc-500">
-        안전한 참가를 위해 필요한 정보만 이벤트 주최자에게 공유됩니다.
-      </p>
+      <HomePrivacyNotice />
     </div>
   );
 }
