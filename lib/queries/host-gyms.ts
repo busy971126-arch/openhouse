@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Gym } from "@/lib/types/database";
+import type { GymWithPrivateContact } from "@/lib/types/database";
 import { PUBLIC_GYM_SELECT } from "@/lib/queries/gym-select";
 import {
   applyPrivateContactToGym,
@@ -26,7 +26,7 @@ export async function verifyHostOwnsGym(
 export async function getHostGymById(
   userId: string,
   gymId: string,
-): Promise<Gym | null> {
+): Promise<GymWithPrivateContact | null> {
   const supabase = await createClient();
 
   const { data } = await supabase
@@ -42,7 +42,9 @@ export async function getHostGymById(
   return applyPrivateContactToGym(data, contact);
 }
 
-export async function getHostGymsWithDetails(userId: string): Promise<Gym[]> {
+export async function getHostGymsWithDetails(
+  userId: string,
+): Promise<GymWithPrivateContact[]> {
   const supabase = await createClient();
 
   const { data } = await supabase

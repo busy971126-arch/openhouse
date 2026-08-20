@@ -50,10 +50,6 @@ export type Gym = {
   sport: string;
   region: string;
   address: string | null;
-  representative_name: string | null;
-  representative_phone: string | null;
-  representative_role: string | null;
-  representative_role_custom: string | null;
   photo_url: string | null;
   description: string | null;
   phone: string | null;
@@ -89,6 +85,17 @@ export type GymPrivateContact = {
   created_at: string;
   updated_at: string;
 };
+
+export type GymPrivateContactFields = Pick<
+  GymPrivateContact,
+  | "representative_name"
+  | "representative_phone"
+  | "representative_role"
+  | "representative_role_custom"
+>;
+
+/** Owner-only gym view: public gyms row plus private contact fields. */
+export type GymWithPrivateContact = Gym & GymPrivateContactFields;
 
 export type EventLifecycleStatus = "active" | "cancelled";
 

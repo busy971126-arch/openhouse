@@ -1,17 +1,11 @@
 import Link from "next/link";
 import type { Gym } from "@/lib/types/database";
-import { formatRepresentativeRoleLabel } from "@/lib/constants/gym-representative";
 
 type ProfileGymCardProps = {
   gym: Gym;
 };
 
 export function ProfileGymCard({ gym }: ProfileGymCardProps) {
-  const roleLabel = formatRepresentativeRoleLabel(
-    gym.representative_role,
-    gym.representative_role_custom,
-  );
-
   return (
     <Link
       href={`/host/gyms/${gym.id}`}
@@ -40,7 +34,6 @@ export function ProfileGymCard({ gym }: ProfileGymCardProps) {
         </div>
         <p className="mt-1 text-sm text-zinc-600">
           {gym.sport ?? "유도"} · {gym.region}
-          {roleLabel ? ` · ${roleLabel}` : ""}
         </p>
         {gym.address && (
           <p className="mt-1 truncate text-sm text-zinc-500">{gym.address}</p>

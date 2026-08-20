@@ -4,7 +4,6 @@ import { getApprovedCountsByEvent } from "@/lib/queries/event-counts";
 import { REGISTRATION_WITH_PROFILE_SELECT } from "@/lib/queries/registration-select";
 import { getTodayDateString } from "@/lib/utils/date";
 import { PUBLIC_GYM_SELECT, EVENT_WITH_PUBLIC_GYM_SELECT } from "@/lib/queries/gym-select";
-import { applyPrivateContactToGym } from "@/lib/queries/gym-private-contacts";
 
 export async function getEvents(filters: EventFilters = {}) {
   const supabase = await createClient();
@@ -77,10 +76,7 @@ export async function getUserGyms(userId: string) {
     .eq("owner_id", userId)
     .order("created_at", { ascending: false });
 
-  return {
-    data: (data ?? []).map((gym) => applyPrivateContactToGym(gym, null)),
-    error,
-  };
+  return { data: data ?? [], error };
 }
 
 export async function getOwnerEvents(userId: string) {

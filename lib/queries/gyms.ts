@@ -2,7 +2,6 @@ import type { Gym } from "@/lib/types/database";
 import { createClient } from "@/lib/supabase/server";
 import { getTodayDateString } from "@/lib/utils/date";
 import { PUBLIC_GYM_SELECT } from "@/lib/queries/gym-select";
-import { applyPrivateContactToGym } from "@/lib/queries/gym-private-contacts";
 
 export type GymFilters = {
   region?: string;
@@ -113,7 +112,7 @@ export async function getPublicGyms(
   );
 
   return {
-    data: filtered.map((gym) => applyPrivateContactToGym(gym, null)),
+    data: filtered,
     error: null,
   };
 }
@@ -129,7 +128,7 @@ export async function getPublicGymById(id: string) {
     .maybeSingle();
 
   return {
-    data: data ? applyPrivateContactToGym(data, null) : data,
+    data,
     error,
   };
 }
