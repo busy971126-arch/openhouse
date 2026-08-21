@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { EventForm } from "@/components/events/EventForm";
+import { MinimalEventForm } from "@/components/events/MinimalEventForm";
 import type { Gym } from "@/lib/types/database";
 import { PUBLIC_GYM_SELECT } from "@/lib/queries/gym-select";
 
@@ -64,19 +64,17 @@ export function NewEventPageContent() {
     : "/host/gyms";
 
   return (
-    <div className="mx-auto max-w-sm">
+    <div className="mx-auto max-w-md">
       <Link href={backHref} className="text-sm text-orange-600 hover:underline">
         ← 이벤트 관리
       </Link>
-      <h1 className="mb-6 mt-4 text-2xl font-bold">이벤트 등록</h1>
-      <EventForm
-        gyms={gyms}
-        mode="create"
-        defaultGymId={defaultGymId}
-        redirectTo={
-          defaultGymId ? `/host/gyms/${defaultGymId}/events` : "/host/gyms"
-        }
-      />
+      <header className="mb-5 mt-4">
+        <h1 className="text-2xl font-bold text-zinc-900">이벤트 만들기</h1>
+        <p className="mt-1 text-sm text-zinc-500">
+          기본 일정만 먼저 만들고 상세 정보는 나중에 채울 수 있어요.
+        </p>
+      </header>
+      <MinimalEventForm gyms={gyms} defaultGymId={defaultGymId} />
     </div>
   );
 }
