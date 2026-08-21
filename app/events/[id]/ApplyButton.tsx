@@ -6,7 +6,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Alert } from "@/components/Alert";
 import { FieldLabel } from "@/components/FieldLabel";
 import { ApplyPreviewHintBox } from "@/components/events/ApplyPreviewHintBox";
-import { PartyFriendPicker } from "@/components/events/PartyFriendPicker";
 import { ParticipantPartySummary } from "@/components/participants/ParticipantPartyBadge";
 import {
   APPLICANT_BACKGROUND_OPTIONS,
@@ -28,8 +27,6 @@ import {
 import type { ParticipantPreview } from "@/lib/utils/participant-preview";
 import { parseRegistrationApplyError } from "@/lib/utils/participant-party";
 import type { Registration } from "@/lib/types/database";
-
-type ApplyMode = "solo" | "party";
 
 type ApplyButtonProps = {
   eventId: string;
@@ -98,8 +95,6 @@ export function ApplyButton({
   >(defaults.years);
   const [gymAffiliation, setGymAffiliation] = useState(defaults.gymAffiliation);
   const [applicantNotes, setApplicantNotes] = useState("");
-  const [applyMode, setApplyMode] = useState<ApplyMode>("solo");
-  const [companionIds, setCompanionIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (!userId) {
@@ -248,11 +243,6 @@ export function ApplyButton({
       return;
     }
 
-    if (applyMode === "party" && companionIds.length === 0) {
-      setError("동행할 운동 친구를 1명 이상 선택해주세요.");
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
@@ -261,7 +251,7 @@ export function ApplyButton({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          mode: applyMode,
+          mode: "solo",
           applicantName: applicantName.trim(),
           applicantPhone,
           applicantGender: selectedGender,
@@ -269,7 +259,6 @@ export function ApplyButton({
           applyExperience,
           gymAffiliation: gymAffiliation.trim() || null,
           applicantNotes: applicantNotes.trim() || null,
-          companionUserIds: applyMode === "party" ? companionIds : undefined,
         }),
       });
 
@@ -280,7 +269,7 @@ export function ApplyButton({
         setError(
           parseRegistrationApplyError(
             result.error ?? "참가 신청에 실패했습니다.",
-            applyMode === "party" ? "동행 신청에 실패했습니다." : "참가 신청에 실패했습니다.",
+            "참가 신청에 실패했습니다.",
           ),
         );
         return;
@@ -306,42 +295,6 @@ export function ApplyButton({
       <ApplyPreviewHintBox hint={previewHint} />
 
       {error && <Alert message={error} />}
-
-      <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-        <p className="text-sm font-medium text-zinc-900">참가 방식</p>
-        <div className="mt-3 flex gap-2">
-          <button
-            type="button"
-            onClick={() => setApplyMode("solo")}
-            className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium ${
-              applyMode === "solo"
-                ? "bg-orange-600 text-white"
-                : "border border-zinc-300 bg-white text-zinc-700"
-            }`}
-          >
-            혼자 신청
-          </button>
-          <button
-            type="button"
-            onClick={() => setApplyMode("party")}
-            className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium ${
-              applyMode === "party"
-                ? "bg-orange-600 text-white"
-                : "border border-zinc-300 bg-white text-zinc-700"
-            }`}
-          >
-            운동 친구와 동행
-          </button>
-        </div>
-      </div>
-
-      {applyMode === "party" && userId && (
-        <PartyFriendPicker
-          viewerId={userId}
-          selectedIds={companionIds}
-          onChange={setCompanionIds}
-        />
-      )}
 
       <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
         <p className="text-sm font-medium text-zinc-900">신청자 확인</p>
@@ -515,7 +468,7 @@ export function ApplyButton({
         disabled={loading}
         className="rounded-lg bg-orange-600 py-3 font-medium text-white hover:bg-orange-700 disabled:opacity-50"
       >
-        {loading ? "신청 중..." : applyMode === "party" ? "동행 신청" : "참가 신청"}
+        {loading ? "신청 중..." : "참가 신청"}
       </button>
     </div>
   );
