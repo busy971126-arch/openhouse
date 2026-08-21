@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { GymPhotoCarousel } from "@/components/gym/GymPhotoCarousel";
 import { GymCardPhotoOverlay } from "@/components/gym/GymCardPhotoOverlay";
@@ -21,10 +20,8 @@ export function GymListCard({
   userId = null,
   initialInterested = false,
 }: GymListCardProps) {
-  const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const sport = gym.sport ?? "유도";
   const photos = collectGymDisplayPhotos(gym);
-  const activePhoto = photos[activePhotoIndex];
   const addressLine = gym.address?.trim() || gym.region;
   const gymHref = `/gym/${gym.id}`;
 
@@ -35,13 +32,12 @@ export function GymListCard({
           photos={photos}
           alt={gym.name}
           aspect="compact"
-          showPhotoLabels={false}
+          showPhotoLabels
           dotPosition="raised"
-          onActiveIndexChange={setActivePhotoIndex}
         />
 
         {photos.length > 0 && (
-          <GymCardPhotoOverlay sport={sport} activePhoto={activePhoto} />
+          <GymCardPhotoOverlay sport={sport} activePhoto={undefined} />
         )}
       </Link>
 
