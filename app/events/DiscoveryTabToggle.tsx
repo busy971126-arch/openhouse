@@ -52,11 +52,11 @@ export function DiscoveryTabToggle() {
   }
 
   return (
-    <div className="flex rounded-xl bg-zinc-100 p-1">
+    <div className="flex gap-6 border-b border-zinc-300">
       {(
         [
-          { value: "events" as const, label: "이벤트" },
-          { value: "gyms" as const, label: "체육관" },
+          { value: "events" as const, label: "EVENTS", subLabel: "이벤트" },
+          { value: "gyms" as const, label: "GYMS", subLabel: "체육관" },
         ] as const
       ).map((option) => {
         const isActive = tab === option.value;
@@ -65,13 +65,15 @@ export function DiscoveryTabToggle() {
             key={option.value}
             type="button"
             onClick={() => setTab(option.value)}
-            className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition ${
-              isActive
-                ? "bg-white text-zinc-900 shadow-sm"
-                : "text-zinc-600 hover:text-zinc-900"
+            className={`relative pb-3 text-left transition ${
+              isActive ? "text-zinc-950" : "text-zinc-400 hover:text-zinc-700"
             }`}
           >
-            {option.label}
+            <span className="block text-[10px] font-black tracking-[0.16em]">
+              {option.label}
+            </span>
+            <span className="mt-0.5 block text-sm font-bold">{option.subLabel}</span>
+            {isActive && <span className="absolute inset-x-0 -bottom-px h-0.5 bg-orange-600" />}
           </button>
         );
       })}
