@@ -8,19 +8,39 @@ import { HomeRecommendedGymsSection } from "@/components/home/HomeRecommendedGym
 
 function HomeIntro({ displayLabel }: { displayLabel?: string }) {
   return (
-    <section>
-      {displayLabel && (
-        <p className="text-sm font-medium text-orange-600">
-          {displayLabel}님, 안녕하세요
-        </p>
-      )}
-      <h1 className={`${displayLabel ? "mt-2 " : ""}text-2xl font-bold leading-tight text-zinc-900`}>
-        주변 운동 이벤트를 한곳에서
-      </h1>
-      <p className="mt-2 text-sm leading-6 text-zinc-600">
-        오픈매트·세미나·대회 정보를 찾고 바로 참가하세요.
+    <section className="pt-1">
+      <p className="text-[11px] font-bold tracking-[0.18em] text-orange-600">
+        FIND · JOIN · PLAY
       </p>
-      <p className="mt-1 text-xs text-zinc-500">지금은 유도부터 시작합니다.</p>
+      {displayLabel && (
+        <p className="mt-4 text-sm font-medium text-zinc-600">{displayLabel}님</p>
+      )}
+      <h1 className={`${displayLabel ? "mt-1 " : "mt-3 "}text-[28px] font-black leading-[1.15] tracking-[-0.03em] text-zinc-950`}>
+        이번 주, 어디서 운동할까?
+      </h1>
+      <p className="mt-3 text-sm leading-6 text-zinc-600">
+        오픈매트·세미나·대회. 지금은 유도부터.
+      </p>
+    </section>
+  );
+}
+
+function OperatorEntry({ href }: { href: string }) {
+  return (
+    <section className="border-t border-zinc-200 pt-5">
+      <p className="text-[11px] font-bold tracking-[0.16em] text-zinc-400">FOR HOSTS</p>
+      <div className="mt-2 flex items-end justify-between gap-4">
+        <div>
+          <h2 className="text-base font-bold text-zinc-950">체육관을 운영하고 있나요?</h2>
+          <p className="mt-1 text-sm text-zinc-600">이벤트를 만들고 참가자를 관리하세요.</p>
+        </div>
+        <Link
+          href={href}
+          className="shrink-0 text-sm font-semibold text-orange-600 hover:text-orange-700"
+        >
+          등록하기 →
+        </Link>
+      </div>
     </section>
   );
 }
@@ -38,33 +58,22 @@ function GuestHome() {
 
       <HomeRecommendedGymsSection />
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 border-t border-zinc-200 pt-5">
         <Link
           href="/signup"
-          className="rounded-xl border border-zinc-300 bg-white px-6 py-4 text-center text-base font-semibold text-zinc-900 hover:bg-zinc-50"
+          className="bg-zinc-950 px-6 py-3.5 text-center text-sm font-bold text-white transition hover:bg-orange-600"
         >
-          회원가입
+          OpenHouse 시작하기
         </Link>
-        <p className="text-center text-sm text-zinc-600">
-          이미 계정이 있으신가요?{" "}
-          <Link href="/login" className="font-medium text-orange-600">
+        <p className="text-center text-xs text-zinc-500">
+          이미 계정이 있나요?{" "}
+          <Link href="/login" className="font-semibold text-zinc-900 underline underline-offset-4">
             로그인
           </Link>
         </p>
       </div>
 
-      <section className="rounded-xl border border-zinc-200 bg-white p-5">
-        <h2 className="font-semibold text-zinc-900">운영자이신가요?</h2>
-        <p className="mt-2 text-sm text-zinc-600">
-          체육관을 등록하고 이벤트를 직접 운영해보세요.
-        </p>
-        <Link
-          href="/signup"
-          className="mt-4 inline-block text-sm font-medium text-orange-600 hover:text-orange-700"
-        >
-          체육관 등록하기 →
-        </Link>
-      </section>
+      <OperatorEntry href="/signup" />
     </>
   );
 }
@@ -90,18 +99,7 @@ function MemberHome({ displayLabel }: MemberHomeProps) {
 
       <HomeRecommendedGymsSection />
 
-      <section className="rounded-xl border border-zinc-200 bg-white p-5">
-        <h2 className="font-semibold text-zinc-900">운영자이신가요?</h2>
-        <p className="mt-2 text-sm text-zinc-600">
-          체육관을 등록하고 이벤트를 직접 운영해보세요.
-        </p>
-        <Link
-          href="/gym/new"
-          className="mt-4 inline-block text-sm font-medium text-orange-600 hover:text-orange-700"
-        >
-          체육관 등록하기 →
-        </Link>
-      </section>
+      <OperatorEntry href="/gym/new" />
     </>
   );
 }

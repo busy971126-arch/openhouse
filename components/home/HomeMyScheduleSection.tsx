@@ -30,11 +30,10 @@ async function HomeMySchedule() {
 
   if (scheduleResult.status === "error") {
     return (
-      <section className="rounded-xl border border-zinc-200 bg-white">
-        <div className="border-b border-zinc-100 px-4 py-3">
-          <h2 className="text-sm font-semibold text-zinc-900">📅 내 일정</h2>
-        </div>
-        <div className="px-4 py-3">
+      <section className="border-t border-zinc-200 pt-5">
+        <p className="text-[10px] font-black tracking-[0.18em] text-zinc-400">MY SCHEDULE</p>
+        <h2 className="mt-1 text-lg font-bold text-zinc-950">내 일정</h2>
+        <div className="mt-3">
           <Alert message="참가 일정을 불러오지 못했습니다." />
         </div>
       </section>
@@ -46,56 +45,52 @@ async function HomeMySchedule() {
   const scheduleTab = schedule.today.length > 0 ? "today" : "week";
   const scheduleHref =
     schedule.upcoming.length > 0
-      ? `${scheduleTabHref(scheduleTab)}`
+      ? scheduleTabHref(scheduleTab)
       : scheduleTabHref("today");
 
   return (
-    <section className="rounded-xl border border-zinc-200 bg-white">
-      <div className="flex items-center justify-between gap-2 border-b border-zinc-100 px-4 py-3">
-        <h2 className="text-sm font-semibold text-zinc-900">📅 내 일정</h2>
+    <section className="border-t border-zinc-200 pt-5">
+      <div className="flex items-end justify-between gap-2">
+        <div>
+          <p className="text-[10px] font-black tracking-[0.18em] text-zinc-400">MY SCHEDULE</p>
+          <h2 className="mt-1 text-lg font-bold tracking-[-0.02em] text-zinc-950">내 일정</h2>
+        </div>
         {schedule.upcoming.length > 0 && (
           <Link
             href={scheduleHref}
-            className="text-xs font-medium text-orange-600 hover:text-orange-700"
+            className="text-xs font-semibold text-zinc-600 hover:text-orange-600"
           >
-            전체 보기 →
+            캘린더 보기 →
           </Link>
         )}
       </div>
 
       {highlight ? (
-        <div className="px-4 py-3">
-          <p className="text-xs font-medium text-orange-600">
-            {schedule.today.length > 0 ? "오늘" : "다가오는 일정"}
-          </p>
-          <Link
-            href={`/events/${highlight.eventId}`}
-            className="mt-2 block rounded-lg hover:bg-zinc-50"
-          >
-            <p className="text-sm font-semibold text-zinc-900">
-              {formatScheduleWhenLabel(highlight.eventDate, highlight.eventTime)}
+        <Link
+          href={`/events/${highlight.eventId}`}
+          className="mt-3 block border-l-2 border-orange-600 py-1 pl-4"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs font-bold text-orange-600">
+              {schedule.today.length > 0 ? "TODAY" : formatScheduleCountdown(highlight.eventDate)}
             </p>
-            <p className="mt-0.5 text-sm text-zinc-600">{highlight.title}</p>
-          </Link>
-          <div className="mt-2 flex items-center justify-between gap-2">
-            <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-semibold text-orange-700">
-              {formatScheduleCountdown(highlight.eventDate)}
-            </span>
             {schedule.thisWeekCount > 1 && (
-              <p className="text-xs text-zinc-500">
-                이번주 일정 {schedule.thisWeekCount}개
-              </p>
+              <p className="text-xs text-zinc-400">이번 주 {schedule.thisWeekCount}개</p>
             )}
           </div>
-        </div>
+          <p className="mt-2 text-sm font-bold text-zinc-950">
+            {formatScheduleWhenLabel(highlight.eventDate, highlight.eventTime)}
+          </p>
+          <p className="mt-1 text-sm text-zinc-600">{highlight.title}</p>
+        </Link>
       ) : (
-        <div className="px-4 py-4">
-          <p className="text-sm text-zinc-600">다가오는 참가 일정이 없습니다.</p>
+        <div className="mt-3 border-y border-zinc-200 py-4">
+          <p className="text-sm text-zinc-500">예정된 참가 일정이 없습니다.</p>
           <Link
             href="/events"
-            className="mt-2 inline-block text-sm font-medium text-orange-600 hover:text-orange-700"
+            className="mt-2 inline-block text-xs font-semibold text-zinc-900 underline decoration-zinc-300 underline-offset-4 hover:text-orange-600"
           >
-            이벤트 찾기 →
+            이벤트 찾기
           </Link>
         </div>
       )}

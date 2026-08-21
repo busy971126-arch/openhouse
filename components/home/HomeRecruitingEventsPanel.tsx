@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { AppIcon } from "@/components/ui/AppIcon";
 import {
   EVENT_TYPE_OPTIONS,
   formatEventType,
@@ -44,29 +45,39 @@ function HomeEventScrollCard({ item }: { item: HomeEventPreviewItem }) {
   return (
     <Link
       href={`/events/${event.id}`}
-      className="flex w-[220px] shrink-0 flex-col rounded-xl border border-zinc-200 bg-white p-3 shadow-sm hover:border-orange-200 hover:bg-orange-50/30"
+      className="flex w-[230px] shrink-0 flex-col border border-zinc-200 bg-white p-3.5 transition hover:border-zinc-400"
     >
-      <div className="flex flex-wrap items-center gap-1">
-        <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="text-[10px] font-black uppercase tracking-[0.12em] text-zinc-500">
           {formatEventType(event.event_type)}
         </span>
         {badges.map((badge) => (
           <span
             key={badge}
-            className="rounded-full bg-orange-100 px-2 py-0.5 text-[11px] font-medium text-orange-700"
+            className="border-l border-orange-300 pl-1.5 text-[10px] font-bold text-orange-700"
           >
             {badge}
           </span>
         ))}
       </div>
-      <p className="mt-2 line-clamp-2 text-sm font-semibold text-zinc-900">
+      <p className="mt-3 line-clamp-2 text-[15px] font-bold leading-5 text-zinc-950">
         {event.title}
       </p>
-      <p className="mt-1 line-clamp-2 text-xs text-zinc-500">{meta}</p>
-      <p className="mt-2 text-xs font-medium text-zinc-600">
-        👥 {participantLine}
-      </p>
+      <p className="mt-2 line-clamp-2 text-xs leading-5 text-zinc-500">{meta}</p>
+      <div className="mt-3 flex items-center gap-1.5 text-xs font-medium text-zinc-600">
+        <AppIcon name="users" className="size-3.5" />
+        <span>{participantLine}</span>
+      </div>
     </Link>
+  );
+}
+
+function SectionHeading() {
+  return (
+    <div>
+      <p className="text-[10px] font-black tracking-[0.18em] text-orange-600">NOW OPEN</p>
+      <h2 className="mt-1 text-lg font-bold tracking-[-0.02em] text-zinc-950">지금 모집중</h2>
+    </div>
   );
 }
 
@@ -83,11 +94,9 @@ export function HomeRecruitingEventsPanel({
 
   if (error) {
     return (
-      <section className="rounded-xl border border-orange-200 bg-orange-50/60">
-        <div className="border-b border-orange-100 px-4 py-3">
-          <h2 className="text-sm font-semibold text-zinc-900">🔥 지금 모집중</h2>
-        </div>
-        <div className="px-4 py-3">
+      <section className="border-t border-zinc-200 pt-5">
+        <SectionHeading />
+        <div className="mt-3">
           <Alert message="이벤트를 불러오지 못했습니다." />
         </div>
       </section>
@@ -97,27 +106,27 @@ export function HomeRecruitingEventsPanel({
   if (items.length === 0) return null;
 
   return (
-    <section className="rounded-xl border border-orange-200 bg-orange-50/60">
-      <div className="flex items-center justify-between gap-2 border-b border-orange-100 px-4 py-3">
-        <h2 className="text-sm font-semibold text-zinc-900">🔥 지금 모집중</h2>
+    <section className="border-t border-zinc-200 pt-5">
+      <div className="flex items-end justify-between gap-2">
+        <SectionHeading />
         <Link
           href="/events"
-          className="text-xs font-medium text-orange-600 hover:text-orange-700"
+          className="text-xs font-semibold text-zinc-600 hover:text-orange-600"
         >
           전체 보기 →
         </Link>
       </div>
 
-      <div className="flex gap-1 overflow-x-auto px-4 py-3">
+      <div className="mt-4 flex gap-4 overflow-x-auto border-b border-zinc-200 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {FILTER_OPTIONS.map((option) => (
           <button
             key={option.value}
             type="button"
             onClick={() => setFilter(option.value)}
-            className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition ${
+            className={`shrink-0 pb-1 text-xs font-semibold transition ${
               filter === option.value
-                ? "bg-orange-600 text-white"
-                : "bg-white text-zinc-600 ring-1 ring-zinc-200 hover:text-zinc-900"
+                ? "border-b-2 border-orange-600 text-zinc-950"
+                : "text-zinc-400 hover:text-zinc-700"
             }`}
           >
             {option.label}
@@ -126,11 +135,9 @@ export function HomeRecruitingEventsPanel({
       </div>
 
       {filtered.length === 0 ? (
-        <p className="px-4 pb-4 text-sm text-zinc-500">
-          해당 종류의 모집 중 이벤트가 없습니다.
-        </p>
+        <p className="py-5 text-sm text-zinc-500">해당 종류의 모집 중 이벤트가 없습니다.</p>
       ) : (
-        <div className="flex gap-3 overflow-x-auto px-4 pb-4">
+        <div className="-mx-4 mt-3 flex snap-x gap-3 overflow-x-auto px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {filtered.map((item) => (
             <HomeEventScrollCard key={item.event.id} item={item} />
           ))}
