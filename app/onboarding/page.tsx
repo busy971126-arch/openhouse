@@ -30,7 +30,6 @@ export default function OnboardingPage() {
   const [verifiedNickname, setVerifiedNickname] = useState<string | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
-  const [marketingAccepted, setMarketingAccepted] = useState(false);
   const [consentCurrent, setConsentCurrent] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -60,7 +59,7 @@ export default function OnboardingPage() {
             .single(),
           supabase
             .from("user_consent_records")
-            .select("terms_version, privacy_version, marketing_agreed")
+            .select("terms_version, privacy_version")
             .eq("user_id", user.id)
             .order("created_at", { ascending: false })
             .limit(1)
@@ -90,10 +89,7 @@ export default function OnboardingPage() {
       if (currentConsent) {
         setTermsAccepted(true);
         setPrivacyAccepted(true);
-        setMarketingAccepted(Boolean(consent?.marketing_agreed));
         setConsentCurrent(true);
-      } else if (consent) {
-        setMarketingAccepted(Boolean(consent.marketing_agreed));
       }
 
       const existingNickname = profile?.nickname?.trim() ?? "";
@@ -176,7 +172,7 @@ export default function OnboardingPage() {
           privacy_version: PRIVACY_VERSION,
           terms_agreed: true,
           privacy_agreed: true,
-          marketing_agreed: marketingAccepted,
+          marketing_agreed: false,
           source: "onboarding_social",
         });
 
@@ -227,17 +223,12 @@ export default function OnboardingPage() {
           <TermsConsent
             termsAccepted={termsAccepted}
             privacyAccepted={privacyAccepted}
-            marketingAccepted={marketingAccepted}
             onTermsChange={(value) => {
               setTermsAccepted(value);
               setConsentCurrent(false);
             }}
             onPrivacyChange={(value) => {
               setPrivacyAccepted(value);
-              setConsentCurrent(false);
-            }}
-            onMarketingChange={(value) => {
-              setMarketingAccepted(value);
               setConsentCurrent(false);
             }}
           />

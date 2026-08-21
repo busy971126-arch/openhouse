@@ -52,7 +52,7 @@ export function getEventRecruitmentStatus({
   eventStatus = "active",
   today = getTodayDateString(),
 }: EventStatusInput): EventRecruitmentStatus {
-  if (eventStatus === "cancelled") {
+  if (eventStatus === "cancelled" || eventStatus === "draft") {
     return "closed";
   }
 
@@ -119,6 +119,10 @@ export function getRegistrationApplyBlockMessage({
   registration_deadline,
   today = getTodayDateString(),
 }: RegistrationApplyGuardInput): string | null {
+  if (status === "draft") {
+    return "아직 공개되지 않은 이벤트입니다.";
+  }
+
   if ((status ?? "active") !== "active") {
     return "취소된 이벤트입니다.";
   }

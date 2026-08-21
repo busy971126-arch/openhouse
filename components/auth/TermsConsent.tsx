@@ -5,26 +5,21 @@ import Link from "next/link";
 type TermsConsentProps = {
   termsAccepted: boolean;
   privacyAccepted: boolean;
-  marketingAccepted: boolean;
   onTermsChange: (value: boolean) => void;
   onPrivacyChange: (value: boolean) => void;
-  onMarketingChange: (value: boolean) => void;
 };
 
 export function TermsConsent({
   termsAccepted,
   privacyAccepted,
-  marketingAccepted,
   onTermsChange,
   onPrivacyChange,
-  onMarketingChange,
 }: TermsConsentProps) {
-  const allAccepted = termsAccepted && privacyAccepted && marketingAccepted;
+  const allAccepted = termsAccepted && privacyAccepted;
 
   function setAll(value: boolean) {
     onTermsChange(value);
     onPrivacyChange(value);
-    onMarketingChange(value);
   }
 
   return (
@@ -39,7 +34,7 @@ export function TermsConsent({
         <span>
           <span className="block text-sm font-semibold text-zinc-900">전체 동의</span>
           <span className="mt-1 block text-xs leading-5 text-zinc-500">
-            선택 항목을 포함해 모두 동의합니다. 선택 동의는 거부해도 서비스를 이용할 수 있어요.
+            OpenHouse 이용에 필요한 필수 약관에 모두 동의합니다.
           </span>
         </span>
       </label>
@@ -84,18 +79,6 @@ export function TermsConsent({
             >
               보기
             </Link>
-          </span>
-        </label>
-
-        <label className="flex cursor-pointer items-start gap-3">
-          <input
-            type="checkbox"
-            checked={marketingAccepted}
-            onChange={(event) => onMarketingChange(event.target.checked)}
-            className="mt-0.5 h-5 w-5 rounded border-zinc-300 accent-orange-600"
-          />
-          <span className="text-zinc-800">
-            <span className="font-medium text-zinc-500">[선택]</span> 서비스 소식 및 이벤트 안내 수신
           </span>
         </label>
       </div>

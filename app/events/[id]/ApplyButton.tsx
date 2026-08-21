@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Alert } from "@/components/Alert";
 import { FieldLabel } from "@/components/FieldLabel";
 import { ApplyPreviewHintBox } from "@/components/events/ApplyPreviewHintBox";
@@ -11,9 +11,12 @@ import { ParticipantPartySummary } from "@/components/participants/ParticipantPa
 import {
   APPLICANT_BACKGROUND_OPTIONS,
   APPLICANT_YEARS_OPTIONS,
+  GENDER_OPTIONS,
   GYM_OPERATOR_EXPERIENCE,
   getWeightClassOptionsForGender,
 } from "@/lib/constants/profile";
+import { createClient } from "@/lib/supabase/client";
+import { formatPhoneInput } from "@/lib/utils/phone";
 import { buildApplyPreviewHint } from "@/lib/utils/apply-preview-hint";
 import {
   buildApplyExperience,
@@ -23,9 +26,7 @@ import {
   type ApplicantBackground,
 } from "@/lib/utils/experience-apply";
 import type { ParticipantPreview } from "@/lib/utils/participant-preview";
-import {
-  parseRegistrationApplyError,
-} from "@/lib/utils/participant-party";
+import { parseRegistrationApplyError } from "@/lib/utils/participant-party";
 import type { Registration } from "@/lib/types/database";
 
 type ApplyMode = "solo" | "party";
@@ -39,6 +40,8 @@ type ApplyButtonProps = {
   weightClass?: string | null;
   gender?: string | null;
   experience?: string | null;
+  displayName?: string | null;
+  phone?: string | null;
   isGymOperator?: boolean;
   gymAffiliationDefault?: string | null;
   preview?: ParticipantPreview | null;
@@ -53,14 +56,14 @@ export function ApplyButton({
   weightClass,
   gender,
   experience,
+  displayName,
+  phone,
   isGymOperator = false,
   gymAffiliationDefault,
   preview,
 }: ApplyButtonProps) {
   const router = useRouter();
-  const profileExperience = isGymOperator
-    ? GYM_OPERATOR_EXPERIENCE
-    : experience;
+  const profileExperience = isGymOperator ? GYM_OPERATOR_EXPERIENCE : experience;
   const defaults = useMemo(
     () =>
       getApplyFormDefaultsFromProfile({
@@ -81,10 +84,12 @@ export function ApplyButton({
   );
 
   const [loading, setLoading] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(Boolean(userId));
   const [error, setError] = useState<string | null>(null);
-  const [selectedWeightClass, setSelectedWeightClass] = useState(
-    defaults.weightClass,
-  );
+  const [applicantName, setApplicantName] = useState(displayName?.trim() ?? "");
+  const [applicantPhone, setApplicantPhone] = useState(formatPhoneInput(phone ?? ""));
+  const [selectedGender, setSelectedGender] = useState(gender?.trim() ?? "");
+  const [selectedWeightClass, setSelectedWeightClass] = useState(defaults.weightClass);
   const [background, setBackground] = useState<
     (typeof APPLICANT_BACKGROUND_OPTIONS)[number]["value"] | ""
   >(defaults.background);
@@ -95,6 +100,49 @@ export function ApplyButton({
   const [applicantNotes, setApplicantNotes] = useState("");
   const [applyMode, setApplyMode] = useState<ApplyMode>("solo");
   const [companionIds, setCompanionIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!userId) {
+      setProfileLoading(false);
+      return;
+    }
+
+    let active = true;
+
+    async function loadIdentity() {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name, phone, gender, weight_class")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (!active) return;
+
+      if (data) {
+        if (!applicantName.trim() && data.display_name?.trim()) {
+          setApplicantName(data.display_name.trim());
+        }
+        if (!applicantPhone.trim() && data.phone?.trim()) {
+          setApplicantPhone(formatPhoneInput(data.phone));
+        }
+        if (!selectedGender && data.gender?.trim()) {
+          setSelectedGender(data.gender.trim());
+        }
+        if (!selectedWeightClass && data.weight_class?.trim()) {
+          setSelectedWeightClass(data.weight_class.trim());
+        }
+      }
+
+      setProfileLoading(false);
+    }
+
+    void loadIdentity();
+
+    return () => {
+      active = false;
+    };
+  }, [userId]);
 
   const previewExperience = isGymOperator
     ? GYM_OPERATOR_EXPERIENCE
@@ -108,8 +156,8 @@ export function ApplyButton({
     previewExperience,
   );
   const weightClassOptions = useMemo(
-    () => getWeightClassOptionsForGender(gender),
-    [gender],
+    () => getWeightClassOptionsForGender(selectedGender),
+    [selectedGender],
   );
 
   if (!userId) {
@@ -128,17 +176,13 @@ export function ApplyButton({
 
   if (existingRegistration) {
     const label =
-      existingRegistration.status === "pending"
-        ? "승인 대기 중"
-        : "참가 확정됨";
+      existingRegistration.status === "pending" ? "승인 대기 중" : "참가 확정됨";
     return (
       <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-center">
         <p className="text-sm font-semibold text-green-800">{label}</p>
         <ParticipantPartySummary
           partyId={existingRegistration.party_id}
-          partyRepresentativeUserId={
-            existingRegistration.party_representative_user_id
-          }
+          partyRepresentativeUserId={existingRegistration.party_representative_user_id}
           userId={userId}
         />
         <Link
@@ -160,6 +204,22 @@ export function ApplyButton({
   }
 
   async function handleApply() {
+    if (!applicantName.trim()) {
+      setError("실명을 입력해주세요.");
+      return;
+    }
+
+    const phoneDigits = applicantPhone.replace(/\D/g, "");
+    if (phoneDigits.length < 10 || phoneDigits.length > 11) {
+      setError("연락처를 올바르게 입력해주세요.");
+      return;
+    }
+
+    if (!selectedGender) {
+      setError("성별을 선택해주세요.");
+      return;
+    }
+
     if (!selectedWeightClass.trim()) {
       setError("체급을 선택해주세요.");
       return;
@@ -202,6 +262,9 @@ export function ApplyButton({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           mode: applyMode,
+          applicantName: applicantName.trim(),
+          applicantPhone,
+          applicantGender: selectedGender,
           applyWeightClass: selectedWeightClass.trim(),
           applyExperience,
           gymAffiliation: gymAffiliation.trim() || null,
@@ -223,19 +286,19 @@ export function ApplyButton({
         return;
       }
 
-      if (applyMode === "party") {
-        window.alert(
-          `동행 신청이 완료되었습니다.\n운동 친구 ${companionIds.length}명과 함께 신청했습니다.`,
-        );
-      } else {
-        window.alert("참가 신청이 완료되었습니다.");
-      }
-
       router.push(`/events/${eventId}/apply/complete`);
     } catch {
       setLoading(false);
       setError("참가 신청 요청에 실패했습니다. 잠시 후 다시 시도해주세요.");
     }
+  }
+
+  if (profileLoading) {
+    return (
+      <div className="rounded-xl border border-zinc-200 bg-white p-4 text-sm text-zinc-600">
+        저장된 참가 정보를 불러오고 있어요...
+      </div>
+    );
   }
 
   return (
@@ -281,26 +344,74 @@ export function ApplyButton({
       )}
 
       <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-        <p className="text-sm font-medium text-zinc-900">참가 정보</p>
-        <p className="mt-1 text-xs text-zinc-500">
-          체급·수련 정보만 예정 참가자에게 공개됩니다.
-        </p>
-        <p className="mt-1 text-xs text-zinc-400">
-          🔒 실명과 연락처는 공개되지 않습니다.
+        <p className="text-sm font-medium text-zinc-900">신청자 확인</p>
+        <p className="mt-1 text-xs leading-5 text-zinc-500">
+          처음 한 번 입력하면 다음 신청부터 자동으로 불러옵니다. 실명과 연락처는 해당 이벤트 운영자에게만 제공됩니다.
         </p>
 
         <div className="mt-4 flex flex-col gap-3">
           <label className="flex flex-col gap-1 text-sm">
-            <FieldLabel required tone="red">
-              체급
-            </FieldLabel>
+            <FieldLabel required tone="red">실명</FieldLabel>
+            <input
+              value={applicantName}
+              onChange={(e) => setApplicantName(e.target.value)}
+              placeholder="예: 홍길동"
+              autoComplete="name"
+              className="rounded-lg border border-zinc-300 bg-white px-3 py-2"
+            />
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm">
+            <FieldLabel required tone="red">연락처</FieldLabel>
+            <input
+              type="tel"
+              value={applicantPhone}
+              onChange={(e) => setApplicantPhone(formatPhoneInput(e.target.value))}
+              placeholder="010-0000-0000"
+              inputMode="tel"
+              autoComplete="tel"
+              className="rounded-lg border border-zinc-300 bg-white px-3 py-2"
+            />
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm">
+            <FieldLabel required tone="red">성별</FieldLabel>
             <select
-              required
-              value={selectedWeightClass}
-              onChange={(e) => setSelectedWeightClass(e.target.value)}
+              value={selectedGender}
+              onChange={(e) => {
+                setSelectedGender(e.target.value);
+                setSelectedWeightClass("");
+              }}
               className="rounded-lg border border-zinc-300 bg-white px-3 py-2"
             >
               <option value="">선택</option>
+              {GENDER_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+        <p className="text-sm font-medium text-zinc-900">운동 정보</p>
+        <p className="mt-1 text-xs text-zinc-500">
+          체급과 수련 정보는 참가자 매칭과 운영을 위해 사용됩니다.
+        </p>
+
+        <div className="mt-4 flex flex-col gap-3">
+          <label className="flex flex-col gap-1 text-sm">
+            <FieldLabel required tone="red">체급</FieldLabel>
+            <select
+              required
+              value={selectedWeightClass}
+              disabled={!selectedGender}
+              onChange={(e) => setSelectedWeightClass(e.target.value)}
+              className="rounded-lg border border-zinc-300 bg-white px-3 py-2 disabled:bg-zinc-100"
+            >
+              <option value="">{selectedGender ? "선택" : "성별을 먼저 선택해주세요"}</option>
               {weightClassOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
@@ -322,9 +433,7 @@ export function ApplyButton({
           ) : (
             <>
               <label className="flex flex-col gap-1 text-sm">
-                <FieldLabel required tone="red">
-                  수련 배경
-                </FieldLabel>
+                <FieldLabel required tone="red">수련 배경</FieldLabel>
                 <select
                   required
                   value={background}
@@ -354,9 +463,7 @@ export function ApplyButton({
 
               {background === "일반 수련자" && (
                 <label className="flex flex-col gap-1 text-sm">
-                  <FieldLabel required tone="red">
-                    수련 기간
-                  </FieldLabel>
+                  <FieldLabel required tone="red">수련 기간</FieldLabel>
                   <select
                     required
                     value={years}
