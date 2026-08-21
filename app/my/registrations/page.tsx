@@ -68,6 +68,7 @@ export default async function MyRegistrationsPage({ searchParams }: PageProps) {
           id: reg.id,
           eventId: reg.event_id,
           status: reg.status as RegistrationStatus,
+          cancelledByEvent: Boolean(reg.cancelled_by_event),
           title: event.title,
           eventDate: event.event_date,
           eventTime: event.event_time,
