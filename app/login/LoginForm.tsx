@@ -6,6 +6,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Alert } from "@/components/Alert";
 import { AuthBrandHero } from "@/components/auth/AuthBrandHero";
+import { KakaoLoginButton } from "@/components/auth/KakaoLoginButton";
 import { PasswordInput, SignupField, SignupInput } from "@/components/SignupField";
 import { mapSignupError } from "@/lib/utils/auth-errors";
 
@@ -52,6 +53,14 @@ export default function LoginForm() {
           <Alert message={error} />
         </div>
       )}
+
+      <KakaoLoginButton next={redirect} />
+
+      <div className="my-5 flex items-center gap-3" aria-hidden="true">
+        <div className="h-px flex-1 bg-zinc-200" />
+        <span className="text-xs text-zinc-400">또는 이메일로 로그인</span>
+        <div className="h-px flex-1 bg-zinc-200" />
+      </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <SignupField label="이메일" required>
