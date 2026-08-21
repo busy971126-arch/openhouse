@@ -16,6 +16,10 @@ function getSafeNext(value: string | null) {
   return value;
 }
 
+function getRoleOnboardingPath(next: string) {
+  return `/onboarding/role?next=${encodeURIComponent(next)}`;
+}
+
 export default function OnboardingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -51,7 +55,7 @@ export default function OnboardingPage() {
         await Promise.all([
           supabase
             .from("profiles")
-            .select("nickname")
+            .select("nickname, initial_use_intent")
             .eq("id", user.id)
             .single(),
           supabase
@@ -99,7 +103,9 @@ export default function OnboardingPage() {
       }
 
       if (existingNickname && currentConsent) {
-        router.replace(next);
+        router.replace(
+          profile?.initial_use_intent ? next : getRoleOnboardingPath(next),
+        );
         router.refresh();
         return;
       }
@@ -182,7 +188,7 @@ export default function OnboardingPage() {
       }
     }
 
-    router.replace(next);
+    router.replace(getRoleOnboardingPath(next));
     router.refresh();
   }
 
