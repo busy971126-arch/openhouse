@@ -5,10 +5,6 @@ import { getEvent } from "@/lib/queries/events";
 import { getEventDisplayAddress } from "@/lib/utils/event-location";
 import { formatEventDetailDate, formatEventTimeDisplay } from "@/lib/utils/date";
 import { formatEventType } from "@/lib/constants/event-types";
-import {
-  getDefaultScheduleTabForEventDate,
-  scheduleTabHref,
-} from "@/lib/utils/my-schedule";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -38,7 +34,6 @@ export default async function ApplyCompletePage({ params }: PageProps) {
     redirect(`/events/${eventId}`);
   }
 
-  const scheduleTab = getDefaultScheduleTabForEventDate(event.event_date);
   const timeLabel = formatEventTimeDisplay(event.event_time);
 
   const gym = event.gyms as { name: string; address: string | null; region: string } | null;
@@ -52,8 +47,8 @@ export default async function ApplyCompletePage({ params }: PageProps) {
         <h1 className="mt-3 text-xl font-bold text-zinc-900">신청이 완료되었습니다</h1>
         <p className="mt-2 text-sm text-zinc-600">
           {isApproved
-            ? "참가가 확정되었습니다. 내 일정에서 확인할 수 있습니다."
-            : "호스트 승인 후 참가가 확정됩니다. 내 일정에서 상태를 확인할 수 있습니다."}
+            ? "참가가 확정되었습니다. 내 일정 캘린더에서 확인할 수 있습니다."
+            : "호스트 승인 후 참가가 확정됩니다. 내 일정 캘린더에서 상태를 확인할 수 있습니다."}
         </p>
       </div>
 
@@ -84,10 +79,10 @@ export default async function ApplyCompletePage({ params }: PageProps) {
 
       <div className="flex flex-col gap-3">
         <Link
-          href={`${scheduleTabHref(scheduleTab)}&applied=1`}
+          href={`/my/registrations?applied=1&date=${encodeURIComponent(event.event_date)}`}
           className="rounded-xl bg-orange-600 py-3.5 text-center text-base font-semibold text-white hover:bg-orange-700"
         >
-          내 일정 보기
+          내 일정 캘린더 보기
         </Link>
         <Link
           href={`/events/${eventId}`}
