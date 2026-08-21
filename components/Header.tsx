@@ -19,18 +19,18 @@ export function Header({ isLoggedIn }: HeaderProps) {
   return (
     <header className="sticky top-0 z-10 border-b border-zinc-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex min-h-14 max-w-lg items-center justify-between px-4 py-2">
-        <Link
-          href="/"
-          className="text-lg font-bold leading-none text-orange-600"
-        >
-          OpenHouse
+        <Link href="/" className="group flex items-center gap-2" aria-label="OpenHouse 홈">
+          <span className="h-4 w-1 bg-orange-600 transition group-hover:h-5" />
+          <span className="text-[13px] font-black tracking-[0.14em] text-zinc-950">
+            OPENHOUSE
+          </span>
         </Link>
         {!isLoggedIn && (
           <Link
             href="/login"
-            className="rounded-full bg-orange-600 px-3 py-1.5 text-sm text-white hover:bg-orange-700"
+            className="text-xs font-semibold tracking-wide text-zinc-700 hover:text-orange-600"
           >
-            로그인
+            LOGIN
           </Link>
         )}
       </div>
