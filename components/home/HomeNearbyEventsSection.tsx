@@ -76,16 +76,16 @@ async function HomeNearbyEvents() {
         <div className="space-y-3 px-4 py-4">
           <p className="text-sm text-zinc-600">
             {user
-              ? "프로필 지역 기준으로 가까운 이벤트를 찾아보세요."
+              ? "운동 프로필 지역 기준으로 가까운 이벤트를 찾아보세요."
               : "내 위치나 관심 지역 기준으로 이벤트를 찾아보세요."}
           </p>
           <HomeNearbyLocationAction />
           {user ? (
             <Link
-              href="/my/profile/edit"
+              href="/my/profile/edit/sports"
               className="block text-center text-sm font-medium text-orange-600 hover:text-orange-700"
             >
-              프로필에 지역 설정 →
+              운동 프로필에 지역 설정 →
             </Link>
           ) : (
             <Link
