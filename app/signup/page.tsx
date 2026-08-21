@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import { Alert } from "@/components/Alert";
 import { AuthBrandHero } from "@/components/auth/AuthBrandHero";
 import { KakaoLoginButton } from "@/components/auth/KakaoLoginButton";
+import { TermsConsent } from "@/components/auth/TermsConsent";
 import { NicknameField } from "@/components/NicknameField";
 import { PasswordInput, SignupField, SignupInput } from "@/components/SignupField";
 
@@ -15,10 +16,20 @@ export default function SignupPage() {
   const [verifiedNickname, setVerifiedNickname] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [marketingAccepted, setMarketingAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const errorRef = useRef<HTMLDivElement>(null);
+
+  function showError(message: string) {
+    setError(message);
+    requestAnimationFrame(() =>
+      errorRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }),
+    );
+  }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -27,20 +38,22 @@ export default function SignupPage() {
 
     const trimmedNickname = nickname.trim();
     if (!verifiedNickname || verifiedNickname !== trimmedNickname) {
-      setError("닉네임 중복확인을 완료해주세요.");
-      requestAnimationFrame(() =>
-        errorRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }),
-      );
+      showError("닉네임 중복확인을 완료해주세요.");
       return;
     }
 
     if (!email.trim()) {
-      setError("이메일을 입력해주세요.");
+      showError("이메일을 입력해주세요.");
       return;
     }
 
     if (password.length < 8) {
-      setError("비밀번호는 8자 이상이어야 합니다.");
+      showError("비밀번호는 8자 이상이어야 합니다.");
+      return;
+    }
+
+    if (!termsAccepted || !privacyAccepted) {
+      showError("OpenHouse 이용약관과 개인정보 처리방침에 동의해주세요.");
       return;
     }
 
@@ -57,13 +70,18 @@ export default function SignupPage() {
             nickname: verifiedNickname,
             preferred_sports: ["유도"],
           },
+          consents: {
+            termsAccepted,
+            privacyAccepted,
+            marketingAccepted,
+          },
         }),
       });
 
       const result = await response.json();
 
       if (!response.ok) {
-        setError(result.error ?? "회원가입에 실패했습니다.");
+        showError(result.error ?? "회원가입에 실패했습니다.");
         setLoading(false);
         return;
       }
@@ -78,7 +96,7 @@ export default function SignupPage() {
       setLoading(false);
     } catch (cause) {
       console.error("signup request error:", cause);
-      setError(
+      showError(
         "회원가입 요청에 실패했습니다. 인터넷 연결을 확인하고 다시 시도해주세요.",
       );
       setLoading(false);
@@ -116,7 +134,7 @@ export default function SignupPage() {
 
       <KakaoLoginButton next="/events" />
       <p className="mt-2 text-center text-xs text-zinc-500">
-        카카오로 시작하면 이메일과 비밀번호를 따로 입력하지 않아도 됩니다.
+        카카오 인증 후 OpenHouse 닉네임과 필수 약관 동의를 한 번만 진행합니다.
       </p>
 
       <div className="my-5 flex items-center gap-3" aria-hidden="true">
@@ -157,6 +175,15 @@ export default function SignupPage() {
             </SignupField>
           </div>
         </div>
+
+        <TermsConsent
+          termsAccepted={termsAccepted}
+          privacyAccepted={privacyAccepted}
+          marketingAccepted={marketingAccepted}
+          onTermsChange={setTermsAccepted}
+          onPrivacyChange={setPrivacyAccepted}
+          onMarketingChange={setMarketingAccepted}
+        />
 
         <button
           type="submit"
