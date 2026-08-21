@@ -29,6 +29,7 @@ const SOLO_BUSINESS_ERROR_CODES = [
   "EXPERIENCE_REQUIRED",
   "EVENT_NOT_FOUND",
   "EVENT_CANCELLED",
+  "EVENT_STARTED",
   "REGISTRATION_CLOSED",
 ] as const;
 
@@ -133,7 +134,9 @@ export async function POST(request: Request, context: RouteContext) {
 
   const { data: event, error: eventError } = await supabase
     .from("events")
-    .select("id, registration_deadline, recruitment_closed, status")
+    .select(
+      "id, event_date, event_time, registration_deadline, recruitment_closed, status",
+    )
     .eq("id", eventId)
     .maybeSingle();
 
