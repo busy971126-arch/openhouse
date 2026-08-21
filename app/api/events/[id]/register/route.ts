@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { normalizePhone } from "@/lib/utils/phone";
 import { getRegistrationApplyBlockMessage } from "@/lib/utils/event-status";
 import {
   isMissingRegistrationRpc,
@@ -11,6 +12,9 @@ type RouteContext = { params: Promise<{ id: string }> };
 
 type RegisterBody = {
   mode?: "solo" | "party";
+  applicantName?: string;
+  applicantPhone?: string;
+  applicantGender?: string;
   applyWeightClass?: string;
   applyExperience?: string;
   gymAffiliation?: string | null;
@@ -94,8 +98,27 @@ export async function POST(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "잘못된 요청입니다." }, { status: 400 });
   }
 
+  const applicantName = body.applicantName?.trim() ?? "";
+  const applicantPhone = normalizePhone(body.applicantPhone ?? "") ?? "";
+  const applicantGender = body.applicantGender?.trim() ?? "";
   const applyWeightClass = body.applyWeightClass?.trim() ?? "";
   const applyExperience = body.applyExperience?.trim() ?? "";
+  const phoneDigits = applicantPhone.replace(/\D/g, "");
+
+  if (!applicantName) {
+    return NextResponse.json({ error: "실명을 입력해주세요." }, { status: 400 });
+  }
+
+  if (phoneDigits.length < 10 || phoneDigits.length > 11) {
+    return NextResponse.json(
+      { error: "연락처를 올바르게 입력해주세요." },
+      { status: 400 },
+    );
+  }
+
+  if (applicantGender !== "남성" && applicantGender !== "여성") {
+    return NextResponse.json({ error: "성별을 선택해주세요." }, { status: 400 });
+  }
 
   if (!applyWeightClass) {
     return NextResponse.json({ error: "체급을 선택해주세요." }, { status: 400 });
@@ -131,6 +154,25 @@ export async function POST(request: Request, context: RouteContext) {
   const closedMessage = getRegistrationApplyBlockMessage(event);
   if (closedMessage) {
     return NextResponse.json({ error: closedMessage }, { status: 400 });
+  }
+
+  const { error: profileError } = await supabase
+    .from("profiles")
+    .update({
+      display_name: applicantName,
+      phone: applicantPhone,
+      gender: applicantGender,
+      weight_class: applyWeightClass,
+      experience: applyExperience,
+    })
+    .eq("id", user.id);
+
+  if (profileError) {
+    console.error("registration profile save error:", profileError);
+    return NextResponse.json(
+      { error: "참가 정보를 저장하지 못했습니다. 잠시 후 다시 시도해주세요." },
+      { status: 500 },
+    );
   }
 
   const mode = body.mode ?? "solo";
@@ -201,6 +243,9 @@ export async function POST(request: Request, context: RouteContext) {
 
   const fallbackError = await insertRegistrationFallback(eventId, user.id, {
     ...body,
+    applicantName,
+    applicantPhone,
+    applicantGender,
     applyWeightClass,
     applyExperience,
   });
