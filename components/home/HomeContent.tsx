@@ -16,10 +16,10 @@ function HomeIntro({ displayLabel }: { displayLabel?: string }) {
         <p className="mt-4 text-sm font-medium text-zinc-600">{displayLabel}님</p>
       )}
       <h1 className={`${displayLabel ? "mt-1 " : "mt-3 "}text-[28px] font-black leading-[1.15] tracking-[-0.03em] text-zinc-950`}>
-        이번 주, 어디서 운동할까?
+        이번 주, 새로운 매트로.
       </h1>
       <p className="mt-3 text-sm leading-6 text-zinc-600">
-        오픈매트·세미나·대회. 지금은 유도부터.
+        유도 오픈매트·세미나·대회를 한곳에서.
       </p>
     </section>
   );
