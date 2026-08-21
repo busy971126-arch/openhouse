@@ -23,20 +23,6 @@ function shouldShowFacilityLabel(photo: GymDisplayPhoto): boolean {
   return photo.showFacilityLabel !== false && photo.label.trim().length > 0;
 }
 
-function GymPhotoFacilityLabel({ label }: { label: string }) {
-  return (
-    <>
-      <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/80 via-black/40 to-transparent"
-        aria-hidden
-      />
-      <span className="absolute bottom-5 left-3 z-10 max-w-[80%] text-sm font-semibold leading-normal text-white whitespace-nowrap drop-shadow-[0_1px_4px_rgba(0,0,0,0.85)]">
-        {label}
-      </span>
-    </>
-  );
-}
-
 export function GymPhotoCarousel({
   photos,
   alt,
@@ -48,6 +34,7 @@ export function GymPhotoCarousel({
 }: GymPhotoCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [scrollPosition, setScrollPosition] = useState(0);
   const [brokenIndexes, setBrokenIndexes] = useState<Set<number>>(
     () => new Set(),
   );
@@ -60,6 +47,8 @@ export function GymPhotoCarousel({
 
   useEffect(() => {
     setBrokenIndexes(new Set());
+    setActiveIndex(0);
+    setScrollPosition(0);
   }, [photos]);
 
   useEffect(() => {
@@ -70,9 +59,14 @@ export function GymPhotoCarousel({
     const element = scrollRef.current;
     if (!element || element.clientWidth === 0) return;
 
-    const index = Math.round(element.scrollLeft / element.clientWidth);
+    const lastIndex = Math.max(photos.length - 1, 0);
+    const rawPosition = element.scrollLeft / element.clientWidth;
+    const nextPosition = Math.min(lastIndex, Math.max(0, rawPosition));
+    const index = Math.round(nextPosition);
+
+    setScrollPosition(nextPosition);
     setActiveIndex(index);
-  }, []);
+  }, [photos.length]);
 
   function scrollTo(index: number) {
     const element = scrollRef.current;
@@ -96,13 +90,25 @@ export function GymPhotoCarousel({
   if (photos.length === 0) {
     return (
       <div
-        className={`flex items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-200 text-5xl ${aspectClass} ${className}`}
+        className={`flex items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-200 text-xs font-black tracking-[0.14em] text-zinc-400 ${aspectClass} ${className}`}
         aria-hidden
       >
-        🏢
+        OPENHOUSE
       </div>
     );
   }
+
+  const lowerIndex = Math.floor(scrollPosition);
+  const upperIndex = Math.min(photos.length - 1, Math.ceil(scrollPosition));
+  const progress = scrollPosition - lowerIndex;
+  const lowerHasLabel =
+    showPhotoLabels && shouldShowFacilityLabel(photos[lowerIndex]) ? 1 : 0;
+  const upperHasLabel =
+    showPhotoLabels && shouldShowFacilityLabel(photos[upperIndex]) ? 1 : 0;
+  const labelOverlayOpacity =
+    lowerIndex === upperIndex
+      ? lowerHasLabel
+      : lowerHasLabel * (1 - progress) + upperHasLabel * progress;
 
   return (
     <div className={`relative overflow-hidden bg-zinc-100 ${className}`}>
@@ -118,8 +124,8 @@ export function GymPhotoCarousel({
             className={`relative min-w-full flex-[0_0_100%] snap-center ${aspectClass}`}
           >
             {brokenIndexes.has(index) ? (
-              <div className="flex h-full w-full items-center justify-center bg-zinc-200 text-4xl">
-                🏢
+              <div className="flex h-full w-full items-center justify-center bg-zinc-200 text-xs font-black tracking-[0.14em] text-zinc-400">
+                OPENHOUSE
               </div>
             ) : (
               <img
@@ -131,12 +137,32 @@ export function GymPhotoCarousel({
                 onError={() => markBroken(index)}
               />
             )}
-            {showPhotoLabels && shouldShowFacilityLabel(photo) && (
-              <GymPhotoFacilityLabel label={photo.label} />
-            )}
           </div>
         ))}
       </div>
+
+      {showPhotoLabels && (
+        <div className="pointer-events-none absolute inset-0 z-10" aria-hidden>
+          <div
+            className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/80 via-black/40 to-transparent will-change-[opacity]"
+            style={{ opacity: labelOverlayOpacity }}
+          />
+          {photos.map((photo, index) => {
+            if (!shouldShowFacilityLabel(photo)) return null;
+
+            const opacity = Math.max(0, 1 - Math.abs(scrollPosition - index));
+            return (
+              <span
+                key={`label-${index}`}
+                className="absolute bottom-5 left-3 max-w-[80%] whitespace-nowrap text-sm font-semibold leading-normal text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.85)] will-change-[opacity]"
+                style={{ opacity }}
+              >
+                {photo.label}
+              </span>
+            );
+          })}
+        </div>
+      )}
 
       {photos.length > 1 && (
         <>
