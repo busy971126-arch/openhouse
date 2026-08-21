@@ -4,6 +4,7 @@ import { getHostRegistrationCountsFullByEventIds } from "@/lib/queries/host-regi
 import { REGISTRATION_WITH_PROFILE_SELECT } from "@/lib/queries/registration-select";
 import { mapRegistrationToParticipantItem } from "@/lib/utils/participant-items";
 import type { ParticipantItem } from "@/lib/utils/participant-items";
+import type { EventLifecycleStatus } from "@/lib/types/database";
 
 export type HostGymOption = {
   id: string;
@@ -22,7 +23,11 @@ export type HostEventOption = {
   id: string;
   title: string;
   eventDate: string;
+  eventTime: string | null;
   maxParticipants: number | null;
+  recruitmentClosed: boolean;
+  registrationDeadline: string | null;
+  status: EventLifecycleStatus;
   counts: HostEventCounts;
 };
 
@@ -60,7 +65,9 @@ export async function getHostEventsForGym(
 
   const { data: events, error } = await supabase
     .from("events")
-    .select("id, title, event_date, max_participants")
+    .select(
+      "id, title, event_date, event_time, max_participants, recruitment_closed, registration_deadline, status",
+    )
     .eq("gym_id", gymId)
     .order("event_date", { ascending: false });
 
@@ -76,7 +83,11 @@ export async function getHostEventsForGym(
       id: event.id,
       title: event.title,
       eventDate: event.event_date,
+      eventTime: event.event_time,
       maxParticipants: event.max_participants,
+      recruitmentClosed: event.recruitment_closed ?? false,
+      registrationDeadline: event.registration_deadline,
+      status: (event.status ?? "active") as EventLifecycleStatus,
       counts: countsMap.get(event.id) ?? {
         approved: 0,
         pending: 0,
