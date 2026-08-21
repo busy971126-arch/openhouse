@@ -76,6 +76,7 @@ const REGISTRATION_APPLY_ERROR_CODES = [
   "COMPANION_ALREADY_REGISTERED",
   "EVENT_NOT_FOUND",
   "EVENT_CANCELLED",
+  "EVENT_STARTED",
   "REGISTRATION_CLOSED",
 ] as const;
 
@@ -104,6 +105,8 @@ export function mapRegistrationApplyError(
       return "이벤트를 찾을 수 없습니다.";
     case "EVENT_CANCELLED":
       return "취소된 이벤트입니다.";
+    case "EVENT_STARTED":
+      return "이미 시작된 이벤트라 참가 신청할 수 없습니다.";
     case "REGISTRATION_CLOSED":
       return "신청이 마감된 이벤트입니다.";
     default:

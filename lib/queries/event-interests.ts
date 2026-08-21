@@ -21,7 +21,7 @@ export async function getUserEventInterests(userId: string) {
   const { data, error } = await supabase
     .from("event_interests")
     .select(
-      "event_id, created_at, events(id, title, sport, region, event_date, event_type, max_participants, recruitment_closed, registration_deadline, status)",
+      "event_id, created_at, events(id, title, sport, region, event_date, event_time, event_type, max_participants, recruitment_closed, registration_deadline, status)",
     )
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
@@ -77,6 +77,7 @@ export async function enrichEventInterestsWithStatus(
               sport: string;
               region: string;
               event_date: string;
+              event_time: string | null;
               event_type: string;
               max_participants: number | null;
               recruitment_closed: boolean;
@@ -90,6 +91,7 @@ export async function enrichEventInterestsWithStatus(
       const { count } = await getApprovedCountForEvent(event.id);
       const recruitmentStatus = getEventRecruitmentStatus({
         eventDate: event.event_date,
+        eventTime: event.event_time,
         maxParticipants: event.max_participants,
         approvedCount: count,
         recruitmentClosed: event.recruitment_closed,

@@ -25,6 +25,7 @@ type MyRegistrationCardProps = {
   registrationId: string;
   eventId: string;
   status: RegistrationStatus;
+  cancelledByEvent?: boolean;
   title: string;
   eventDate: string;
   eventTime?: string | null;
@@ -38,6 +39,7 @@ export function MyRegistrationCard({
   registrationId,
   eventId,
   status,
+  cancelledByEvent = false,
   title,
   eventDate,
   eventTime,
@@ -51,7 +53,11 @@ export function MyRegistrationCard({
   const [error, setError] = useState<string | null>(null);
   const [currentStatus, setCurrentStatus] = useState(status);
 
-  const displayStatus = getRegistrationDisplayStatus(currentStatus, eventDate);
+  const displayStatus = getRegistrationDisplayStatus(
+    currentStatus,
+    eventDate,
+    cancelledByEvent,
+  );
   const statusInfo = REGISTRATION_STATUS_DISPLAY[displayStatus];
   const canCancel = canCancelRegistration(currentStatus, eventDate);
   const whenLabel = formatScheduleWhenLabel(eventDate, eventTime);
@@ -108,13 +114,19 @@ export function MyRegistrationCard({
           <span className={`text-xs font-medium ${statusInfo.className}`}>
             {statusInfo.emoji} {statusInfo.label}
           </span>
-          {emphasizeToday && (
+          {emphasizeToday && currentStatus !== "cancelled" && (
             <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold text-orange-700">
               {formatScheduleCountdown(eventDate)}
             </span>
           )}
         </div>
       </div>
+
+      {cancelledByEvent && currentStatus === "cancelled" && (
+        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
+          운영자가 이벤트를 취소했습니다. 일정에서 상태를 확인해주세요.
+        </p>
+      )}
 
       {error && (
         <div className="mt-3">

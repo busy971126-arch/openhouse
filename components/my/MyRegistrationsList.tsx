@@ -11,6 +11,7 @@ export type MyRegistrationItem = {
   id: string;
   eventId: string;
   status: RegistrationStatus;
+  cancelledByEvent: boolean;
   title: string;
   eventDate: string;
   eventTime: string | null;
@@ -300,6 +301,7 @@ export function MyRegistrationsList({
                     registrationId={registration.id}
                     eventId={registration.eventId}
                     status={registration.status}
+                    cancelledByEvent={registration.cancelledByEvent}
                     title={registration.title}
                     eventDate={registration.eventDate}
                     eventTime={registration.eventTime}
@@ -354,7 +356,7 @@ export function MyRegistrationsList({
                   : "text-zinc-600 hover:text-zinc-900"
               }`}
             >
-              지난 ({past.length})
+              지난·취소 ({past.length})
             </button>
           </div>
 
@@ -364,7 +366,7 @@ export function MyRegistrationsList({
                 message={
                   listTab === "upcoming"
                     ? "예정된 참가 일정이 없습니다."
-                    : "지난 참가 이력이 없습니다."
+                    : "지난 일정이나 취소된 신청이 없습니다."
                 }
               />
               {listTab === "upcoming" && (
@@ -388,6 +390,7 @@ export function MyRegistrationsList({
                         registrationId={registration.id}
                         eventId={registration.eventId}
                         status={registration.status}
+                        cancelledByEvent={registration.cancelledByEvent}
                         title={registration.title}
                         eventDate={registration.eventDate}
                         eventTime={registration.eventTime}
