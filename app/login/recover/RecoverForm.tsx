@@ -113,12 +113,9 @@ export default function RecoverForm() {
         </form>
       </section>
 
-      <p className="mt-5 text-center text-xs text-zinc-500">
-        가입 방식을 기억하기 어렵다면{" "}
-        <Link href="/my/inquiries" className="text-orange-600 underline">
-          문의하기
-        </Link>
-        를 이용해주세요.
+      <p className="mt-5 text-center text-xs leading-5 text-zinc-500">
+        가입 방식이 기억나지 않으면 카카오 로그인을 먼저 시도하고, 이메일로
+        가입한 것이 확실한 경우에만 비밀번호 재설정을 요청해주세요.
       </p>
     </div>
   );
