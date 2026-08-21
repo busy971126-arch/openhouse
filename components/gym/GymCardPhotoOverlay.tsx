@@ -1,5 +1,4 @@
 import type { GymDisplayPhoto } from "@/lib/utils/gym-display-photos";
-import { getSportEmoji } from "@/lib/constants/profile";
 import {
   OverlayBadgePrimary,
   OverlayBadgeSecondary,
@@ -27,7 +26,7 @@ export function GymCardPhotoOverlay({
 
       <div className="pointer-events-none absolute left-3 top-3 z-20 flex flex-wrap gap-1.5">
         <OverlayBadgePrimary>
-          {getSportEmoji(sport)} {sport}
+          <span className="text-[10px] font-black uppercase tracking-[0.12em]">{sport}</span>
         </OverlayBadgePrimary>
         {privateBadge && (
           <OverlayBadgeSecondary className="bg-zinc-900/70 text-white">

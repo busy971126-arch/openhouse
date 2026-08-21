@@ -29,8 +29,8 @@ export function GymListCard({
   const gymHref = `/gym/${gym.id}`;
 
   return (
-    <article className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition hover:border-orange-300 hover:shadow-md">
-      <Link href={gymHref} className="relative block">
+    <article className="overflow-hidden border-b border-zinc-300 pb-5 last:border-b-0">
+      <Link href={gymHref} className="relative block overflow-hidden bg-zinc-100">
         <GymPhotoCarousel
           photos={photos}
           alt={gym.name}
@@ -45,14 +45,17 @@ export function GymListCard({
         )}
       </Link>
 
-      <div className="px-3 py-3">
-        <div className="flex min-w-0 items-center">
-          <Link
-            href={gymHref}
-            className="min-w-0 truncate text-lg font-semibold text-zinc-900 hover:text-orange-700"
-          >
-            {gym.name}
-          </Link>
+      <div className="pt-3.5">
+        <div className="flex min-w-0 items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-[10px] font-black uppercase tracking-[0.12em] text-zinc-400">{sport}</p>
+            <Link
+              href={gymHref}
+              className="mt-1 block truncate text-[19px] font-black tracking-[-0.025em] text-zinc-950 hover:text-orange-700"
+            >
+              {gym.name}
+            </Link>
+          </div>
           <InterestHeart
             kind="gym"
             targetId={gym.id}
@@ -60,18 +63,22 @@ export function GymListCard({
             userId={userId}
             loginRedirect={gymHref}
             size="xs"
-            className="-ml-1.5"
           />
         </div>
         <Link
           href={gymHref}
-          className="mt-0.5 block truncate text-sm text-zinc-600 hover:text-zinc-800"
+          className="mt-1.5 block truncate text-sm text-zinc-600 hover:text-zinc-800"
         >
           {addressLine}
         </Link>
-        {recommendReason ? (
-          <p className="mt-2 text-xs text-zinc-500">{recommendReason}</p>
-        ) : null}
+        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-zinc-500">
+          <span>
+            {gym.upcomingEventCount > 0
+              ? `예정 이벤트 ${gym.upcomingEventCount}개`
+              : "예정 이벤트 없음"}
+          </span>
+          {recommendReason ? <span>{recommendReason}</span> : null}
+        </div>
       </div>
     </article>
   );
