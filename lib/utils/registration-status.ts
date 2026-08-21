@@ -5,6 +5,7 @@ export type RegistrationDisplayStatus =
   | "pending"
   | "approved"
   | "cancelled"
+  | "event_cancelled"
   | "rejected"
   | "ended";
 
@@ -16,14 +17,18 @@ export const REGISTRATION_STATUS_DISPLAY: Record<
   approved: { label: "참가 확정", emoji: "🟢", className: "text-green-700" },
   ended: { label: "종료", emoji: "⚫", className: "text-zinc-500" },
   cancelled: { label: "참가 취소", emoji: "🔴", className: "text-red-600" },
+  event_cancelled: { label: "이벤트 취소", emoji: "🔴", className: "text-red-600" },
   rejected: { label: "참가 거절", emoji: "🔴", className: "text-red-600" },
 };
 
 export function getRegistrationDisplayStatus(
   status: RegistrationStatus,
   eventDate: string | null,
+  cancelledByEvent = false,
 ): RegistrationDisplayStatus {
-  if (status === "cancelled") return "cancelled";
+  if (status === "cancelled") {
+    return cancelledByEvent ? "event_cancelled" : "cancelled";
+  }
   if (status === "rejected") return "rejected";
   if (eventDate && eventDate < getTodayDateString()) return "ended";
   if (status === "approved") return "approved";
