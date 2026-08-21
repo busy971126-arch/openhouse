@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { LoginRequiredPromptButton } from "@/components/auth/LoginRequiredPromptButton";
 import {
   EVENT_TYPE_OPTIONS,
   formatEventType,
@@ -27,7 +26,6 @@ const FILTER_OPTIONS: { value: EventTypeFilter; label: string }[] = [
 
 type HomeRecruitingEventsPanelProps = {
   items: HomeEventPreviewItem[];
-  isLoggedIn: boolean;
   error?: boolean;
 };
 
@@ -74,7 +72,6 @@ function HomeEventScrollCard({ item }: { item: HomeEventPreviewItem }) {
 
 export function HomeRecruitingEventsPanel({
   items,
-  isLoggedIn,
   error = false,
 }: HomeRecruitingEventsPanelProps) {
   const [filter, setFilter] = useState<EventTypeFilter>("all");
@@ -88,7 +85,7 @@ export function HomeRecruitingEventsPanel({
     return (
       <section className="rounded-xl border border-orange-200 bg-orange-50/60">
         <div className="border-b border-orange-100 px-4 py-3">
-          <h2 className="text-sm font-semibold text-zinc-900">🔥 오늘 모집중</h2>
+          <h2 className="text-sm font-semibold text-zinc-900">🔥 지금 모집중</h2>
         </div>
         <div className="px-4 py-3">
           <Alert message="이벤트를 불러오지 못했습니다." />
@@ -102,21 +99,13 @@ export function HomeRecruitingEventsPanel({
   return (
     <section className="rounded-xl border border-orange-200 bg-orange-50/60">
       <div className="flex items-center justify-between gap-2 border-b border-orange-100 px-4 py-3">
-        <h2 className="text-sm font-semibold text-zinc-900">🔥 오늘 모집중</h2>
-        {isLoggedIn ? (
-          <Link
-            href="/events"
-            className="text-xs font-medium text-orange-600 hover:text-orange-700"
-          >
-            전체 보기 →
-          </Link>
-        ) : (
-          <LoginRequiredPromptButton
-            loginRedirect="/events"
-            description="로그인하면 이벤트 전체를 볼 수 있어요."
-            className="text-xs font-medium text-orange-600 hover:text-orange-700"
-          />
-        )}
+        <h2 className="text-sm font-semibold text-zinc-900">🔥 지금 모집중</h2>
+        <Link
+          href="/events"
+          className="text-xs font-medium text-orange-600 hover:text-orange-700"
+        >
+          전체 보기 →
+        </Link>
       </div>
 
       <div className="flex gap-1 overflow-x-auto px-4 py-3">

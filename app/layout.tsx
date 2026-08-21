@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://openhouse-gilt.vercel.app";
 
+const serviceDescription =
+  "주변 오픈매트·세미나·대회 정보를 찾고 바로 참가하는 스포츠 커뮤니티";
+
 const ogImage = {
   url: "/images/ohs-wordmark.jpg",
   width: 1024,
@@ -26,10 +29,10 @@ const ogImage = {
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "OHS openhouse",
-  description: "FIND · JOIN · PLAY",
+  description: serviceDescription,
   openGraph: {
     title: "OHS openhouse",
-    description: "FIND · JOIN · PLAY",
+    description: serviceDescription,
     siteName: "OpenHouse",
     locale: "ko_KR",
     type: "website",
@@ -38,7 +41,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "OHS openhouse",
-    description: "FIND · JOIN · PLAY",
+    description: serviceDescription,
     images: [ogImage.url],
   },
 };
