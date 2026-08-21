@@ -7,11 +7,17 @@ import { normalizePhone } from "@/lib/utils/phone";
 import { buildPendingGymInfo } from "@/lib/utils/pending-gym-info";
 import { GYM_OPERATOR_EXPERIENCE } from "@/lib/constants/profile";
 import { serializeRepresentativeRole } from "@/lib/constants/gym-representative";
+import { PRIVACY_VERSION, TERMS_VERSION } from "@/lib/constants/legal";
 
 type SignupBody = {
   email?: string;
   password?: string;
   profile?: Record<string, unknown>;
+  consents?: {
+    termsAccepted?: boolean;
+    privacyAccepted?: boolean;
+    marketingAccepted?: boolean;
+  };
   isGymOperator?: boolean;
   gym?: {
     name?: string;
@@ -136,11 +142,27 @@ export async function POST(request: Request) {
   const email = body.email?.trim() ?? "";
   const password = body.password ?? "";
   const profile = body.profile ?? {};
+  const consents = body.consents;
 
   if (!email || !password) {
     return NextResponse.json(
       { error: "이메일과 비밀번호를 입력해주세요." },
       { status: 400 },
+    );
+  }
+
+  if (!consents?.termsAccepted || !consents?.privacyAccepted) {
+    return NextResponse.json(
+      { error: "이용약관과 개인정보 처리방침에 동의해주세요." },
+      { status: 400 },
+    );
+  }
+
+  const admin = createAdminClient();
+  if (!admin) {
+    return NextResponse.json(
+      { error: "서버 설정 오류입니다. 잠시 후 다시 시도해주세요." },
+      { status: 500 },
     );
   }
 
@@ -239,6 +261,30 @@ export async function POST(request: Request) {
           "이미 가입된 이메일입니다. 로그인하거나 다른 이메일을 사용해주세요.",
       },
       { status: 400 },
+    );
+  }
+
+  const { error: consentError } = await admin
+    .from("user_consent_records")
+    .insert({
+      user_id: data.user.id,
+      terms_version: TERMS_VERSION,
+      privacy_version: PRIVACY_VERSION,
+      terms_agreed: true,
+      privacy_agreed: true,
+      marketing_agreed: Boolean(consents.marketingAccepted),
+      source: "signup_email",
+    });
+
+  if (consentError) {
+    console.error("signup consent save error:", consentError);
+    const { error: rollbackError } = await admin.auth.admin.deleteUser(data.user.id);
+    if (rollbackError) {
+      console.error("signup consent rollback error:", rollbackError);
+    }
+    return NextResponse.json(
+      { error: "약관 동의를 저장하지 못했습니다. 잠시 후 다시 시도해주세요." },
+      { status: 500 },
     );
   }
 

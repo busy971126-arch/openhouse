@@ -8,12 +8,20 @@ import { Alert } from "@/components/Alert";
 import { AuthBrandHero } from "@/components/auth/AuthBrandHero";
 import { KakaoLoginButton } from "@/components/auth/KakaoLoginButton";
 import { PasswordInput, SignupField, SignupInput } from "@/components/SignupField";
+import { PRIVACY_VERSION, TERMS_VERSION } from "@/lib/constants/legal";
 import { mapSignupError } from "@/lib/utils/auth-errors";
+
+function getSafeNext(value: string | null) {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+    return "/";
+  }
+  return value;
+}
 
 export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") ?? "/";
+  const redirect = getSafeNext(searchParams.get("redirect"));
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,18 +34,45 @@ export default function LoginForm() {
     setLoading(true);
 
     const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    setLoading(false);
-
     if (authError) {
+      setLoading(false);
       setError(mapSignupError(authError.message));
       return;
     }
 
+    if (authData.user) {
+      const { data: consent, error: consentError } = await supabase
+        .from("user_consent_records")
+        .select("terms_version, privacy_version")
+        .eq("user_id", authData.user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (consentError) {
+        console.error("login consent check error:", consentError);
+        setLoading(false);
+        setError("약관 동의 상태를 확인하지 못했습니다. 잠시 후 다시 시도해주세요.");
+        return;
+      }
+
+      const hasCurrentConsent =
+        consent?.terms_version === TERMS_VERSION &&
+        consent?.privacy_version === PRIVACY_VERSION;
+
+      if (!hasCurrentConsent) {
+        router.push(`/onboarding?next=${encodeURIComponent(redirect)}`);
+        router.refresh();
+        return;
+      }
+    }
+
+    setLoading(false);
     router.push(redirect);
     router.refresh();
   }
