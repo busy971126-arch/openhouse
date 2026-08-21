@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { GymListCard } from "@/components/gym/GymListCard";
+import { InterestHeart } from "@/components/interest/InterestHeart";
 import { getRecommendedGyms } from "@/lib/queries/gyms";
 import { getUserInterestedGymIds } from "@/lib/queries/interests";
 import { createClient } from "@/lib/supabase/server";
@@ -31,7 +31,7 @@ async function HomeRecommendedGyms() {
     profileRegions = profile?.regions ?? [];
   }
 
-  const gyms = await getRecommendedGyms(3);
+  const gyms = await getRecommendedGyms(6);
   const interestedGymIds = await getUserInterestedGymIds(user?.id);
 
   if (gyms.length === 0) {
@@ -41,24 +41,79 @@ async function HomeRecommendedGyms() {
   return (
     <section className="flex flex-col gap-3">
       <div className="flex items-end justify-between gap-2">
-        <h2 className="text-lg font-semibold text-zinc-900">추천 체육관</h2>
+        <div>
+          <h2 className="text-lg font-semibold text-zinc-900">추천 체육관</h2>
+          <p className="mt-0.5 text-xs text-zinc-500">옆으로 넘겨 더 둘러보세요.</p>
+        </div>
         <Link
           href="/events?tab=gyms"
-          className="text-sm font-medium text-orange-600 hover:text-orange-700"
+          className="shrink-0 text-sm font-medium text-orange-600 hover:text-orange-700"
         >
           전체 보기 →
         </Link>
       </div>
-      <div className="flex flex-col gap-3">
-        {gyms.map((gym) => (
-          <GymListCard
-            key={gym.id}
-            gym={gym}
-            recommendReason={formatGymRecommendReason(gym, profileRegions)}
-            userId={user?.id ?? null}
-            initialInterested={interestedGymIds.has(gym.id)}
-          />
-        ))}
+
+      <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {gyms.map((gym) => {
+          const gymHref = `/gym/${gym.id}`;
+          const sport = gym.sport ?? "유도";
+          const imageUrl = gym.photo_url?.trim() || null;
+          const recommendReason = formatGymRecommendReason(gym, profileRegions);
+
+          return (
+            <article
+              key={gym.id}
+              className="w-[74%] min-w-[250px] max-w-[310px] shrink-0 snap-start overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition hover:border-orange-300 hover:shadow-md"
+            >
+              <div className="relative">
+                <Link href={gymHref} className="block">
+                  <div className="aspect-[4/3] overflow-hidden bg-zinc-100">
+                    {imageUrl ? (
+                      <img
+                        src={imageUrl}
+                        alt={`${gym.name} 대표사진`}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-4xl text-zinc-300">
+                        🥋
+                      </div>
+                    )}
+                  </div>
+                </Link>
+
+                <div className="absolute left-2.5 top-2.5 rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+                  🥋 {sport}
+                </div>
+
+                <div className="absolute right-2 top-2 rounded-full bg-white/95 shadow-sm backdrop-blur-sm">
+                  <InterestHeart
+                    kind="gym"
+                    targetId={gym.id}
+                    initialInterested={interestedGymIds.has(gym.id)}
+                    userId={user?.id ?? null}
+                    loginRedirect={gymHref}
+                    size="xs"
+                  />
+                </div>
+              </div>
+
+              <Link href={gymHref} className="block px-3.5 py-3.5">
+                <h3 className="truncate text-base font-semibold text-zinc-900">
+                  {gym.name}
+                </h3>
+                <p className="mt-1 truncate text-sm text-zinc-600">
+                  {gym.region || gym.address || "지역 정보 없음"}
+                </p>
+                <p className="mt-2 truncate text-xs font-medium text-zinc-500">
+                  {recommendReason}
+                </p>
+              </Link>
+            </article>
+          );
+        })}
       </div>
     </section>
   );
