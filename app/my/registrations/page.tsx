@@ -5,13 +5,12 @@ import { getUserRegistrations } from "@/lib/queries/events";
 import { MyRegistrationsList } from "@/components/my/MyRegistrationsList";
 import { EmptyState } from "@/components/EmptyState";
 import { Alert } from "@/components/Alert";
-import { parseMyScheduleTab } from "@/lib/utils/my-schedule";
 import type { RegistrationStatus } from "@/lib/types/database";
 
 type PageProps = {
   searchParams: Promise<{
-    tab?: string;
     applied?: string;
+    date?: string;
   }>;
 };
 
@@ -26,8 +25,10 @@ export default async function MyRegistrationsPage({ searchParams }: PageProps) {
 
   const { data: registrations, error: registrationsError } =
     await getUserRegistrations(user.id);
-  const initialTab = parseMyScheduleTab(params.tab);
   const showAppliedBanner = params.applied === "1";
+  const initialSelectedDate = /^\d{4}-\d{2}-\d{2}$/.test(params.date ?? "")
+    ? params.date
+    : undefined;
 
   if (registrationsError) {
     return (
@@ -41,7 +42,7 @@ export default async function MyRegistrationsPage({ searchParams }: PageProps) {
         <div>
           <h1 className="text-2xl font-bold text-zinc-900">내 일정</h1>
           <p className="mt-1 text-sm text-zinc-600">
-            오늘·이번주 운동 일정과 신청 상태를 확인하세요.
+            신청한 운동 일정을 캘린더와 목록에서 확인하세요.
           </p>
         </div>
         <Alert message="참가 신청 내역을 불러오지 못했습니다." />
@@ -88,13 +89,13 @@ export default async function MyRegistrationsPage({ searchParams }: PageProps) {
       <div>
         <h1 className="text-2xl font-bold text-zinc-900">내 일정</h1>
         <p className="mt-1 text-sm text-zinc-600">
-          오늘·이번주 운동 일정과 신청 상태를 확인하세요.
+          신청한 모든 예정 일정을 캘린더와 목록에서 확인하세요.
         </p>
       </div>
 
       {showAppliedBanner && (
         <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-          ✅ 신청이 완료되어 내 일정에 추가되었습니다. 호스트 승인을 기다려주세요.
+          ✅ 신청이 완료되어 내 일정에 추가되었습니다. 아래 캘린더에서 바로 확인할 수 있어요.
         </div>
       )}
 
@@ -109,7 +110,10 @@ export default async function MyRegistrationsPage({ searchParams }: PageProps) {
           </Link>
         </div>
       ) : (
-        <MyRegistrationsList registrations={items} initialTab={initialTab} />
+        <MyRegistrationsList
+          registrations={items}
+          initialSelectedDate={initialSelectedDate}
+        />
       )}
     </div>
   );
