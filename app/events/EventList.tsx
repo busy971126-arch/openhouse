@@ -79,10 +79,12 @@ export async function EventList({
     const approved = getApprovedCountFromResult(countsResult, event.id);
     const status = getEventRecruitmentStatus({
       eventDate: event.event_date,
+      eventTime: event.event_time,
       maxParticipants: event.max_participants,
       approvedCount: approved,
       recruitmentClosed: event.recruitment_closed ?? false,
       registrationDeadline: event.registration_deadline,
+      eventStatus: event.status ?? "active",
     });
 
     if (!includePast && !matchesRecruitmentFilter(status, recruitmentStatus)) {
