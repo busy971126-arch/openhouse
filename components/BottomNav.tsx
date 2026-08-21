@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import {
   getActiveBottomNavTab,
   shouldShowBottomNav,
@@ -13,17 +14,25 @@ type BottomNavProps = {
   pendingApprovals: number;
 };
 
-const BASE_TABS = [
-  { id: "home" as const, href: "/", label: "홈", icon: "🏠" },
-  { id: "events" as const, href: "/events", label: "이벤트", icon: "📅" },
-  { id: "my" as const, href: "/my", label: "마이", icon: "👤", requiresAuth: true },
+type NavTab = {
+  id: "home" | "events" | "my" | "gyms";
+  href: string;
+  label: string;
+  icon: AppIconName;
+  requiresAuth?: boolean;
+};
+
+const BASE_TABS: NavTab[] = [
+  { id: "home", href: "/", label: "홈", icon: "home" },
+  { id: "events", href: "/events", label: "이벤트", icon: "calendar" },
+  { id: "my", href: "/my", label: "마이", icon: "user", requiresAuth: true },
 ];
 
-const HOST_TAB = {
-  id: "gyms" as const,
+const HOST_TAB: NavTab = {
+  id: "gyms",
   href: "/host/gyms",
   label: "내 체육관",
-  icon: "🏢",
+  icon: "building",
   requiresAuth: true,
 };
 
@@ -61,17 +70,20 @@ export function BottomNav({
             <Link
               key={tab.id}
               href={href}
-              className={`flex flex-1 flex-col items-center justify-center gap-0.5 text-xs transition ${
+              className={`flex flex-1 flex-col items-center justify-center gap-1 text-[11px] transition ${
                 isActive
-                  ? "font-semibold text-orange-600"
+                  ? "font-semibold text-zinc-950"
                   : "font-medium text-zinc-500 hover:text-zinc-800"
               }`}
               aria-current={isActive ? "page" : undefined}
             >
-              <span className="relative text-xl leading-none">
-                {tab.icon}
+              <span className="relative">
+                <AppIcon
+                  name={tab.icon}
+                  className={`size-[21px] ${isActive ? "text-orange-600" : "text-zinc-500"}`}
+                />
                 {showBadge && (
-                  <span className="absolute -right-2 -top-1 flex size-4 items-center justify-center rounded-full bg-orange-600 text-[10px] font-bold text-white">
+                  <span className="absolute -right-2.5 -top-1.5 flex size-4 items-center justify-center rounded-full bg-orange-600 text-[9px] font-bold text-white">
                     {pendingApprovals > 9 ? "9+" : pendingApprovals}
                   </span>
                 )}
