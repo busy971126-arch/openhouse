@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { AppIcon } from "@/components/ui/AppIcon";
 import { createClient } from "@/lib/supabase/server";
 import { getHomeNotificationPreview } from "@/lib/queries/notifications";
 
@@ -28,32 +29,38 @@ async function HomeNotifications() {
   const isUnread = !notification.read_at;
 
   return (
-    <section className="rounded-xl border border-zinc-200 bg-white">
-      <div className="flex items-center justify-between gap-2 border-b border-zinc-100 px-4 py-3">
-        <h2 className="text-sm font-semibold text-zinc-900">📢 오늘의 알림</h2>
+    <section className="border-t border-zinc-200 pt-5">
+      <div className="flex items-end justify-between gap-2">
+        <div>
+          <p className="text-[10px] font-black tracking-[0.18em] text-zinc-400">NOTICE</p>
+          <h2 className="mt-1 flex items-center gap-2 text-lg font-bold tracking-[-0.02em] text-zinc-950">
+            <AppIcon name="bell" className="size-4 text-orange-600" />
+            알림
+          </h2>
+        </div>
         {unreadCount > 1 && (
           <Link
             href="/my/notifications"
-            className="text-xs font-medium text-orange-600 hover:text-orange-700"
+            className="text-xs font-semibold text-zinc-500 hover:text-orange-600"
           >
-            +{unreadCount - 1}건 더
+            +{unreadCount - 1}건
           </Link>
         )}
       </div>
       <Link
         href={href}
-        className={`block px-4 py-3 hover:bg-zinc-50 ${
-          isUnread ? "bg-orange-50/40" : ""
+        className={`mt-3 block border-l-2 py-1 pl-4 transition ${
+          isUnread ? "border-orange-600" : "border-zinc-300"
         }`}
       >
-        <p className="text-sm font-medium text-zinc-900">{notification.title}</p>
+        <p className="text-sm font-bold text-zinc-950">{notification.title}</p>
         {notification.body && (
-          <p className="mt-1 line-clamp-2 text-sm text-zinc-600">
+          <p className="mt-1 line-clamp-2 text-sm leading-5 text-zinc-600">
             {notification.body}
           </p>
         )}
-        <span className="mt-2 inline-block text-xs font-medium text-orange-600">
-          확인 →
+        <span className="mt-2 inline-block text-xs font-semibold text-zinc-500">
+          자세히 보기 →
         </span>
       </Link>
     </section>
