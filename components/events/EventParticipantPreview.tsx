@@ -20,7 +20,6 @@ type EventParticipantPreviewProps = {
   requiresAuth?: boolean;
   loginHref?: string;
   viewerId?: string | null;
-  /** 로그인 유저의 체급. null이면 필터 없이 전체 표시 */
   viewerWeightClass?: string | null;
   friendUserIds?: string[];
   visibilityByUserId?: Record<
@@ -86,16 +85,32 @@ function CountList({
 
   return (
     <div>
-      <p className="text-xs font-medium text-zinc-500">{title}</p>
-      <ul className="mt-2 space-y-1">
+      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-zinc-400">{title}</p>
+      <ul className="mt-2 divide-y divide-zinc-200 border-y border-zinc-200">
         {entries.map(([label, count]) => (
-          <li key={label} className="flex justify-between text-sm text-zinc-800">
+          <li key={label} className="flex justify-between py-2 text-sm text-zinc-800">
             <span>{label}</span>
-            <span className="font-medium">{count}명</span>
+            <span className="font-bold text-zinc-950">{count}명</span>
           </li>
         ))}
       </ul>
     </div>
+  );
+}
+
+function PreviewShell({
+  previewAnchorId,
+  children,
+}: {
+  previewAnchorId: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section id={previewAnchorId} className="scroll-mt-4 border-t border-zinc-300 pt-5">
+      <p className="text-[10px] font-black tracking-[0.16em] text-zinc-400">WHO'S IN</p>
+      <h2 className="mt-1 text-base font-bold text-zinc-950">예정 참가자</h2>
+      {children}
+    </section>
   );
 }
 
@@ -111,48 +126,30 @@ export function EventParticipantPreview({
 }: EventParticipantPreviewProps) {
   if (requiresAuth) {
     return (
-      <section
-        id={previewAnchorId}
-        className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 shadow-sm scroll-mt-4"
-      >
-        <h2 className="font-semibold text-zinc-900">예정 참가자 현황</h2>
-        <p className="mt-2 text-sm text-zinc-600">
-          로그인 후 참가자 정보를 확인할 수 있습니다.
-        </p>
+      <PreviewShell previewAnchorId={previewAnchorId}>
+        <p className="mt-2 text-sm text-zinc-600">로그인하면 참가자 구성을 확인할 수 있습니다.</p>
         <Link
           href={loginHref}
-          className="mt-3 inline-block text-sm font-medium text-orange-600 hover:text-orange-700"
+          className="mt-3 inline-block text-xs font-bold text-orange-600 hover:text-orange-700"
         >
-          로그인
+          로그인 →
         </Link>
-      </section>
+      </PreviewShell>
     );
   }
 
   if (!preview || preview.total === 0) {
     return (
-      <section
-        id={previewAnchorId}
-        className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 shadow-sm scroll-mt-4"
-      >
-        <h2 className="font-semibold text-zinc-900">예정 참가자 현황</h2>
-        <p className="mt-2 text-sm text-zinc-500">
-          아직 예정 참가자가 없습니다.
-        </p>
-      </section>
+      <PreviewShell previewAnchorId={previewAnchorId}>
+        <p className="mt-2 text-sm text-zinc-500">아직 예정 참가자가 없습니다.</p>
+      </PreviewShell>
     );
   }
 
   if (preview.hidden) {
     return (
-      <section
-        id={previewAnchorId}
-        className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 shadow-sm scroll-mt-4"
-      >
-        <h2 className="font-semibold text-zinc-900">예정 참가자 현황</h2>
-        <p className="mt-2 text-sm text-zinc-600">
-          참가 예정 {preview.total}명
-        </p>
+      <PreviewShell previewAnchorId={previewAnchorId}>
+        <p className="mt-2 text-sm font-semibold text-zinc-800">참가 예정 {preview.total}명</p>
         <EventParticipantGenderAccordion
           genders={preview.genders}
           participants={preview.participants}
@@ -161,10 +158,8 @@ export function EventParticipantPreview({
           friendUserIds={friendUserIds}
           visibilityByUserId={visibilityByUserId}
         />
-        <p className="mt-2 text-xs text-zinc-400">
-          3명 이상 모이면 체급·경력 분포를 보여드립니다.
-        </p>
-      </section>
+        <p className="mt-2 text-xs text-zinc-400">3명 이상 모이면 체급·경력 분포가 표시됩니다.</p>
+      </PreviewShell>
     );
   }
 
@@ -172,29 +167,18 @@ export function EventParticipantPreview({
   const backgroundEntries = sortCountEntries(preview.backgrounds);
   const yearEntries = sortCountEntries(preview.experience_years);
   const seekers = preview.sparring_seekers.map((seeker) => {
-    const context = getSeekerViewContext(
-      viewerId,
-      seeker.user_id,
-      friendUserIds,
-    );
+    const context = getSeekerViewContext(viewerId, seeker.user_id, friendUserIds);
     const visibilitySettings = visibilityByUserId[seeker.user_id];
     const details = formatSeekerDetails(seeker, context, visibilitySettings);
-
     return { seeker, details };
   });
 
   return (
-    <section
-      id={previewAnchorId}
-      className="rounded-xl border border-orange-100 bg-white p-4 shadow-sm scroll-mt-4"
-    >
-      <h2 className="font-semibold text-zinc-900">예정 참가자 현황</h2>
-      <p className="mt-1 text-sm text-zinc-600">
-        현재 예정 참가자 {preview.total}명
-      </p>
-      <p className="mt-1 text-xs text-zinc-400">
-        이름과 연락처는 공개되지 않습니다.
-      </p>
+    <PreviewShell previewAnchorId={previewAnchorId}>
+      <div className="mt-2 flex items-baseline justify-between gap-3">
+        <p className="text-sm font-semibold text-zinc-800">현재 {preview.total}명</p>
+        <p className="text-xs text-zinc-400">이름·연락처 비공개</p>
+      </div>
 
       <EventParticipantGenderAccordion
         genders={preview.genders}
@@ -205,40 +189,32 @@ export function EventParticipantPreview({
         visibilityByUserId={visibilityByUserId}
       />
 
-      <div className="mt-4 space-y-4">
-        <CountList title="체급" entries={weightEntries} />
-        <CountList title="수련 경력" entries={yearEntries} />
-        <CountList title="수련 배경" entries={backgroundEntries} />
+      <div className="mt-5 space-y-5">
+        <CountList title="WEIGHT" entries={weightEntries} />
+        <CountList title="EXPERIENCE" entries={yearEntries} />
+        <CountList title="BACKGROUND" entries={backgroundEntries} />
       </div>
 
       {seekers.length > 0 && (
-        <div className="mt-5 border-t border-zinc-100 pt-4">
-          <p className="text-xs font-medium text-zinc-500">
-            대련 상대를 찾는 예정 참가자
+        <div className="mt-6 border-t border-zinc-300 pt-4">
+          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-zinc-400">
+            LOOKING FOR SPARRING
           </p>
-          <ul className="mt-2 space-y-2">
+          <ul className="mt-2 divide-y divide-zinc-200 border-y border-zinc-200">
             {seekers.map(({ seeker, details }, index) => (
-              <li
-                key={`${seeker.user_id}-${index}`}
-                className="rounded-lg bg-orange-50 px-3 py-2 text-sm text-zinc-800"
-              >
+              <li key={`${seeker.user_id}-${index}`} className="py-2.5 text-sm text-zinc-800">
                 <Link
                   href={`/users/${seeker.user_id}`}
-                  className="font-medium text-orange-900 hover:underline"
+                  className="font-bold text-zinc-950 hover:text-orange-700"
                 >
                   {seeker.nickname}
                 </Link>
-                {details && (
-                  <>
-                    {" · "}
-                    {details}
-                  </>
-                )}
+                {details && <> · {details}</>}
               </li>
             ))}
           </ul>
         </div>
       )}
-    </section>
+    </PreviewShell>
   );
 }
