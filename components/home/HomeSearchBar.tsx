@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 export function HomeSearchBar() {
   const router = useRouter();
@@ -14,9 +15,10 @@ export function HomeSearchBar() {
 
   return (
     <div className="relative">
-      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">
-        🔍
-      </span>
+      <AppIcon
+        name="search"
+        className="pointer-events-none absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-zinc-400"
+      />
       <input
         type="search"
         value={value}
@@ -24,9 +26,9 @@ export function HomeSearchBar() {
         onKeyDown={(e) => {
           if (e.key === "Enter") submit();
         }}
-        placeholder="운동, 체육관, 이벤트 검색"
-        aria-label="운동, 체육관, 이벤트 검색"
-        className="w-full rounded-xl border border-zinc-300 bg-white py-3 pl-10 pr-4 text-sm text-zinc-900 placeholder:text-zinc-400"
+        placeholder="체육관, 지역, 이벤트 검색"
+        aria-label="체육관, 지역, 이벤트 검색"
+        className="w-full border-0 border-b border-zinc-300 bg-transparent py-3 pl-10 pr-2 text-sm text-zinc-950 outline-none placeholder:text-zinc-400 focus:border-orange-600"
       />
     </div>
   );
