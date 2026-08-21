@@ -6,17 +6,29 @@ import { HomeRecruitingEventsSection } from "@/components/home/HomeRecruitingEve
 import { HomeSearchBar } from "@/components/home/HomeSearchBar";
 import { HomeRecommendedGymsSection } from "@/components/home/HomeRecommendedGyms";
 
+function HomeIntro({ displayLabel }: { displayLabel?: string }) {
+  return (
+    <section>
+      {displayLabel && (
+        <p className="text-sm font-medium text-orange-600">
+          {displayLabel}님, 안녕하세요
+        </p>
+      )}
+      <h1 className={`${displayLabel ? "mt-2 " : ""}text-2xl font-bold leading-tight text-zinc-900`}>
+        주변 운동 이벤트를 한곳에서
+      </h1>
+      <p className="mt-2 text-sm leading-6 text-zinc-600">
+        오픈매트·세미나·대회 정보를 찾고 바로 참가하세요.
+      </p>
+      <p className="mt-1 text-xs text-zinc-500">지금은 유도부터 시작합니다.</p>
+    </section>
+  );
+}
+
 function GuestHome() {
   return (
     <>
-      <section>
-        <h1 className="text-2xl font-bold leading-tight text-zinc-900">
-          오늘 어떤 운동을 찾으세요?
-        </h1>
-        <p className="mt-2 text-xs text-zinc-500">
-          지금은 유도 이벤트부터 시작합니다.
-        </p>
-      </section>
+      <HomeIntro />
 
       <HomeSearchBar />
 
@@ -64,14 +76,7 @@ type MemberHomeProps = {
 function MemberHome({ displayLabel }: MemberHomeProps) {
   return (
     <>
-      <section>
-        <p className="text-sm font-medium text-orange-600">
-          {displayLabel}님, 안녕하세요
-        </p>
-        <h1 className="mt-2 text-2xl font-bold leading-tight text-zinc-900">
-          오늘 어떤 운동을 찾으세요?
-        </h1>
-      </section>
+      <HomeIntro displayLabel={displayLabel} />
 
       <HomeSearchBar />
 
