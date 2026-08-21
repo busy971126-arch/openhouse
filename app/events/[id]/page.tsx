@@ -173,6 +173,7 @@ export default async function EventDetailPage({ params }: PageProps) {
 
   const recruitmentStatus = getEventRecruitmentStatus({
     eventDate: event.event_date,
+    eventTime: event.event_time,
     maxParticipants: event.max_participants,
     approvedCount,
     recruitmentClosed: event.recruitment_closed ?? false,
