@@ -2,11 +2,9 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { DiscoveryTabToggle } from "./DiscoveryTabToggle";
-import { EventCalendarPlaceholder } from "./EventCalendarPlaceholder";
 import { EventFilterBar } from "./EventFilterBar";
 import { EventList } from "./EventList";
 import { EventSearchBar } from "./EventSearchBar";
-import { EventViewToggle } from "./EventViewToggle";
 import { GymSearchOptions } from "./GymSearchOptions";
 import { GymList } from "./GymList";
 import { GymSearchBar } from "./GymSearchBar";
@@ -29,7 +27,6 @@ type PageProps = {
     past?: string;
     quick?: string;
     q?: string;
-    view?: string;
     status?: string;
     facilities?: string;
     beginner?: string;
@@ -51,7 +48,6 @@ export default async function EventsPage({ searchParams }: PageProps) {
   const isGymTab = params.tab === "gyms";
   const eventType = params.type as EventType | undefined;
   const quick = params.quick as EventQuickFilter | undefined;
-  const view = params.view === "calendar" ? "calendar" : "list";
   const recruitmentStatus =
     (params.status as EventRecruitmentFilter | undefined) ?? "recruiting";
 
@@ -141,8 +137,8 @@ export default async function EventsPage({ searchParams }: PageProps) {
           {params.quick === "nearby" && user && !nearbyRegions?.length && (
             <p className="text-sm text-amber-700">
               프로필에 관심 지역이 없습니다.{" "}
-              <Link href="/my/profile/edit" className="font-medium underline">
-                프로필 수정
+              <Link href="/my/profile/edit/sports" className="font-medium underline">
+                운동 프로필
               </Link>
               에서 지역을 설정해주세요.
             </p>
@@ -151,8 +147,8 @@ export default async function EventsPage({ searchParams }: PageProps) {
           {gymSort === "distance" && user && !profileRegions?.length && (
             <p className="text-sm text-amber-700">
               가까운 순 정렬은 프로필 관심 지역을 기준으로 합니다.{" "}
-              <Link href="/my/profile/edit" className="font-medium underline">
-                프로필 수정
+              <Link href="/my/profile/edit/sports" className="font-medium underline">
+                운동 프로필
               </Link>
               에서 지역을 설정해주세요.
             </p>
@@ -175,47 +171,37 @@ export default async function EventsPage({ searchParams }: PageProps) {
       ) : (
         <>
           <Suspense fallback={<LoadingSpinner />}>
-            <EventViewToggle />
+            <EventSearchBar />
           </Suspense>
 
-          {view === "calendar" ? (
-            <EventCalendarPlaceholder />
-          ) : (
-            <>
-              <Suspense fallback={<LoadingSpinner />}>
-                <EventSearchBar />
-              </Suspense>
+          <Suspense fallback={<LoadingSpinner />}>
+            <EventFilterBar />
+          </Suspense>
 
-              <Suspense fallback={<LoadingSpinner />}>
-                <EventFilterBar />
-              </Suspense>
-
-              {quick === "nearby" && !nearbyRegions?.length && (
-                <p className="text-sm text-amber-700">
-                  관심 지역이 없습니다.{" "}
-                  <Link href="/my/profile/edit" className="font-medium underline">
-                    프로필 수정
-                  </Link>
-                  에서 지역을 설정하거나 홈에서 현재 위치로 찾기를 사용해주세요.
-                </p>
-              )}
-
-              <Suspense fallback={<LoadingSpinner />}>
-                <EventList
-                  region={params.region}
-                  sport={params.sport}
-                  date={date}
-                  dateFrom={dateFrom}
-                  dateTo={dateTo}
-                  eventType={eventType}
-                  includePast={params.past === "1"}
-                  nearbyRegions={nearbyRegions}
-                  searchQuery={params.q}
-                  recruitmentStatus={recruitmentStatus}
-                />
-              </Suspense>
-            </>
+          {quick === "nearby" && !nearbyRegions?.length && (
+            <p className="text-sm text-amber-700">
+              관심 지역이 없습니다.{" "}
+              <Link href="/my/profile/edit/sports" className="font-medium underline">
+                운동 프로필
+              </Link>
+              에서 지역을 설정하거나 홈에서 현재 위치로 찾기를 사용해주세요.
+            </p>
           )}
+
+          <Suspense fallback={<LoadingSpinner />}>
+            <EventList
+              region={params.region}
+              sport={params.sport}
+              date={date}
+              dateFrom={dateFrom}
+              dateTo={dateTo}
+              eventType={eventType}
+              includePast={params.past === "1"}
+              nearbyRegions={nearbyRegions}
+              searchQuery={params.q}
+              recruitmentStatus={recruitmentStatus}
+            />
+          </Suspense>
         </>
       )}
     </div>
