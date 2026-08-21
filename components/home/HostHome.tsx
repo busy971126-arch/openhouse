@@ -4,6 +4,7 @@ import { DashboardSummary } from "@/components/dashboard/DashboardSummary";
 import { EmptyState } from "@/components/EmptyState";
 import { HomeNotificationsSection } from "@/components/home/HomeNotificationsSection";
 import { HostGymListCard } from "@/components/host/HostGymListCard";
+import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import type { DashboardEvent } from "@/lib/queries/dashboard";
 import type { Gym } from "@/lib/types/database";
 import {
@@ -42,13 +43,33 @@ function HostEventList({
 
   return (
     <div className="flex flex-col gap-3">
-      <h3 className="text-sm font-semibold text-zinc-700">{title}</h3>
+      <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-zinc-500">{title}</h3>
       <ul className="flex flex-col gap-3">
         {events.map((event) => (
           <DashboardEventCard key={event.id} event={event} />
         ))}
       </ul>
     </div>
+  );
+}
+
+function QuickAction({
+  href,
+  icon,
+  label,
+}: {
+  href: string;
+  icon: AppIconName;
+  label: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex min-h-20 flex-col justify-between border border-zinc-200 bg-white p-3 text-left transition hover:border-zinc-400"
+    >
+      <AppIcon name={icon} className="size-5 text-orange-600" />
+      <span className="mt-3 text-xs font-bold text-zinc-900">{label}</span>
+    </Link>
   );
 }
 
@@ -61,8 +82,7 @@ export function HostHome({
   gyms,
   stats,
 }: HostHomeProps) {
-  const { todayEvents, upcomingEvents } =
-    splitHostOperatingEvents(operatingEvents);
+  const { todayEvents, upcomingEvents } = splitHostOperatingEvents(operatingEvents);
   const upcomingPreview = upcomingEvents.slice(0, UPCOMING_PREVIEW_LIMIT);
   const participantsHref = getHostParticipantsHref(allEvents, gyms);
   const newEventHref = getHostNewEventHref(gyms);
@@ -70,76 +90,56 @@ export function HostHome({
 
   return (
     <>
-      <section>
-        <p className="text-sm font-medium text-orange-600">
-          {displayLabel}님, 안녕하세요
-        </p>
-        <h1 className="mt-2 text-2xl font-bold leading-tight text-zinc-900">
-          오늘 운영할 일을 확인하세요
+      <section className="pt-1">
+        <p className="text-[10px] font-black tracking-[0.18em] text-orange-600">HOST MODE</p>
+        <p className="mt-4 text-sm font-medium text-zinc-600">{displayLabel}님</p>
+        <h1 className="mt-1 text-[28px] font-black leading-[1.15] tracking-[-0.03em] text-zinc-950">
+          오늘 운영할 일
         </h1>
       </section>
 
       {pendingApprovals > 0 ? (
         <Link
           href={participantsHref}
-          className="flex items-center justify-between rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 hover:bg-orange-100"
+          className="flex items-center justify-between border-l-2 border-orange-600 py-2 pl-4"
         >
           <div>
-            <p className="text-sm font-semibold text-orange-900">
-              승인 대기 {pendingApprovals}명
-            </p>
-            <p className="mt-0.5 text-sm text-orange-800">
-              참가자 관리에서 바로 처리하세요
-            </p>
+            <p className="text-sm font-bold text-zinc-950">승인 대기 {pendingApprovals}명</p>
+            <p className="mt-1 text-xs text-zinc-500">참가자 관리에서 확인</p>
           </div>
-          <span className="text-orange-600">→</span>
+          <span className="text-sm font-bold text-orange-600">→</span>
         </Link>
       ) : (
-        <section className="rounded-xl border border-zinc-200 bg-white px-4 py-3">
-          <p className="text-sm font-medium text-zinc-900">
-            처리할 승인 대기가 없습니다
-          </p>
+        <section className="border-y border-zinc-200 py-3">
+          <p className="text-sm font-semibold text-zinc-900">승인 대기 없음</p>
           {tomorrowEvents > 0 && (
-            <p className="mt-1 text-sm text-zinc-600">
-              내일 진행 일정 {tomorrowEvents}개
-            </p>
+            <p className="mt-1 text-xs text-zinc-500">내일 진행 일정 {tomorrowEvents}개</p>
           )}
         </section>
       )}
 
       <section className="grid grid-cols-3 gap-2">
-        <Link
-          href={participantsHref}
-          className="rounded-xl border border-zinc-200 bg-white px-2 py-3 text-center text-xs font-medium text-zinc-800 hover:border-orange-200 hover:bg-orange-50/40"
-        >
-          👥
-          <span className="mt-1 block">예정 참가자</span>
-        </Link>
-        <Link
-          href={newEventHref}
-          className="rounded-xl border border-zinc-200 bg-white px-2 py-3 text-center text-xs font-medium text-zinc-800 hover:border-orange-200 hover:bg-orange-50/40"
-        >
-          📅
-          <span className="mt-1 block">이벤트</span>
-        </Link>
-        <Link
+        <QuickAction href={participantsHref} icon="users" label="예정 참가자" />
+        <QuickAction href={newEventHref} icon="calendar" label="이벤트" />
+        <QuickAction
           href={primaryGym ? `/host/gyms/${primaryGym.id}` : "/host/gyms"}
-          className="rounded-xl border border-zinc-200 bg-white px-2 py-3 text-center text-xs font-medium text-zinc-800 hover:border-orange-200 hover:bg-orange-50/40"
-        >
-          🏠
-          <span className="mt-1 block">체육관</span>
-        </Link>
+          icon="building"
+          label="체육관"
+        />
       </section>
 
       <DashboardSummary {...stats} />
 
-      <section className="flex flex-col gap-4">
+      <section className="flex flex-col gap-4 border-t border-zinc-200 pt-5">
         <div className="flex items-end justify-between gap-2">
-          <h2 className="text-lg font-semibold text-zinc-900">운영 일정</h2>
+          <div>
+            <p className="text-[10px] font-black tracking-[0.18em] text-zinc-400">OPERATIONS</p>
+            <h2 className="mt-1 text-lg font-bold tracking-[-0.02em] text-zinc-950">운영 일정</h2>
+          </div>
           {operatingEvents.length > 0 && (
             <Link
               href={primaryGym ? `/host/gyms/${primaryGym.id}/events` : "/host/gyms"}
-              className="text-sm font-medium text-orange-600 hover:text-orange-700"
+              className="text-xs font-semibold text-zinc-600 hover:text-orange-600"
             >
               전체 보기 →
             </Link>
@@ -148,17 +148,17 @@ export function HostHome({
 
         {operatingEvents.length > 0 ? (
           <>
-            <HostEventList title="오늘" events={todayEvents} />
-            <HostEventList title="다가오는 일정" events={upcomingPreview} />
+            <HostEventList title="TODAY" events={todayEvents} />
+            <HostEventList title="UP NEXT" events={upcomingPreview} />
           </>
         ) : (
-          <div className="rounded-xl border border-zinc-200 bg-white p-4">
+          <div className="border-y border-zinc-200 py-4">
             <EmptyState message="운영 중인 일정이 없습니다." />
             <Link
               href={newEventHref}
-              className="mt-3 block text-center text-sm font-medium text-orange-600 hover:text-orange-700"
+              className="mt-3 block text-sm font-semibold text-orange-600 hover:text-orange-700"
             >
-              + 이벤트 만들기
+              이벤트 만들기 →
             </Link>
           </div>
         )}
@@ -167,12 +167,15 @@ export function HostHome({
       <HomeNotificationsSection />
 
       {gyms.length > 0 && (
-        <section className="flex flex-col gap-3">
+        <section className="flex flex-col gap-3 border-t border-zinc-200 pt-5">
           <div className="flex items-end justify-between gap-2">
-            <h2 className="text-lg font-semibold text-zinc-900">내 체육관</h2>
+            <div>
+              <p className="text-[10px] font-black tracking-[0.18em] text-zinc-400">MY GYMS</p>
+              <h2 className="mt-1 text-lg font-bold tracking-[-0.02em] text-zinc-950">내 체육관</h2>
+            </div>
             <Link
               href="/host/gyms"
-              className="text-sm font-medium text-orange-600 hover:text-orange-700"
+              className="text-xs font-semibold text-zinc-600 hover:text-orange-600"
             >
               관리 →
             </Link>
@@ -185,24 +188,17 @@ export function HostHome({
         </section>
       )}
 
-      <section className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-        <h2 className="text-sm font-semibold text-zinc-900">참가자로 이용하기</h2>
-        <p className="mt-1 text-xs text-zinc-500">
-          운영자도 다른 이벤트에 참가할 수 있습니다.
-        </p>
-        <div className="mt-3 flex flex-col gap-2">
-          <Link
-            href="/my/registrations"
-            className="rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-center text-sm font-medium text-zinc-800 hover:bg-zinc-50"
-          >
-            내 일정
-          </Link>
-          <Link
-            href="/events"
-            className="rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-center text-sm font-medium text-zinc-800 hover:bg-zinc-50"
-          >
-            이벤트 찾기
-          </Link>
+      <section className="border-t border-zinc-200 pt-5">
+        <p className="text-[10px] font-black tracking-[0.18em] text-zinc-400">PARTICIPANT MODE</p>
+        <div className="mt-2 flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-sm font-bold text-zinc-950">나도 운동하러 가기</h2>
+            <p className="mt-1 text-xs text-zinc-500">운영자 계정 그대로 참가할 수 있어요.</p>
+          </div>
+          <div className="flex shrink-0 gap-3 text-xs font-semibold">
+            <Link href="/my/registrations" className="text-zinc-600 hover:text-orange-600">내 일정</Link>
+            <Link href="/events" className="text-orange-600 hover:text-orange-700">이벤트 찾기</Link>
+          </div>
         </div>
       </section>
     </>
