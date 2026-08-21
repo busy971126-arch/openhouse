@@ -39,18 +39,19 @@ async function HomeNearbyEvents() {
   const regionSummary = regions.slice(0, 2).join(", ");
 
   return (
-    <section className="rounded-xl border border-zinc-200 bg-white">
-      <div className="flex items-center justify-between gap-2 border-b border-zinc-100 px-4 py-3">
+    <section className="border-t border-zinc-200 pt-5">
+      <div className="flex items-end justify-between gap-2">
         <div>
-          <h2 className="text-sm font-semibold text-zinc-900">📍 내 주변</h2>
-          {regionSummary && (
-            <p className="mt-0.5 text-xs text-zinc-500">{regionSummary} 기준</p>
-          )}
+          <p className="text-[10px] font-black tracking-[0.18em] text-zinc-400">NEAR YOU</p>
+          <div className="mt-1 flex items-baseline gap-2">
+            <h2 className="text-lg font-bold tracking-[-0.02em] text-zinc-950">내 주변</h2>
+            {regionSummary && <span className="text-xs text-zinc-500">{regionSummary}</span>}
+          </div>
         </div>
         {items.length > 0 && (
           <Link
             href="/events?quick=nearby"
-            className="text-xs font-medium text-orange-600 hover:text-orange-700"
+            className="text-xs font-semibold text-zinc-600 hover:text-orange-600"
           >
             전체 보기 →
           </Link>
@@ -58,11 +59,11 @@ async function HomeNearbyEvents() {
       </div>
 
       {error ? (
-        <div className="px-4 py-3">
+        <div className="mt-3">
           <Alert message="이벤트를 불러오지 못했습니다." />
         </div>
       ) : items.length > 0 ? (
-        <div className="divide-y divide-zinc-100 px-4 py-1">
+        <div className="mt-3 divide-y divide-zinc-200 border-y border-zinc-200">
           {items.map((item) => (
             <HomeEventCompactRow
               key={item.event.id}
@@ -73,28 +74,14 @@ async function HomeNearbyEvents() {
           ))}
         </div>
       ) : (
-        <div className="space-y-3 px-4 py-4">
-          <p className="text-sm text-zinc-600">
-            {user
-              ? "운동 프로필 지역 기준으로 가까운 이벤트를 찾아보세요."
-              : "내 위치나 관심 지역 기준으로 이벤트를 찾아보세요."}
-          </p>
+        <div className="mt-4 border-y border-zinc-200 py-4">
           <HomeNearbyLocationAction />
-          {user ? (
-            <Link
-              href="/my/profile/edit/sports"
-              className="block text-center text-sm font-medium text-orange-600 hover:text-orange-700"
-            >
-              운동 프로필에 지역 설정 →
-            </Link>
-          ) : (
-            <Link
-              href="/events?quick=nearby"
-              className="block text-center text-sm font-medium text-orange-600 hover:text-orange-700"
-            >
-              이벤트 목록에서 찾기 →
-            </Link>
-          )}
+          <Link
+            href={user ? "/my/profile/edit/sports" : "/events?quick=nearby"}
+            className="mt-3 inline-block text-xs font-semibold text-zinc-500 underline decoration-zinc-300 underline-offset-4 hover:text-orange-600"
+          >
+            {user ? "관심 지역 설정" : "지역으로 이벤트 찾기"}
+          </Link>
         </div>
       )}
     </section>
