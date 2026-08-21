@@ -13,12 +13,13 @@ import {
 import { formatEventDetailDate } from "@/lib/utils/date";
 import { isEventHost } from "@/lib/utils/event-host";
 import { InterestHeart } from "@/components/interest/InterestHeart";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 function EventEditButton({ eventId }: { eventId: string }) {
   return (
     <Link
       href={`/events/${eventId}/edit`}
-      className="inline-flex size-8 items-center justify-center rounded-md border border-zinc-300 text-zinc-600 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700"
+      className="inline-flex size-8 items-center justify-center border border-zinc-300 text-zinc-600 hover:border-orange-500 hover:text-orange-700"
       aria-label="이벤트 수정"
       title="수정"
     >
@@ -65,55 +66,68 @@ export function EventListCard({
   );
   const feeLabel = formatEventFeeDisplay(event.fee_amount);
   const showEditButton = isEventHost(userId, event);
+  const href = `/events/${event.id}`;
 
   return (
-    <article className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
+    <article className="border-b border-zinc-200 pb-5 last:border-b-0">
       <div className="flex items-start justify-between gap-3">
-        <p className="text-sm font-medium text-zinc-600">
-          <span className="text-zinc-800">{event.sport}</span>
-          {" · "}
-          <span className={status.className}>
-            {status.emoji} {status.label}
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <span className="text-[10px] font-black uppercase tracking-[0.12em] text-zinc-500">
+            {event.sport}
           </span>
-        </p>
+          <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-zinc-400">
+            {formatEventType(event.event_type)}
+          </span>
+          <span className={`text-[11px] font-bold ${status.className}`}>
+            {status.label}
+          </span>
+        </div>
         <InterestHeart
           kind="event"
           targetId={event.id}
           initialInterested={initialInterested}
           userId={userId}
-          loginRedirect={`/events/${event.id}`}
+          loginRedirect={href}
           size="xs"
         />
       </div>
 
-      <h2 className="mt-2 text-lg font-semibold leading-snug text-zinc-900">
-        {event.title}
-      </h2>
+      <Link href={href} className="group block">
+        <h2 className="mt-2 text-[19px] font-black leading-snug tracking-[-0.025em] text-zinc-950 group-hover:text-orange-700">
+          {event.title}
+        </h2>
 
-      <p className="mt-1 text-xs text-zinc-500">
-        {formatEventType(event.event_type)}
-      </p>
+        <div className="mt-4 grid gap-2 text-sm text-zinc-600">
+          <div className="flex items-center gap-2">
+            <AppIcon name="calendar" className="size-4 shrink-0 text-zinc-400" />
+            <span>
+              {formatEventDetailDate(event.event_date)}
+              {timeLabel ? ` · ${timeLabel}` : ""}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <AppIcon name="map-pin" className="size-4 shrink-0 text-zinc-400" />
+            <span className="truncate">
+              {event.gyms?.name ?? "체육관"}
+              {event.region ? ` · ${event.region}` : ""}
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-500">
+            <span className="flex items-center gap-1.5">
+              <AppIcon name="users" className="size-3.5" />
+              {participantLine}
+            </span>
+            <span>{feeLabel}</span>
+          </div>
+        </div>
+      </Link>
 
-      <div className="mt-3 space-y-1 text-sm text-zinc-700">
-        <p>{formatEventDetailDate(event.event_date)}</p>
-        {timeLabel && <p>{timeLabel}</p>}
-        <p>
-          📍 {event.gyms?.name ?? "체육관"}
-          {event.region ? ` · ${event.region}` : ""}
-        </p>
-        <p>
-          👥 {participantLine}
-          {" · "}
-          💰 {feeLabel}
-        </p>
-      </div>
-
-      <div className="mt-4 flex items-center gap-2">
+      <div className="mt-4 flex items-center gap-3">
         <Link
-          href={`/events/${event.id}`}
-          className="inline-flex items-center rounded-md bg-orange-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-700"
+          href={href}
+          className="text-xs font-bold text-orange-600 hover:text-orange-700"
         >
-          이벤트 보기
+          자세히 보기 →
         </Link>
         {showEditButton && <EventEditButton eventId={event.id} />}
       </div>
