@@ -12,6 +12,7 @@ export async function getEvents(filters: EventFilters = {}) {
     .from("events")
     .select("*, gyms!inner(name, region, photo_url, is_public, owner_id)")
     .eq("gyms.is_public", true)
+    .eq("status", "active")
     .order("event_date", { ascending: true });
 
   if (!filters.includePast) {
