@@ -7,15 +7,21 @@ export async function middleware(request: NextRequest) {
   const response = await updateSession(request);
   const { pathname } = request.nextUrl;
 
-  const isProtected =
-    protectedPaths.some(
-      (path) => pathname === path || pathname.startsWith(`${path}/`),
-    ) || pathname.startsWith("/gym/");
-
+  const isProtected = protectedPaths.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`),
+  );
+  const isGymOwnerRoute = /^\/gym\/[^/]+\/(?:edit|registered)(?:\/|$)/.test(
+    pathname,
+  );
   const isParticipantsRoute = /\/events\/[^/]+\/participants/.test(pathname);
   const isEventEditRoute = /\/events\/[^/]+\/edit/.test(pathname);
 
-  if (!isProtected && !isParticipantsRoute && !isEventEditRoute) {
+  if (
+    !isProtected &&
+    !isGymOwnerRoute &&
+    !isParticipantsRoute &&
+    !isEventEditRoute
+  ) {
     return response;
   }
 
