@@ -87,7 +87,9 @@ export default function SignupPage() {
       }
 
       if (result.hasSession && result.redirectTo) {
-        router.push(result.redirectTo);
+        router.push(
+          `/onboarding/role?next=${encodeURIComponent(result.redirectTo)}`,
+        );
         router.refresh();
         return;
       }
