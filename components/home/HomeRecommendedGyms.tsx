@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { LoginRequiredPromptButton } from "@/components/auth/LoginRequiredPromptButton";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { GymListCard } from "@/components/gym/GymListCard";
 import { getRecommendedGyms } from "@/lib/queries/gyms";
@@ -34,10 +33,8 @@ async function HomeRecommendedGyms() {
 
   const gyms = await getRecommendedGyms(3);
   const interestedGymIds = await getUserInterestedGymIds(user?.id);
-  const isLoggedIn = Boolean(user);
-  const visibleGyms = isLoggedIn ? gyms : gyms.slice(0, 1);
 
-  if (visibleGyms.length === 0) {
+  if (gyms.length === 0) {
     return null;
   }
 
@@ -45,22 +42,15 @@ async function HomeRecommendedGyms() {
     <section className="flex flex-col gap-3">
       <div className="flex items-end justify-between gap-2">
         <h2 className="text-lg font-semibold text-zinc-900">추천 체육관</h2>
-        {isLoggedIn ? (
-          <Link
-            href="/events?tab=gyms"
-            className="text-sm font-medium text-orange-600 hover:text-orange-700"
-          >
-            전체 보기 →
-          </Link>
-        ) : (
-          <LoginRequiredPromptButton
-            loginRedirect="/events?tab=gyms"
-            className="text-sm font-medium text-orange-600 hover:text-orange-700"
-          />
-        )}
+        <Link
+          href="/events?tab=gyms"
+          className="text-sm font-medium text-orange-600 hover:text-orange-700"
+        >
+          전체 보기 →
+        </Link>
       </div>
       <div className="flex flex-col gap-3">
-        {visibleGyms.map((gym) => (
+        {gyms.map((gym) => (
           <GymListCard
             key={gym.id}
             gym={gym}
