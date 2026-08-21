@@ -19,8 +19,8 @@ export default function PrivacyPolicyPage() {
       </section>
 
       <section className="mt-6 space-y-2">
-        <h2 className="font-semibold text-zinc-900">3. 선택 동의 정보</h2>
-        <p>서비스 소식 및 이벤트 안내 수신은 선택 사항입니다. 동의하지 않아도 OpenHouse의 기본 기능을 이용할 수 있으며, 실제 발송 기능이 도입되면 설정에서 수신 여부를 변경할 수 있도록 제공합니다.</p>
+        <h2 className="font-semibold text-zinc-900">3. 서비스 안내 수신</h2>
+        <p>현재 베타에서는 별도의 광고·마케팅 수신 동의를 받거나 마케팅 메시지를 발송하지 않습니다. 향후 해당 기능을 도입하는 경우 발송 목적과 수단을 안내하고 별도의 선택 동의를 받습니다.</p>
       </section>
 
       <section className="mt-6 space-y-2">
