@@ -13,7 +13,7 @@ export default async function MyPage() {
 
   if (!user) redirect("/login?redirect=/my");
 
-  const { profile } = await getMyPageData(user.id);
+  const { profile, isOperator } = await getMyPageData(user.id);
   const { count: unreadNotifications } = await getUnreadNotificationCount(user.id);
   const displayLabel =
     profile?.nickname?.trim() || profile?.displayName?.trim() || "회원";
@@ -29,6 +29,20 @@ export default async function MyPage() {
       <MyMenuItem href="/my/registrations" label="📅 내 참가" />
       <MyMenuItem href="/my/interests" label="❤️ 관심" />
       <MyMenuItem href="/my/friends" label="🤝 운동 친구" />
+
+      {isOperator ? (
+        <MyMenuItem
+          href="/host/gyms"
+          label="🏠 운영 관리"
+          description="체육관과 이벤트를 관리합니다"
+        />
+      ) : (
+        <MyMenuItem
+          href="/gym/new"
+          label="🏠 운영자 등록"
+          description="체육관을 등록하고 이벤트를 운영할 수 있어요"
+        />
+      )}
 
       <MyMenuItem
         href="/my/notifications"
