@@ -147,6 +147,7 @@ export async function getUpcomingEventCountsByGym(
     .from("events")
     .select("gym_id")
     .in("gym_id", gymIds)
+    .eq("status", "active")
     .gte("event_date", today)
     .eq("recruitment_closed", false);
 
@@ -176,6 +177,7 @@ export async function getUpcomingEventsByGyms(
     .from("events")
     .select("id, gym_id, title, event_date")
     .in("gym_id", gymIds)
+    .eq("status", "active")
     .gte("event_date", today)
     .eq("recruitment_closed", false)
     .order("event_date", { ascending: true });
@@ -243,6 +245,7 @@ export async function getUpcomingEventsForGym(gymId: string) {
     .from("events")
     .select("id, title, sport, region, event_date, event_time, event_type, max_participants, fee_amount, recruitment_closed")
     .eq("gym_id", gymId)
+    .eq("status", "active")
     .gte("event_date", today)
     .eq("recruitment_closed", false)
     .order("event_date", { ascending: true });
