@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { AppIcon } from "@/components/ui/AppIcon";
 import { resolveRegionFromCurrentPosition } from "@/lib/utils/geolocation-client";
 
 export function HomeNearbyLocationAction() {
@@ -15,9 +16,7 @@ export function HomeNearbyLocationAction() {
 
     try {
       const region = await resolveRegionFromCurrentPosition();
-      router.push(
-        `/events?quick=nearby&region=${encodeURIComponent(region)}`,
-      );
+      router.push(`/events?quick=nearby&region=${encodeURIComponent(region)}`);
     } catch (locateError) {
       setError(
         locateError instanceof Error
@@ -35,9 +34,10 @@ export function HomeNearbyLocationAction() {
         type="button"
         onClick={handleLocate}
         disabled={loading}
-        className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm font-medium text-zinc-800 hover:bg-zinc-50 disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-2 bg-zinc-950 px-3 py-3 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:opacity-50"
       >
-        {loading ? "위치 확인 중..." : "📍 현재 위치로 찾기"}
+        <AppIcon name="map-pin" className="size-4" />
+        {loading ? "위치 확인 중..." : "현재 위치로 찾기"}
       </button>
       {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
     </div>
