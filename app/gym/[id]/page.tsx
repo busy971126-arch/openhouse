@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { EventGymSection } from "@/components/events/EventGymSection";
-import { EmptyState } from "@/components/EmptyState";
+import { AppIcon } from "@/components/ui/AppIcon";
 import {
   getPublicGymById,
   getUpcomingEventsForGym,
@@ -69,12 +69,12 @@ export default async function GymDetailPage({ params }: PageProps) {
   const isOwner = user?.id === gym.owner_id;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       <Link
         href="/events?tab=gyms"
-        className="text-sm font-medium text-orange-600 hover:text-orange-700"
+        className="w-fit text-xs font-bold tracking-wide text-zinc-500 hover:text-orange-600"
       >
-        ← 체육관 목록
+        ← BACK TO GYMS
       </Link>
 
       <EventGymSection
@@ -89,24 +89,26 @@ export default async function GymDetailPage({ params }: PageProps) {
       {isOwner && (
         <Link
           href={`/gym/${id}/edit`}
-          className="block rounded-xl border border-zinc-300 py-3 text-center text-sm font-medium text-zinc-800 hover:bg-zinc-50"
+          className="block border border-zinc-300 py-3 text-center text-sm font-semibold text-zinc-800 hover:border-zinc-500"
         >
           체육관 정보 수정
         </Link>
       )}
 
-      <section
-        id="gym-upcoming-events"
-        className="scroll-mt-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm"
-      >
-        <h2 className="font-semibold text-zinc-900">예정 이벤트</h2>
+      <section id="gym-upcoming-events" className="scroll-mt-4 border-t border-zinc-300 pt-5">
+        <p className="text-[10px] font-black tracking-[0.16em] text-zinc-400">
+          UPCOMING
+        </p>
+        <h2 className="mt-1 text-lg font-black tracking-[-0.02em] text-zinc-950">
+          예정 이벤트
+        </h2>
 
         {!upcomingEvents?.length ? (
-          <div className="mt-3">
-            <EmptyState message="예정된 이벤트가 없습니다." />
-          </div>
+          <p className="mt-4 border-y border-zinc-200 py-5 text-sm text-zinc-500">
+            예정된 이벤트가 없습니다.
+          </p>
         ) : (
-          <ul className="mt-4 flex flex-col gap-3">
+          <ul className="mt-3 border-t border-zinc-200">
             {upcomingEvents.map((event) => {
               const approved = getApprovedCountFromResult(
                 countsResult,
@@ -120,25 +122,33 @@ export default async function GymDetailPage({ params }: PageProps) {
                     : `${approved}명`;
 
               return (
-                <li key={event.id}>
+                <li key={event.id} className="border-b border-zinc-200">
                   <Link
                     href={`/events/${event.id}`}
-                    className="block rounded-lg border border-zinc-200 px-4 py-3 hover:bg-zinc-50"
+                    className="group block py-5"
                   >
-                    <p className="text-xs text-zinc-500">
-                      {event.sport} · {formatEventType(event.event_type)}
-                    </p>
-                    <p className="mt-1 font-semibold text-zinc-900">
+                    <div className="flex items-center justify-between gap-4">
+                      <p className="text-[10px] font-black tracking-[0.12em] text-orange-600">
+                        {event.sport} · {formatEventType(event.event_type)}
+                      </p>
+                      <span className="text-xs text-zinc-400 transition group-hover:translate-x-0.5">
+                        →
+                      </span>
+                    </div>
+                    <p className="mt-2 text-base font-bold leading-6 text-zinc-950 group-hover:text-orange-700">
                       {event.title}
                     </p>
-                    <p className="mt-1 text-sm text-zinc-600">
+                    <p className="mt-2 text-sm text-zinc-600">
                       {formatEventDetailDate(event.event_date)}
                       {event.region ? ` · ${event.region}` : ""}
                     </p>
-                    <p className="mt-1 text-xs text-zinc-500">
-                      👥 {participantLine} · 💰{" "}
-                      {formatEventFeeDisplay(event.fee_amount)}
-                    </p>
+                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-500">
+                      <span className="inline-flex items-center gap-1.5">
+                        <AppIcon name="users" className="size-3.5" />
+                        {participantLine}
+                      </span>
+                      <span>{formatEventFeeDisplay(event.fee_amount)}</span>
+                    </div>
                   </Link>
                 </li>
               );
