@@ -39,21 +39,21 @@ async function HomeRecommendedGyms() {
   }
 
   return (
-    <section className="flex flex-col gap-3">
+    <section className="border-t border-zinc-200 pt-5">
       <div className="flex items-end justify-between gap-2">
         <div>
-          <h2 className="text-lg font-semibold text-zinc-900">추천 체육관</h2>
-          <p className="mt-0.5 text-xs text-zinc-500">옆으로 넘겨 더 둘러보세요.</p>
+          <p className="text-[10px] font-black tracking-[0.18em] text-zinc-400">GYMS TO WATCH</p>
+          <h2 className="mt-1 text-lg font-bold tracking-[-0.02em] text-zinc-950">추천 체육관</h2>
         </div>
         <Link
           href="/events?tab=gyms"
-          className="shrink-0 text-sm font-medium text-orange-600 hover:text-orange-700"
+          className="shrink-0 text-xs font-semibold text-zinc-600 hover:text-orange-600"
         >
           전체 보기 →
         </Link>
       </div>
 
-      <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="-mx-4 mt-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {gyms.map((gym) => {
           const gymHref = `/gym/${gym.id}`;
           const sport = gym.sport ?? "유도";
@@ -63,7 +63,7 @@ async function HomeRecommendedGyms() {
           return (
             <article
               key={gym.id}
-              className="w-[74%] min-w-[250px] max-w-[310px] shrink-0 snap-start overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition hover:border-orange-300 hover:shadow-md"
+              className="w-[74%] min-w-[250px] max-w-[310px] shrink-0 snap-start overflow-hidden border border-zinc-200 bg-white transition hover:border-zinc-400"
             >
               <div className="relative">
                 <Link href={gymHref} className="block">
@@ -77,15 +77,15 @@ async function HomeRecommendedGyms() {
                         decoding="async"
                       />
                     ) : (
-                      <div className="flex h-full items-center justify-center text-4xl text-zinc-300">
-                        🥋
+                      <div className="flex h-full items-center justify-center bg-zinc-950 text-sm font-black tracking-[0.2em] text-white">
+                        OHS
                       </div>
                     )}
                   </div>
                 </Link>
 
-                <div className="absolute left-2.5 top-2.5 rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
-                  🥋 {sport}
+                <div className="absolute left-2.5 top-2.5 bg-black/65 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-white backdrop-blur-sm">
+                  {sport}
                 </div>
 
                 <div className="absolute right-2 top-2 rounded-full bg-white/95 shadow-sm backdrop-blur-sm">
@@ -101,9 +101,7 @@ async function HomeRecommendedGyms() {
               </div>
 
               <Link href={gymHref} className="block px-3.5 py-3.5">
-                <h3 className="truncate text-base font-semibold text-zinc-900">
-                  {gym.name}
-                </h3>
+                <h3 className="truncate text-base font-bold text-zinc-950">{gym.name}</h3>
                 <p className="mt-1 truncate text-sm text-zinc-600">
                   {gym.region || gym.address || "지역 정보 없음"}
                 </p>
