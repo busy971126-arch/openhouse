@@ -97,7 +97,7 @@ export type GymPrivateContactFields = Pick<
 /** Owner-only gym view: public gyms row plus private contact fields. */
 export type GymWithPrivateContact = Gym & GymPrivateContactFields;
 
-export type EventLifecycleStatus = "active" | "cancelled";
+export type EventLifecycleStatus = "draft" | "active" | "cancelled";
 
 export type Event = {
   id: string;
