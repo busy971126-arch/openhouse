@@ -46,18 +46,31 @@ export default function LoginForm() {
     }
 
     if (authData.user) {
-      const { data: consent, error: consentError } = await supabase
-        .from("user_consent_records")
-        .select("terms_version, privacy_version")
-        .eq("user_id", authData.user.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const [
+        { data: consent, error: consentError },
+        { data: profile, error: profileError },
+      ] = await Promise.all([
+        supabase
+          .from("user_consent_records")
+          .select("terms_version, privacy_version")
+          .eq("user_id", authData.user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from("profiles")
+          .select("initial_use_intent")
+          .eq("id", authData.user.id)
+          .single(),
+      ]);
 
-      if (consentError) {
-        console.error("login consent check error:", consentError);
+      if (consentError || profileError) {
+        console.error("login onboarding check error:", {
+          consentError,
+          profileError,
+        });
         setLoading(false);
-        setError("약관 동의 상태를 확인하지 못했습니다. 잠시 후 다시 시도해주세요.");
+        setError("가입 정보를 확인하지 못했습니다. 잠시 후 다시 시도해주세요.");
         return;
       }
 
@@ -67,6 +80,12 @@ export default function LoginForm() {
 
       if (!hasCurrentConsent) {
         router.push(`/onboarding?next=${encodeURIComponent(redirect)}`);
+        router.refresh();
+        return;
+      }
+
+      if (!profile?.initial_use_intent) {
+        router.push(`/onboarding/role?next=${encodeURIComponent(redirect)}`);
         router.refresh();
         return;
       }
