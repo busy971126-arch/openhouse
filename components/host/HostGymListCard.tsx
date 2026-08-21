@@ -20,8 +20,8 @@ export function HostGymListCard({ gym }: HostGymListCardProps) {
   const gymHref = `/host/gyms/${gym.id}`;
 
   return (
-    <article className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition hover:border-orange-300 hover:shadow-md">
-      <Link href={gymHref} className="relative block">
+    <article className="border-b border-zinc-300 pb-5">
+      <Link href={gymHref} className="relative block overflow-hidden bg-zinc-100">
         <GymPhotoCarousel
           photos={photos}
           alt={gym.name}
@@ -40,20 +40,17 @@ export function HostGymListCard({ gym }: HostGymListCardProps) {
         )}
       </Link>
 
-      <div className="px-3 py-3">
-        <Link
-          href={gymHref}
-          className="block truncate text-lg font-semibold text-zinc-900 hover:text-orange-700"
-        >
-          {gym.name}
-        </Link>
-        <Link
-          href={gymHref}
-          className="mt-0.5 block truncate text-sm text-zinc-600 hover:text-zinc-800"
-        >
-          {addressLine}
-        </Link>
-      </div>
+      <Link href={gymHref} className="group mt-3 flex items-end justify-between gap-4">
+        <div className="min-w-0">
+          <p className="truncate text-lg font-black tracking-[-0.02em] text-zinc-950 group-hover:text-orange-700">
+            {gym.name}
+          </p>
+          <p className="mt-1 truncate text-sm text-zinc-500">{addressLine}</p>
+        </div>
+        <span className="shrink-0 pb-0.5 text-sm text-zinc-400 transition group-hover:translate-x-0.5">
+          →
+        </span>
+      </Link>
     </article>
   );
 }
