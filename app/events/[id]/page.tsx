@@ -127,6 +127,7 @@ export default async function EventDetailPage({ params }: PageProps) {
     | "exterior_photos"
     | "parking_photos"
   > | null;
+
   const isOwner = !!(user && gym && gym.owner_id === user.id);
 
   const participantUserIds = [
@@ -197,12 +198,15 @@ export default async function EventDetailPage({ params }: PageProps) {
         : undefined;
 
   return (
-    <div className="flex flex-col gap-6">
-      <Link href="/events" className="text-sm text-orange-600 hover:underline">
-        ← 이벤트 목록
+    <div className="flex flex-col gap-8">
+      <Link
+        href="/events"
+        className="w-fit text-xs font-bold tracking-wide text-zinc-500 hover:text-orange-600"
+      >
+        ← BACK TO EVENTS
       </Link>
 
-      <article className="rounded-xl bg-white p-5 shadow-sm">
+      <article>
         <EventDetailHeader
           sport={event.sport}
           title={event.title}
@@ -232,15 +236,16 @@ export default async function EventDetailPage({ params }: PageProps) {
         />
 
         {event.description && (
-          <div className="mt-4 border-t border-zinc-100 pt-4">
-            <h2 className="text-sm font-semibold text-zinc-900">이벤트 소개</h2>
-            <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-700">
+          <section className="mt-7 border-t border-zinc-300 pt-5">
+            <p className="text-[10px] font-black tracking-[0.16em] text-zinc-400">ABOUT</p>
+            <h2 className="mt-1 text-base font-bold text-zinc-950">이벤트 소개</h2>
+            <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-zinc-700">
               {event.description}
             </p>
-          </div>
+          </section>
         )}
 
-        <div className="mt-6">
+        <div className="mt-7">
           <EventParticipantPreview
             preview={preview}
             requiresAuth={previewRequiresAuth}
@@ -252,7 +257,7 @@ export default async function EventDetailPage({ params }: PageProps) {
           />
         </div>
 
-        <div className="mt-6">
+        <div className="mt-7">
           <EventDetailActions
             eventId={id}
             event={event}
@@ -271,10 +276,10 @@ export default async function EventDetailPage({ params }: PageProps) {
         </div>
 
         {!isOwner && user && (
-          <div className="mt-4 border-t border-zinc-100 pt-4">
+          <div className="mt-5 border-t border-zinc-200 pt-4">
             <Link
               href={`/my/reports?eventId=${id}`}
-              className="block text-center text-xs text-zinc-500 hover:text-red-600"
+              className="text-xs text-zinc-400 hover:text-red-600"
             >
               이 이벤트 신고하기
             </Link>
@@ -298,10 +303,11 @@ export default async function EventDetailPage({ params }: PageProps) {
         />
       )}
 
-      <section className="rounded-xl bg-white p-5 shadow-sm">
-        <h2 className="font-semibold">공지</h2>
+      <section className="border-t border-zinc-300 pt-5">
+        <p className="text-[10px] font-black tracking-[0.16em] text-zinc-400">NOTICE</p>
+        <h2 className="mt-1 text-base font-bold text-zinc-950">공지</h2>
         {announcements?.length ? (
-          <ul className="mt-3 space-y-3">
+          <ul className="mt-4 divide-y divide-zinc-200 border-y border-zinc-200">
             {announcements.map((a) =>
               isOwner ? (
                 <AnnouncementItem
@@ -311,11 +317,8 @@ export default async function EventDetailPage({ params }: PageProps) {
                   createdAt={a.created_at}
                 />
               ) : (
-                <li
-                  key={a.id}
-                  className="rounded-lg bg-zinc-50 px-3 py-2 text-sm text-zinc-700"
-                >
-                  <p className="whitespace-pre-wrap">{a.content}</p>
+                <li key={a.id} className="py-3 text-sm text-zinc-700">
+                  <p className="whitespace-pre-wrap leading-6">{a.content}</p>
                   <time className="mt-1 block text-xs text-zinc-400">
                     {new Date(a.created_at).toLocaleDateString("ko-KR")}
                   </time>
@@ -324,7 +327,7 @@ export default async function EventDetailPage({ params }: PageProps) {
             )}
           </ul>
         ) : (
-          <p className="mt-2 text-sm text-zinc-500">등록된 공지가 없습니다.</p>
+          <p className="mt-3 text-sm text-zinc-500">등록된 공지가 없습니다.</p>
         )}
 
         {isOwner && user && (
