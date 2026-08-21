@@ -99,6 +99,16 @@ export async function POST(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "잘못된 요청입니다." }, { status: 400 });
   }
 
+  if (body.mode === "party") {
+    return NextResponse.json(
+      {
+        error:
+          "동행 신청은 Closed Beta 동안 잠시 사용할 수 없습니다. 각 참가자가 직접 신청해주세요.",
+      },
+      { status: 400 },
+    );
+  }
+
   const applicantName = body.applicantName?.trim() ?? "";
   const applicantPhone = normalizePhone(body.applicantPhone ?? "") ?? "";
   const applicantGender = body.applicantGender?.trim() ?? "";
@@ -178,7 +188,6 @@ export async function POST(request: Request, context: RouteContext) {
     );
   }
 
-  const mode = body.mode ?? "solo";
   const rpcBase = {
     p_event_id: eventId,
     p_apply_weight_class: applyWeightClass,
@@ -187,35 +196,6 @@ export async function POST(request: Request, context: RouteContext) {
     p_applicant_notes: body.applicantNotes?.trim() || null,
     p_seeking_sparring: false,
   };
-
-  if (mode === "party") {
-    const companionUserIds = body.companionUserIds ?? [];
-    if (companionUserIds.length === 0) {
-      return NextResponse.json(
-        { error: "동행할 운동 친구를 1명 이상 선택해주세요." },
-        { status: 400 },
-      );
-    }
-
-    const { error: partyError } = await supabase.rpc("create_party_registration", {
-      ...rpcBase,
-      p_companion_user_ids: companionUserIds,
-    });
-
-    if (partyError) {
-      return NextResponse.json(
-        {
-          error: parseRegistrationApplyError(
-            partyError.message,
-            "동행 신청에 실패했습니다.",
-          ),
-        },
-        { status: 400 },
-      );
-    }
-
-    return NextResponse.json({ success: true, mode: "party" });
-  }
 
   const { error: rpcError } = await supabase.rpc(
     "create_solo_registration",

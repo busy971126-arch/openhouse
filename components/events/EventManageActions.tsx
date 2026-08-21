@@ -42,7 +42,14 @@ export function EventManageActions({
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const lifecycleStatus = event.status ?? "active";
+  const isDraft = lifecycleStatus === "draft";
+  const isActive = lifecycleStatus === "active";
+  const isCancelled = lifecycleStatus === "cancelled";
+
   async function toggleRecruitment() {
+    if (!isActive) return;
+
     setLoading("recruitment");
     setError(null);
 
@@ -50,7 +57,8 @@ export function EventManageActions({
     const { error: updateError } = await supabase
       .from("events")
       .update({ recruitment_closed: !event.recruitment_closed })
-      .eq("id", event.id);
+      .eq("id", event.id)
+      .eq("status", "active");
 
     setLoading(null);
 
@@ -100,7 +108,13 @@ export function EventManageActions({
   }
 
   async function cancelEvent() {
-    if (!confirm("이벤트를 취소하시겠습니까? 참가 신청은 더 이상 받지 않습니다.")) {
+    if (!isActive) return;
+
+    if (
+      !confirm(
+        "이벤트를 취소하시겠습니까? 참가자에게 취소 상태가 반영되고 더 이상 신청을 받지 않습니다.",
+      )
+    ) {
       return;
     }
 
@@ -111,7 +125,8 @@ export function EventManageActions({
     const { error: updateError } = await supabase
       .from("events")
       .update({ status: "cancelled", recruitment_closed: true })
-      .eq("id", event.id);
+      .eq("id", event.id)
+      .eq("status", "active");
 
     setLoading(null);
 
@@ -123,12 +138,10 @@ export function EventManageActions({
     router.refresh();
   }
 
-  async function deleteEvent() {
-    if (
-      !confirm(
-        "일정을 삭제하시겠습니까? 참가 신청과 공지도 함께 삭제됩니다.",
-      )
-    ) {
+  async function deleteDraft() {
+    if (!isDraft) return;
+
+    if (!confirm("이 비공개 초안을 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.")) {
       return;
     }
 
@@ -139,21 +152,21 @@ export function EventManageActions({
     const { error: deleteError } = await supabase
       .from("events")
       .delete()
-      .eq("id", event.id);
+      .eq("id", event.id)
+      .eq("status", "draft");
 
     setLoading(null);
 
     if (deleteError) {
-      setError(deleteError.message);
+      setError("초안을 삭제하지 못했습니다. 잠시 후 다시 시도해주세요.");
       return;
     }
 
-    router.push("/my/profile");
+    router.push(`/host/gyms/${event.gym_id}/events`);
     router.refresh();
   }
 
   const recruitmentLabel = event.recruitment_closed ? "모집 재개" : "모집 마감";
-  const isCancelled = event.status === "cancelled";
   const linkClass =
     variant === "inline"
       ? "text-zinc-500 hover:text-orange-600 disabled:opacity-50"
@@ -177,18 +190,19 @@ export function EventManageActions({
           >
             {loading === "duplicate" ? "복제 중..." : "복제"}
           </button>
-          <span className="text-zinc-300">·</span>
-          <button
-            type="button"
-            disabled={loading !== null || isCancelled}
-            onClick={toggleRecruitment}
-            className={linkClass}
-          >
-            {loading === "recruitment" ? "처리 중..." : recruitmentLabel}
-          </button>
-          <span className="text-zinc-300">·</span>
-          {!isCancelled && (
+
+          {isActive && (
             <>
+              <span className="text-zinc-300">·</span>
+              <button
+                type="button"
+                disabled={loading !== null}
+                onClick={toggleRecruitment}
+                className={linkClass}
+              >
+                {loading === "recruitment" ? "처리 중..." : recruitmentLabel}
+              </button>
+              <span className="text-zinc-300">·</span>
               <button
                 type="button"
                 disabled={loading !== null}
@@ -197,17 +211,29 @@ export function EventManageActions({
               >
                 {loading === "cancel" ? "취소 중..." : "이벤트 취소"}
               </button>
-              <span className="text-zinc-300">·</span>
             </>
           )}
-          <button
-            type="button"
-            disabled={loading !== null}
-            onClick={deleteEvent}
-            className="text-red-500 hover:text-red-600 disabled:opacity-50"
-          >
-            {loading === "delete" ? "삭제 중..." : "삭제"}
-          </button>
+
+          {isDraft && (
+            <>
+              <span className="text-zinc-300">·</span>
+              <button
+                type="button"
+                disabled={loading !== null}
+                onClick={deleteDraft}
+                className="text-red-500 hover:text-red-600 disabled:opacity-50"
+              >
+                {loading === "delete" ? "삭제 중..." : "초안 삭제"}
+              </button>
+            </>
+          )}
+
+          {isCancelled && (
+            <>
+              <span className="text-zinc-300">·</span>
+              <span className="text-zinc-400">취소된 이벤트 · 기록 보관</span>
+            </>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-2">
@@ -225,32 +251,44 @@ export function EventManageActions({
           >
             {loading === "duplicate" ? "복제 중..." : "복제"}
           </button>
-          <button
-            type="button"
-            disabled={loading !== null || isCancelled}
-            onClick={toggleRecruitment}
-            className={`col-span-2 ${linkClass}`}
-          >
-            {loading === "recruitment" ? "처리 중..." : recruitmentLabel}
-          </button>
-          {!isCancelled && (
+
+          {isActive && (
+            <>
+              <button
+                type="button"
+                disabled={loading !== null}
+                onClick={toggleRecruitment}
+                className={`col-span-2 ${linkClass}`}
+              >
+                {loading === "recruitment" ? "처리 중..." : recruitmentLabel}
+              </button>
+              <button
+                type="button"
+                disabled={loading !== null}
+                onClick={cancelEvent}
+                className={`col-span-2 ${linkClass} text-amber-700 hover:bg-amber-50`}
+              >
+                {loading === "cancel" ? "취소 중..." : "이벤트 취소"}
+              </button>
+            </>
+          )}
+
+          {isDraft && (
             <button
               type="button"
               disabled={loading !== null}
-              onClick={cancelEvent}
-              className={`col-span-2 ${linkClass} text-amber-700 hover:bg-amber-50`}
+              onClick={deleteDraft}
+              className={`col-span-2 ${linkClass} text-red-600 hover:bg-red-50`}
             >
-              {loading === "cancel" ? "취소 중..." : "이벤트 취소"}
+              {loading === "delete" ? "삭제 중..." : "초안 삭제"}
             </button>
           )}
-          <button
-            type="button"
-            disabled={loading !== null}
-            onClick={deleteEvent}
-            className={`col-span-2 ${linkClass} text-red-600 hover:bg-red-50`}
-          >
-            {loading === "delete" ? "삭제 중..." : "삭제"}
-          </button>
+
+          {isCancelled && (
+            <p className="col-span-2 rounded-lg bg-zinc-50 px-3 py-2 text-center text-xs text-zinc-500">
+              취소된 이벤트는 참가 기록 보존을 위해 삭제하지 않습니다.
+            </p>
+          )}
         </div>
       )}
     </div>

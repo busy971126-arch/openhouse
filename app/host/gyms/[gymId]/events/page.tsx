@@ -4,12 +4,66 @@ import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/EmptyState";
 import { Alert } from "@/components/Alert";
 import { getHostGymById } from "@/lib/queries/host-gyms";
-import { getHostEventsForGym } from "@/lib/queries/host-participants";
+import { getHostEventsForGym, type HostEventOption } from "@/lib/queries/host-participants";
 import { formatEventDetailDate } from "@/lib/utils/date";
+import { getEventRecruitmentStatus } from "@/lib/utils/event-status";
 
 type PageProps = {
   params: Promise<{ gymId: string }>;
 };
+
+function getHostEventBadge(event: HostEventOption) {
+  if (event.status === "draft") {
+    return {
+      label: "작성 중 · 비공개",
+      className: "bg-amber-50 text-amber-700 border-amber-200",
+    };
+  }
+
+  if (event.status === "cancelled") {
+    return {
+      label: "취소",
+      className: "bg-red-50 text-red-700 border-red-200",
+    };
+  }
+
+  const activeCount = event.counts.approved + event.counts.pending;
+  const recruitmentStatus = getEventRecruitmentStatus({
+    eventDate: event.eventDate,
+    eventTime: event.eventTime,
+    maxParticipants: event.maxParticipants,
+    approvedCount: activeCount,
+    recruitmentClosed: event.recruitmentClosed,
+    registrationDeadline: event.registrationDeadline,
+    eventStatus: event.status,
+  });
+
+  if (recruitmentStatus === "ended") {
+    return {
+      label: "종료",
+      className: "bg-zinc-100 text-zinc-600 border-zinc-200",
+    };
+  }
+
+  if (recruitmentStatus === "closed") {
+    return {
+      label: "모집 마감",
+      className: "bg-red-50 text-red-700 border-red-200",
+    };
+  }
+
+  if (recruitmentStatus === "closing_soon") {
+    return {
+      label: "마감 임박",
+      className: "bg-amber-50 text-amber-700 border-amber-200",
+    };
+  }
+
+  return {
+    label: "모집 중",
+    className: "bg-green-50 text-green-700 border-green-200",
+  };
+}
 
 export default async function HostGymEventsPage({ params }: PageProps) {
   const { gymId } = await params;
@@ -57,6 +111,7 @@ export default async function HostGymEventsPage({ params }: PageProps) {
         <ul className="flex flex-col gap-3">
           {events.map((event) => {
             const activeCount = event.counts.approved + event.counts.pending;
+            const badge = getHostEventBadge(event);
 
             return (
               <li key={event.id}>
@@ -64,9 +119,16 @@ export default async function HostGymEventsPage({ params }: PageProps) {
                   href={`/events/${event.id}/edit`}
                   className="block rounded-xl border border-zinc-200 bg-white px-4 py-4 hover:bg-zinc-50"
                 >
-                  <p className="text-xs text-zinc-500">
-                    {formatEventDetailDate(event.eventDate)}
-                  </p>
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-xs text-zinc-500">
+                      {formatEventDetailDate(event.eventDate)}
+                    </p>
+                    <span
+                      className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${badge.className}`}
+                    >
+                      {badge.label}
+                    </span>
+                  </div>
                   <p className="mt-1 font-semibold text-zinc-900">{event.title}</p>
                   <p className="mt-1 text-sm text-zinc-600">
                     참가 {activeCount}명

@@ -11,6 +11,19 @@ type EventPublishButtonProps = {
   redirectTo?: string;
 };
 
+function getPublishErrorMessage(message: string): string {
+  const knownMessages = [
+    "이벤트 날짜와 시작 시간은 현재 시각 이후로 설정해주세요.",
+    "신청 마감일은 이벤트 날짜 이후로 설정할 수 없습니다.",
+    "신청 마감일은 오늘보다 이전으로 설정할 수 없습니다.",
+  ];
+
+  return (
+    knownMessages.find((known) => message.includes(known)) ??
+    "이벤트를 공개하지 못했습니다. 잠시 후 다시 시도해주세요."
+  );
+}
+
 export function EventPublishButton({
   eventId,
   className = "rounded-lg bg-orange-600 py-3.5 text-center font-semibold text-white hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-50",
@@ -32,12 +45,13 @@ export function EventPublishButton({
     const { error: updateError } = await supabase
       .from("events")
       .update({ status: "active", recruitment_closed: false })
-      .eq("id", eventId);
+      .eq("id", eventId)
+      .eq("status", "draft");
 
     setPublishing(false);
 
     if (updateError) {
-      setError("이벤트를 공개하지 못했습니다. 잠시 후 다시 시도해주세요.");
+      setError(getPublishErrorMessage(updateError.message));
       return;
     }
 
