@@ -44,6 +44,9 @@ type ApplyButtonProps = {
   preview?: ParticipantPreview | null;
 };
 
+const fieldClass =
+  "w-full border-0 border-b border-zinc-300 bg-transparent px-0 py-2.5 text-base text-zinc-950 outline-none transition placeholder:text-zinc-400 focus:border-orange-600 focus:ring-0 disabled:text-zinc-400";
+
 export function ApplyButton({
   eventId,
   userId,
@@ -157,11 +160,11 @@ export function ApplyButton({
 
   if (!userId) {
     return (
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-4">
         <ApplyPreviewHintBox hint={previewHint} />
         <a
           href={`/login?redirect=/events/${eventId}`}
-          className="block rounded-lg bg-orange-600 py-3 text-center font-medium text-white hover:bg-orange-700"
+          className="block bg-orange-600 py-3 text-center font-bold text-white hover:bg-orange-700"
         >
           로그인 후 참가 신청
         </a>
@@ -173,8 +176,11 @@ export function ApplyButton({
     const label =
       existingRegistration.status === "pending" ? "승인 대기 중" : "참가 확정됨";
     return (
-      <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-center">
-        <p className="text-sm font-semibold text-green-800">{label}</p>
+      <div className="border-y border-zinc-300 py-5">
+        <p className="text-[10px] font-black tracking-[0.14em] text-green-700">
+          REGISTRATION
+        </p>
+        <p className="mt-1 text-base font-bold text-zinc-950">{label}</p>
         <ParticipantPartySummary
           partyId={existingRegistration.party_id}
           partyRepresentativeUserId={existingRegistration.party_representative_user_id}
@@ -182,7 +188,7 @@ export function ApplyButton({
         />
         <Link
           href="/my/registrations"
-          className="mt-3 inline-block text-sm font-medium text-orange-600 hover:text-orange-700"
+          className="mt-3 inline-block text-sm font-bold text-orange-600 hover:text-orange-700"
         >
           내 일정에서 보기 →
         </Link>
@@ -192,7 +198,7 @@ export function ApplyButton({
 
   if (!canApply) {
     return (
-      <div className="rounded-lg bg-zinc-100 py-3 text-center text-sm font-medium text-zinc-600">
+      <div className="border-y border-zinc-300 py-4 text-sm font-semibold text-zinc-600">
         {closedReason ?? "참가 신청이 마감되었습니다."}
       </div>
     );
@@ -284,25 +290,28 @@ export function ApplyButton({
 
   if (profileLoading) {
     return (
-      <div className="rounded-xl border border-zinc-200 bg-white p-4 text-sm text-zinc-600">
+      <div className="border-y border-zinc-300 py-4 text-sm text-zinc-600">
         저장된 참가 정보를 불러오고 있어요...
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-6">
       <ApplyPreviewHintBox hint={previewHint} />
 
       {error && <Alert message={error} />}
 
-      <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-        <p className="text-sm font-medium text-zinc-900">신청자 확인</p>
+      <section className="border-t border-zinc-300 pt-5">
+        <p className="text-[10px] font-black tracking-[0.16em] text-zinc-400">
+          YOU
+        </p>
+        <h3 className="mt-1 text-base font-bold text-zinc-950">신청자 정보</h3>
         <p className="mt-1 text-xs leading-5 text-zinc-500">
-          처음 한 번 입력하면 다음 신청부터 자동으로 불러옵니다. 실명과 연락처는 해당 이벤트 운영자에게만 제공됩니다.
+          한 번 입력한 정보는 다음 신청에서 다시 불러옵니다. 실명과 연락처는 이벤트 운영자에게만 전달됩니다.
         </p>
 
-        <div className="mt-4 flex flex-col gap-3">
+        <div className="mt-5 flex flex-col gap-5">
           <label className="flex flex-col gap-1 text-sm">
             <FieldLabel required tone="red">실명</FieldLabel>
             <input
@@ -310,7 +319,7 @@ export function ApplyButton({
               onChange={(e) => setApplicantName(e.target.value)}
               placeholder="예: 홍길동"
               autoComplete="name"
-              className="rounded-lg border border-zinc-300 bg-white px-3 py-2"
+              className={fieldClass}
             />
           </label>
 
@@ -323,7 +332,7 @@ export function ApplyButton({
               placeholder="010-0000-0000"
               inputMode="tel"
               autoComplete="tel"
-              className="rounded-lg border border-zinc-300 bg-white px-3 py-2"
+              className={fieldClass}
             />
           </label>
 
@@ -335,7 +344,7 @@ export function ApplyButton({
                 setSelectedGender(e.target.value);
                 setSelectedWeightClass("");
               }}
-              className="rounded-lg border border-zinc-300 bg-white px-3 py-2"
+              className={fieldClass}
             >
               <option value="">선택</option>
               {GENDER_OPTIONS.map((option) => (
@@ -346,15 +355,18 @@ export function ApplyButton({
             </select>
           </label>
         </div>
-      </div>
+      </section>
 
-      <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-        <p className="text-sm font-medium text-zinc-900">운동 정보</p>
+      <section className="border-t border-zinc-300 pt-5">
+        <p className="text-[10px] font-black tracking-[0.16em] text-zinc-400">
+          TRAINING
+        </p>
+        <h3 className="mt-1 text-base font-bold text-zinc-950">운동 정보</h3>
         <p className="mt-1 text-xs text-zinc-500">
-          체급과 수련 정보는 참가자 매칭과 운영을 위해 사용됩니다.
+          체급과 수련 정보는 참가자 구성과 운영을 위해 사용됩니다.
         </p>
 
-        <div className="mt-4 flex flex-col gap-3">
+        <div className="mt-5 flex flex-col gap-5">
           <label className="flex flex-col gap-1 text-sm">
             <FieldLabel required tone="red">체급</FieldLabel>
             <select
@@ -362,7 +374,7 @@ export function ApplyButton({
               value={selectedWeightClass}
               disabled={!selectedGender}
               onChange={(e) => setSelectedWeightClass(e.target.value)}
-              className="rounded-lg border border-zinc-300 bg-white px-3 py-2 disabled:bg-zinc-100"
+              className={fieldClass}
             >
               <option value="">{selectedGender ? "선택" : "성별을 먼저 선택해주세요"}</option>
               {weightClassOptions.map((option) => (
@@ -374,12 +386,10 @@ export function ApplyButton({
           </label>
 
           {isGymOperator ? (
-            <div className="flex flex-col gap-1 text-sm">
-              <span>수련 배경</span>
-              <p className="rounded-lg border border-zinc-200 bg-white px-3 py-2 font-medium text-zinc-800">
-                {GYM_OPERATOR_EXPERIENCE}
-              </p>
-              <span className="text-xs text-zinc-500">
+            <div className="border-b border-zinc-300 pb-3 text-sm">
+              <span className="text-zinc-600">수련 배경</span>
+              <p className="mt-1 font-bold text-zinc-950">{GYM_OPERATOR_EXPERIENCE}</p>
+              <span className="mt-1 block text-xs text-zinc-500">
                 체육관 운영자는 지도자로 신청됩니다.
               </span>
             </div>
@@ -398,7 +408,7 @@ export function ApplyButton({
                       setYears("");
                     }
                   }}
-                  className="rounded-lg border border-zinc-300 bg-white px-3 py-2"
+                  className={fieldClass}
                 >
                   <option value="">선택</option>
                   {backgroundOptions.map((option) => (
@@ -425,7 +435,7 @@ export function ApplyButton({
                         e.target.value as (typeof APPLICANT_YEARS_OPTIONS)[number]["value"] | "",
                       )
                     }
-                    className="rounded-lg border border-zinc-300 bg-white px-3 py-2"
+                    className={fieldClass}
                   >
                     <option value="">선택</option>
                     {APPLICANT_YEARS_OPTIONS.map((option) => (
@@ -440,33 +450,33 @@ export function ApplyButton({
           )}
 
           <label className="flex flex-col gap-1 text-sm">
-            소속 도장 (선택)
+            소속 도장 <span className="text-xs text-zinc-400">선택</span>
             <input
               value={gymAffiliation}
               onChange={(e) => setGymAffiliation(e.target.value)}
               placeholder="예: OO 유도장"
-              className="rounded-lg border border-zinc-300 bg-white px-3 py-2"
+              className={fieldClass}
             />
           </label>
 
           <label className="flex flex-col gap-1 text-sm">
-            요청 사항 (선택)
+            요청 사항 <span className="text-xs text-zinc-400">선택</span>
             <textarea
               value={applicantNotes}
               onChange={(e) => setApplicantNotes(e.target.value)}
               rows={2}
               placeholder="호스트에게 전달할 메모"
-              className="rounded-lg border border-zinc-300 bg-white px-3 py-2"
+              className={`${fieldClass} resize-none`}
             />
           </label>
         </div>
-      </div>
+      </section>
 
       <button
         type="button"
         onClick={handleApply}
         disabled={loading}
-        className="rounded-lg bg-orange-600 py-3 font-medium text-white hover:bg-orange-700 disabled:opacity-50"
+        className="bg-orange-600 py-3.5 font-bold text-white hover:bg-orange-700 disabled:opacity-50"
       >
         {loading ? "신청 중..." : "참가 신청"}
       </button>

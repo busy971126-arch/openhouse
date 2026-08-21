@@ -112,79 +112,81 @@ export default function OnboardingRolePage() {
     <div className="mx-auto max-w-md">
       <AuthBrandHero />
 
-      <div className="mb-6">
-        <p className="text-sm font-medium text-orange-600">가입 완료</p>
-        <h2 className="mt-1 text-2xl font-bold text-zinc-900">
-          OpenHouse에서 무엇을 하고 싶으세요?
+      <div className="mb-8">
+        <p className="text-[10px] font-black tracking-[0.16em] text-orange-600">
+          WELCOME IN
+        </p>
+        <h2 className="mt-2 text-[28px] font-black leading-[1.15] tracking-[-0.035em] text-zinc-950">
+          OpenHouse에서
+          <br />무엇을 하고 싶으세요?
         </h2>
-        <p className="mt-2 text-sm leading-6 text-zinc-600">
-          처음 보여드릴 화면을 맞추기 위한 질문이에요. 계정 종류를 영구적으로
-          나누는 선택은 아닙니다.
+        <p className="mt-3 max-w-sm text-sm leading-6 text-zinc-600">
+          처음 보여드릴 화면만 맞춥니다. 언제든 참가자와 운영자 역할을 오갈 수 있어요.
         </p>
       </div>
 
       {error && (
-        <div className="mb-4">
+        <div className="mb-5">
           <Alert message={error} />
         </div>
       )}
 
       {checking ? (
-        <div className="rounded-xl border border-zinc-200 bg-white p-5 text-sm text-zinc-600">
+        <div className="border-y border-zinc-300 py-5 text-sm text-zinc-600">
           계정 정보를 확인하고 있어요...
         </div>
       ) : (
-        <div className="flex flex-col gap-4">
+        <div className="border-y border-zinc-300">
           <button
             type="button"
             onClick={() => void chooseIntent("participant")}
             disabled={saving !== null}
-            className="rounded-2xl border border-zinc-200 bg-white p-5 text-left transition hover:border-orange-300 hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="group flex w-full items-start gap-4 border-b border-zinc-200 py-6 text-left transition disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <div className="flex items-start gap-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-orange-100 text-xl">
-                🥋
-              </div>
-              <div>
-                <p className="text-lg font-bold text-zinc-900">운동하러 왔어요</p>
-                <p className="mt-1 text-sm leading-6 text-zinc-600">
-                  이벤트와 체육관을 찾아보고 참가하고 싶어요.
-                </p>
-                <p className="mt-3 text-sm font-semibold text-orange-600">
-                  {saving === "participant" ? "저장 중..." : "일반 이용자로 시작"} →
-                </p>
-              </div>
-            </div>
+            <span className="mt-0.5 w-12 shrink-0 text-[10px] font-black tracking-[0.14em] text-orange-600">
+              JOIN
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-xl font-black tracking-[-0.02em] text-zinc-950 group-hover:text-orange-700">
+                운동하러 왔어요
+              </span>
+              <span className="mt-1.5 block text-sm leading-6 text-zinc-600">
+                이벤트와 체육관을 찾고 바로 참가합니다.
+              </span>
+              <span className="mt-4 block text-xs font-bold tracking-wide text-zinc-500">
+                {saving === "participant" ? "저장 중..." : "참가자로 시작"} →
+              </span>
+            </span>
           </button>
 
           <button
             type="button"
             onClick={() => void chooseIntent("operator")}
             disabled={saving !== null}
-            className="rounded-2xl border border-zinc-200 bg-white p-5 text-left transition hover:border-orange-300 hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="group flex w-full items-start gap-4 py-6 text-left transition disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <div className="flex items-start gap-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xl">
-                🏠
-              </div>
-              <div>
-                <p className="text-lg font-bold text-zinc-900">
-                  체육관·이벤트를 운영해요
-                </p>
-                <p className="mt-1 text-sm leading-6 text-zinc-600">
-                  체육관을 등록하고 이벤트를 직접 열고 싶어요.
-                </p>
-                <p className="mt-3 text-sm font-semibold text-orange-600">
-                  {saving === "operator" ? "저장 중..." : "운영자 등록 시작"} →
-                </p>
-              </div>
-            </div>
+            <span className="mt-0.5 w-12 shrink-0 text-[10px] font-black tracking-[0.14em] text-zinc-400">
+              HOST
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-xl font-black tracking-[-0.02em] text-zinc-950 group-hover:text-orange-700">
+                체육관·이벤트를 운영해요
+              </span>
+              <span className="mt-1.5 block text-sm leading-6 text-zinc-600">
+                체육관을 등록하고 이벤트를 직접 엽니다.
+              </span>
+              <span className="mt-4 block text-xs font-bold tracking-wide text-zinc-500">
+                {saving === "operator" ? "저장 중..." : "운영 시작"} →
+              </span>
+            </span>
           </button>
-
-          <p className="px-2 text-center text-xs leading-5 text-zinc-500">
-            일반 이용자로 시작해도 마이페이지에서 언제든 운영자 등록을 할 수 있어요.
-          </p>
         </div>
+      )}
+
+      {!checking && (
+        <p className="mt-4 text-xs leading-5 text-zinc-500">
+          참가자로 시작해도 마이페이지에서 언제든 체육관을 등록할 수 있습니다.
+        </p>
       )}
     </div>
   );

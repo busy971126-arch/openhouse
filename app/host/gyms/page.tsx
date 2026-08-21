@@ -15,30 +15,34 @@ export default async function HostGymsPage() {
   const gyms = await getHostGymsWithDetails(user.id);
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold text-zinc-900">내 체육관</h1>
-        <p className="mt-1 text-sm text-zinc-600">
-          운영 중인 체육관을 선택해 관리하세요.
+    <div>
+      <header className="mb-8 border-b border-zinc-300 pb-5">
+        <p className="text-[10px] font-black tracking-[0.16em] text-orange-600">
+          HOST
         </p>
-      </div>
+        <h1 className="mt-2 text-[28px] font-black leading-none tracking-[-0.035em] text-zinc-950">
+          내 체육관
+        </h1>
+        <p className="mt-2 text-sm text-zinc-500">
+          체육관을 선택해 이벤트와 참가자를 관리합니다.
+        </p>
+      </header>
 
       {gyms.length === 0 ? (
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 text-center">
-          <p className="text-sm text-zinc-600">
-            등록된 체육관이 없습니다. 체육관을 추가하면 이벤트와 예정 참가자를
-            관리할 수 있습니다.
+        <section className="border-y border-zinc-300 py-6">
+          <p className="text-sm leading-6 text-zinc-600">
+            아직 등록한 체육관이 없습니다.
           </p>
           <Link
             href="/gym/new"
-            className="mt-4 inline-block rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700"
+            className="mt-4 inline-block text-sm font-bold text-orange-600 hover:text-orange-700"
           >
-            + 체육관 추가
+            첫 체육관 등록하기 →
           </Link>
-        </div>
+        </section>
       ) : (
         <>
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-6">
             {gyms.map((gym) => (
               <HostGymListCard key={gym.id} gym={gym} />
             ))}
@@ -46,9 +50,10 @@ export default async function HostGymsPage() {
 
           <Link
             href="/gym/new"
-            className="flex items-center justify-center rounded-xl border border-dashed border-zinc-300 bg-white py-4 text-sm font-medium text-orange-600 hover:border-orange-300 hover:bg-orange-50"
+            className="mt-8 flex items-center justify-between border-y border-zinc-300 py-4 text-sm font-bold text-zinc-900 hover:text-orange-700"
           >
-            + 체육관 추가
+            <span>체육관 추가</span>
+            <span>＋</span>
           </Link>
         </>
       )}

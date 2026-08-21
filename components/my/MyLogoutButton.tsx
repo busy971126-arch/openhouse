@@ -21,10 +21,14 @@ export function MyLogoutButton({ label = "로그아웃" }: MyLogoutButtonProps) 
     <button
       type="button"
       onClick={handleLogout}
-      className="flex w-full items-center justify-between rounded-xl border border-zinc-200 bg-white px-4 py-3 text-left hover:bg-zinc-50"
+      className="group flex w-full items-center justify-between border-b border-zinc-200 py-4 text-left"
     >
-      <span className="font-medium text-zinc-900">{label}</span>
-      <span className="text-zinc-400">→</span>
+      <span className="font-semibold text-zinc-950 transition group-hover:text-orange-700">
+        {label}
+      </span>
+      <span className="text-sm text-zinc-400 transition group-hover:translate-x-0.5 group-hover:text-zinc-700">
+        →
+      </span>
     </button>
   );
 }
