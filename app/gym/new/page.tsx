@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { GymForm } from "@/components/gym/GymForm";
+import { MinimalGymForm } from "@/components/gym/MinimalGymForm";
 import { getPendingGymRegistration } from "@/lib/queries/pending-gym";
 import { createClient } from "@/lib/supabase/server";
 import { getPendingGymFormDefaults } from "@/lib/utils/pending-gym-info";
@@ -27,20 +27,21 @@ export default async function NewGymPage() {
   return (
     <div className="mx-auto max-w-md">
       <Link
-        href="/my/profile"
+        href="/my"
         className="text-sm font-medium text-orange-600 hover:text-orange-700"
       >
-        ← 내 프로필
+        ← 마이페이지
       </Link>
 
       <header className="mb-5 mt-4">
         <h1 className="text-2xl font-bold text-zinc-900">체육관 등록</h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          필수 항목만 입력해도 등록할 수 있습니다
+        <p className="mt-1 text-sm leading-6 text-zinc-500">
+          기본 정보만 입력하면 먼저 등록할 수 있어요. 사진과 운영 정보는 나중에
+          완성하면 됩니다.
         </p>
       </header>
 
-      <GymForm mode="create" pendingDefaults={pendingDefaults} />
+      <MinimalGymForm pendingDefaults={pendingDefaults} />
     </div>
   );
 }
