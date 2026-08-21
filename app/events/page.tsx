@@ -70,9 +70,7 @@ export default async function EventsPage({ searchParams }: PageProps) {
       (region: string) => region !== "전국",
     );
 
-    if (regions.length > 0) {
-      profileRegions = regions;
-    }
+    if (regions.length > 0) profileRegions = regions;
   }
 
   if (
@@ -105,17 +103,18 @@ export default async function EventsPage({ searchParams }: PageProps) {
 
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="text-2xl font-bold">{isGymTab ? "체육관" : "이벤트"}</h1>
+      <header className="pt-1">
+        <p className="text-[10px] font-black tracking-[0.18em] text-orange-600">DISCOVER</p>
+        <h1 className="mt-1 text-[28px] font-black tracking-[-0.03em] text-zinc-950">
+          {isGymTab ? "운동할 곳을 찾자" : "다음 운동을 찾자"}
+        </h1>
+      </header>
 
       {!user && !isGymTab && (
-        <div className="rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-900">
-          로그인하면 참가 신청과 내역 관리가 가능합니다.{" "}
-          <Link href="/login?redirect=/events" className="font-medium underline">
+        <div className="border-l-2 border-orange-600 py-1 pl-3 text-xs leading-5 text-zinc-600">
+          참가 신청은 로그인 후 가능합니다.{" "}
+          <Link href="/login?redirect=/events" className="font-bold text-zinc-950 underline underline-offset-4">
             로그인
-          </Link>
-          {" · "}
-          <Link href="/signup" className="font-medium underline">
-            회원가입
           </Link>
         </div>
       )}
@@ -135,22 +134,14 @@ export default async function EventsPage({ searchParams }: PageProps) {
           </Suspense>
 
           {params.quick === "nearby" && user && !nearbyRegions?.length && (
-            <p className="text-sm text-amber-700">
-              프로필에 관심 지역이 없습니다.{" "}
-              <Link href="/my/profile/edit/sports" className="font-medium underline">
-                운동 프로필
-              </Link>
-              에서 지역을 설정해주세요.
+            <p className="border-l-2 border-amber-500 pl-3 text-sm text-amber-800">
+              관심 지역이 없습니다. <Link href="/my/profile/edit/sports" className="font-bold underline">운동 프로필에서 설정</Link>
             </p>
           )}
 
           {gymSort === "distance" && user && !profileRegions?.length && (
-            <p className="text-sm text-amber-700">
-              가까운 순 정렬은 프로필 관심 지역을 기준으로 합니다.{" "}
-              <Link href="/my/profile/edit/sports" className="font-medium underline">
-                운동 프로필
-              </Link>
-              에서 지역을 설정해주세요.
+            <p className="border-l-2 border-amber-500 pl-3 text-sm text-amber-800">
+              가까운 순은 관심 지역을 기준으로 합니다. <Link href="/my/profile/edit/sports" className="font-bold underline">지역 설정</Link>
             </p>
           )}
 
@@ -179,12 +170,9 @@ export default async function EventsPage({ searchParams }: PageProps) {
           </Suspense>
 
           {quick === "nearby" && !nearbyRegions?.length && (
-            <p className="text-sm text-amber-700">
-              관심 지역이 없습니다.{" "}
-              <Link href="/my/profile/edit/sports" className="font-medium underline">
-                운동 프로필
-              </Link>
-              에서 지역을 설정하거나 홈에서 현재 위치로 찾기를 사용해주세요.
+            <p className="border-l-2 border-amber-500 pl-3 text-sm text-amber-800">
+              관심 지역이 없습니다. <Link href="/my/profile/edit/sports" className="font-bold underline">지역 설정</Link>
+              {" 또는 홈에서 현재 위치를 사용하세요."}
             </p>
           )}
 
