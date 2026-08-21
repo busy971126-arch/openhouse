@@ -19,6 +19,11 @@ const ASPECT_CLASS = {
   compact: "aspect-[6/5]",
 } as const;
 
+const DOT_SIZE_PX = 6;
+const DOT_GAP_PX = 6;
+const DOT_STEP_PX = DOT_SIZE_PX + DOT_GAP_PX;
+const PAGE_NUMBER_HEIGHT_PX = 16;
+
 function shouldShowFacilityLabel(photo: GymDisplayPhoto): boolean {
   return photo.showFacilityLabel !== false && photo.label.trim().length > 0;
 }
@@ -109,6 +114,9 @@ export function GymPhotoCarousel({
     lowerIndex === upperIndex
       ? lowerHasLabel
       : lowerHasLabel * (1 - progress) + upperHasLabel * progress;
+  const dotTrackWidth =
+    photos.length * DOT_SIZE_PX + (photos.length - 1) * DOT_GAP_PX;
+  const pageNumberWidthCh = Math.max(1, String(photos.length).length);
 
   return (
     <div className={`relative overflow-hidden bg-zinc-100 ${className}`}>
@@ -166,24 +174,62 @@ export function GymPhotoCarousel({
 
       {photos.length > 1 && (
         <>
-          <span className="absolute right-3 top-3 z-20 rounded-full bg-black/60 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
-            {activeIndex + 1} / {photos.length}
-          </span>
+          <div className="absolute right-3 top-3 z-20 flex items-center rounded-full bg-black/60 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+            <span
+              className="relative inline-block overflow-hidden"
+              style={{
+                width: `${pageNumberWidthCh}ch`,
+                height: `${PAGE_NUMBER_HEIGHT_PX}px`,
+              }}
+              aria-hidden
+            >
+              <span
+                className="absolute inset-x-0 top-0 flex flex-col items-center will-change-transform"
+                style={{
+                  transform: `translate3d(0, -${scrollPosition * PAGE_NUMBER_HEIGHT_PX}px, 0)`,
+                }}
+              >
+                {photos.map((_, index) => (
+                  <span
+                    key={`page-number-${index}`}
+                    className="block w-full text-center leading-4"
+                    style={{ height: `${PAGE_NUMBER_HEIGHT_PX}px` }}
+                  >
+                    {index + 1}
+                  </span>
+                ))}
+              </span>
+            </span>
+            <span aria-hidden>&nbsp;/ {photos.length}</span>
+            <span className="sr-only">
+              {activeIndex + 1} / {photos.length}
+            </span>
+          </div>
 
           <div
-            className={`pointer-events-none absolute inset-x-0 ${dotsClass} z-20 flex justify-center gap-1.5`}
+            className={`pointer-events-none absolute inset-x-0 ${dotsClass} z-20 flex justify-center`}
           >
-            {photos.map((photo, index) => (
-              <button
-                key={`dot-${index}`}
-                type="button"
-                aria-label={`${index + 1}번째 사진`}
-                onClick={() => scrollTo(index)}
-                className={`pointer-events-auto size-1.5 rounded-full transition ${
-                  index === activeIndex ? "bg-white" : "bg-white/45"
-                }`}
+            <div
+              className="relative flex gap-1.5"
+              style={{ width: `${dotTrackWidth}px` }}
+            >
+              {photos.map((_, index) => (
+                <button
+                  key={`dot-${index}`}
+                  type="button"
+                  aria-label={`${index + 1}번째 사진`}
+                  onClick={() => scrollTo(index)}
+                  className="pointer-events-auto size-1.5 shrink-0 rounded-full bg-white/40 transition hover:bg-white/70"
+                />
+              ))}
+              <span
+                className="pointer-events-none absolute left-0 top-0 size-1.5 rounded-full bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.06)] will-change-transform"
+                style={{
+                  transform: `translate3d(${scrollPosition * DOT_STEP_PX}px, 0, 0)`,
+                }}
+                aria-hidden
               />
-            ))}
+            </div>
           </div>
         </>
       )}
