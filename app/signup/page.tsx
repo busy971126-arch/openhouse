@@ -18,7 +18,6 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
-  const [marketingAccepted, setMarketingAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -73,7 +72,6 @@ export default function SignupPage() {
           consents: {
             termsAccepted,
             privacyAccepted,
-            marketingAccepted,
           },
         }),
       });
@@ -181,10 +179,8 @@ export default function SignupPage() {
         <TermsConsent
           termsAccepted={termsAccepted}
           privacyAccepted={privacyAccepted}
-          marketingAccepted={marketingAccepted}
           onTermsChange={setTermsAccepted}
           onPrivacyChange={setPrivacyAccepted}
-          onMarketingChange={setMarketingAccepted}
         />
 
         <button
@@ -200,7 +196,7 @@ export default function SignupPage() {
         <p className="font-medium text-zinc-800">가입 후 필요할 때 입력해요</p>
         <p className="mt-1">
           이벤트 참가 시 실명·연락처·수련 정보 등을 한 번 입력하면 다음
-          신청부터 다시 사용할 수 있도록 구성할 예정입니다.
+          신청부터 다시 사용할 수 있어요.
         </p>
       </div>
 
