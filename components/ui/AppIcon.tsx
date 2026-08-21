@@ -1,4 +1,4 @@
-import type { SVGProps } from "react";
+import type { ReactNode, SVGProps } from "react";
 
 export type AppIconName =
   | "home"
@@ -14,7 +14,7 @@ type AppIconProps = SVGProps<SVGSVGElement> & {
   name: AppIconName;
 };
 
-const paths: Record<AppIconName, React.ReactNode> = {
+const paths: Record<AppIconName, ReactNode> = {
   home: (
     <>
       <path d="M3 10.75 12 3l9 7.75" />
