@@ -87,7 +87,7 @@ export default function LoginForm() {
             href="/login/recover"
             className="text-xs font-medium text-zinc-600 hover:text-orange-600"
           >
-            아이디·비밀번호 찾기
+            로그인에 문제가 있나요?
           </Link>
         </div>
 

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { hasPasswordLogin } from "@/lib/auth/providers";
 import { createClient } from "@/lib/supabase/server";
 import { ChangePasswordForm } from "./ChangePasswordForm";
 
@@ -10,6 +11,7 @@ export default async function ChangePasswordPage() {
   } = await supabase.auth.getUser();
 
   if (!user) redirect("/login?redirect=/my/settings/password");
+  if (!hasPasswordLogin(user)) redirect("/my/settings");
 
   return (
     <div className="mx-auto max-w-md flex flex-col gap-6">
