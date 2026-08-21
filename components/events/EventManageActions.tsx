@@ -63,7 +63,7 @@ export function EventManageActions({
   }
 
   async function duplicateEvent() {
-    if (!confirm("이 일정을 복제하시겠습니까?")) return;
+    if (!confirm("이 일정을 복제하시겠습니까? 복사본은 비공개 초안으로 저장됩니다.")) return;
 
     setLoading("duplicate");
     setError(null);
@@ -86,7 +86,7 @@ export function EventManageActions({
       registration_deadline: event.registration_deadline,
       difficulty: event.difficulty,
       recruitment_closed: false,
-      status: "active",
+      status: "draft",
     });
 
     setLoading(null);
