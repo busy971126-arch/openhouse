@@ -68,17 +68,18 @@ export function EventDetailActions({
   if (isOwner) {
     if ((event.status as string | undefined) === "draft") {
       return (
-        <div className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+        <div className="flex flex-col gap-3 border-l-2 border-amber-500 py-1 pl-4">
           <div>
-            <p className="text-sm font-semibold text-amber-900">🟡 작성 중 · 비공개</p>
-            <p className="mt-1 text-xs leading-5 text-amber-800">
-              지금은 운영자에게만 보입니다. 내용을 확인한 뒤 공개해주세요.
+            <p className="text-[10px] font-black tracking-[0.14em] text-amber-700">DRAFT · PRIVATE</p>
+            <p className="mt-1 text-sm font-bold text-zinc-950">작성 중인 이벤트</p>
+            <p className="mt-1 text-xs leading-5 text-zinc-500">
+              현재 운영자에게만 보입니다. 내용을 확인한 뒤 공개하세요.
             </p>
           </div>
           <EventPublishButton eventId={eventId} />
           <Link
             href={`/events/${event.id}/edit`}
-            className="rounded-lg border border-amber-200 bg-white py-2.5 text-center text-sm font-medium text-amber-900 hover:bg-amber-100"
+            className="w-fit text-xs font-bold text-zinc-600 underline decoration-zinc-300 underline-offset-4 hover:text-orange-600"
           >
             상세 정보 수정
           </Link>
@@ -87,10 +88,11 @@ export function EventDetailActions({
     }
 
     return (
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 border-t border-zinc-300 pt-5">
+        <p className="text-[10px] font-black tracking-[0.14em] text-zinc-400">HOST ACTIONS</p>
         <Link
           href={buildHostParticipantsUrl(event.gym_id, eventId)}
-          className="block rounded-lg bg-orange-600 py-3 text-center text-sm font-semibold text-white hover:bg-orange-700"
+          className="block bg-zinc-950 py-3 text-center text-sm font-bold text-white transition hover:bg-orange-600"
         >
           참가자 관리
         </Link>
