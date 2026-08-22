@@ -64,7 +64,7 @@ export default async function AdminEventsPage({ searchParams }: PageProps) {
             <li key={item.id} className="border-b border-zinc-200 py-4">
               <div className="flex items-baseline justify-between gap-3">
                 <Link
-                  href={`/events/${item.id}`}
+                  href={`/admin/events/${item.id}`}
                   className="text-sm font-semibold text-zinc-950 underline underline-offset-4"
                 >
                   {item.title}

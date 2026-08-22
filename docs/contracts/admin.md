@@ -45,10 +45,13 @@
 | `admin_get_users(search)` | id, nickname, display_name, created_at, is_operator, application_count |
 | `admin_get_gyms(search)` | id, name, sport, region, is_public, created_at, owner_label, upcoming_event_count |
 | `admin_get_events(search, p_status)` | id, title, event_date, status, gym_name, host_label, application_count |
+| `admin_get_event_detail(event_id)` | 검수용 이벤트 필드 + `is_publicly_viewable`. 민감 연락처/메모 없음 |
 | `admin_get_profile_labels(user_ids)` | id, nickname, display_name |
 | `admin_get_event_titles(event_ids)` | id, title |
 
 반환 금지: `phone`, `parent_phone`, `pending_gym_info`, `emergency_contact`, `applicant_notes`, `operator_memo`.
+
+이벤트 목록 링크는 `/admin/events/{id}`다. `/events/{id}`는 `is_publicly_viewable`일 때만 보조 링크로 제공한다. 상세는 read-only.
 
 비관리자가 RPC를 호출하면 exception.
 

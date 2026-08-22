@@ -47,7 +47,7 @@ export default async function AdminReportDetailPage({ params }: PageProps) {
       </p>
       {report.eventTitle && report.eventId && (
         <Link
-          href={`/events/${report.eventId}`}
+          href={`/admin/events/${report.eventId}`}
           className="mt-3 inline-block text-sm font-semibold text-zinc-950 underline underline-offset-4"
         >
           {report.eventTitle}

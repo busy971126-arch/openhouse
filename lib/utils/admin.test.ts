@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   isAdminPath,
+  isAdminEventPubliclyViewable,
   parseEventAdminStatus,
   parseInquiryStatus,
   parseReportStatus,
@@ -44,5 +45,13 @@ describe("admin helpers", () => {
 
   it("strips ilike metacharacters from search", () => {
     expect(sanitizeAdminSearch("김%,_이")).toBe("김 이");
+  });
+
+  it("only treats non-draft events on public gyms as publicly viewable", () => {
+    expect(isAdminEventPubliclyViewable("active", true)).toBe(true);
+    expect(isAdminEventPubliclyViewable("cancelled", true)).toBe(true);
+    expect(isAdminEventPubliclyViewable("draft", true)).toBe(false);
+    expect(isAdminEventPubliclyViewable("active", false)).toBe(false);
+    expect(isAdminEventPubliclyViewable("draft", false)).toBe(false);
   });
 });

@@ -8,6 +8,7 @@ import {
   rpcRowHasForbiddenFields,
 } from "@/lib/admin/rpc-fields";
 import {
+  getAdminEventDetail,
   getAdminEvents,
   getAdminGyms,
   getAdminOverview,
@@ -131,5 +132,58 @@ describe("admin directory queries use RPCs", () => {
 
     expect(ADMIN_USER_FIELDS.length + ADMIN_GYM_FIELDS.length + ADMIN_EVENT_FIELDS.length).toBeGreaterThan(0);
     expect(ADMIN_FORBIDDEN_FIELDS).toContain("phone");
+  });
+
+  it("maps event detail from allowlisted RPC columns only", async () => {
+    const detail = await getAdminEventDetail(
+      rpcClient("admin_get_event_detail", [
+        {
+          id: "e1",
+          title: "Draft Open",
+          sport: "bjj",
+          event_type: "open_mat",
+          event_date: "2026-09-01",
+          event_time: "18:00:00",
+          status: "draft",
+          region: "서울",
+          address: "도로명",
+          gym_id: "g1",
+          gym_name: "Private Gym",
+          gym_is_public: false,
+          host_label: "호스트",
+          max_participants: 12,
+          active_application_count: 0,
+          created_at: "2026-08-01T00:00:00Z",
+          description: "검수용 설명",
+          is_publicly_viewable: false,
+          emergency_contact: "010",
+          applicant_notes: "nope",
+          operator_memo: "secret",
+        },
+      ]),
+      "e1",
+    );
+
+    expect(detail).toEqual({
+      id: "e1",
+      title: "Draft Open",
+      sport: "bjj",
+      eventType: "open_mat",
+      eventDate: "2026-09-01",
+      eventTime: "18:00:00",
+      status: "draft",
+      region: "서울",
+      address: "도로명",
+      gymId: "g1",
+      gymName: "Private Gym",
+      gymIsPublic: false,
+      hostLabel: "호스트",
+      maxParticipants: 12,
+      activeApplicationCount: 0,
+      createdAt: "2026-08-01T00:00:00Z",
+      description: "검수용 설명",
+      isPubliclyViewable: false,
+    });
+    expect(detail && "emergency_contact" in detail).toBe(false);
   });
 });

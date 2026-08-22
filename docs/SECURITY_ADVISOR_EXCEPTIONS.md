@@ -132,3 +132,20 @@ Returned data:
 
 Revisit when:
 서버 전용 admin API로 이전할 때.
+
+---
+
+## admin_get_event_detail(uuid)
+
+Purpose:
+Closed Beta admin이 타인이 만든 draft / 비공개 체육관 이벤트를 검수. public `/events/{id}` RLS를 완화하지 않음.
+
+Why authenticated / SECURITY DEFINER:
+events 전체 SELECT RLS를 다시 열지 않고 검수용 컬럼만 반환. `is_admin()` 필수.
+
+Returned data:
+title, schedule, gym/host labels, application count, description, `is_publicly_viewable`.
+`emergency_contact`, 참가자 개인정보, `applicant_notes`, `operator_memo` 미반환.
+
+Revisit when:
+서버 전용 admin API로 이전할 때.

@@ -30,6 +30,17 @@ export function isAdminPath(pathname: string): boolean {
   return pathname === "/admin" || pathname.startsWith("/admin/");
 }
 
+export function adminEventPath(id: string): string {
+  return `${ADMIN_PATHS.events}/${id}`;
+}
+
+export function isAdminEventPubliclyViewable(
+  status: string | null | undefined,
+  gymIsPublic: boolean,
+): boolean {
+  return gymIsPublic && status !== "draft";
+}
+
 export function sanitizeAdminSearch(value: string): string {
   return value.replace(/[%_,]/g, " ").replace(/\s+/g, " ").trim();
 }

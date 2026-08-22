@@ -1,5 +1,6 @@
 import { sanitizeAdminSearch, type EventAdminStatus } from "@/lib/utils/admin";
 import {
+  ADMIN_EVENT_DETAIL_FIELDS,
   ADMIN_EVENT_FIELDS,
   ADMIN_GYM_FIELDS,
   ADMIN_OVERVIEW_FIELDS,
@@ -80,6 +81,27 @@ export type AdminEventListItem = {
   gymName: string;
   hostLabel: string;
   applicationCount: number;
+};
+
+export type AdminEventDetail = {
+  id: string;
+  title: string;
+  sport: string;
+  eventType: string;
+  eventDate: string;
+  eventTime: string | null;
+  status: string;
+  region: string;
+  address: string | null;
+  gymId: string;
+  gymName: string;
+  gymIsPublic: boolean;
+  hostLabel: string;
+  maxParticipants: number | null;
+  activeApplicationCount: number;
+  createdAt: string;
+  description: string | null;
+  isPubliclyViewable: boolean;
 };
 
 export type AdminUserListItem = {
@@ -406,6 +428,62 @@ export async function getAdminEvents(
       applicationCount: asNumber(row.application_count),
     };
   });
+}
+
+function asOptionalString(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+}
+
+function asOptionalNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  const parsed = asNumber(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+export async function getAdminEventDetail(
+  supabase: AdminClient,
+  eventId: string,
+): Promise<AdminEventDetail | null> {
+  const { data, error } = await supabase.rpc("admin_get_event_detail", {
+    event_id: eventId,
+  });
+
+  if (error) {
+    console.error("admin_get_event_detail:", error.message);
+    return null;
+  }
+
+  const raw = (Array.isArray(data) ? data[0] : data) as
+    | Record<string, unknown>
+    | null
+    | undefined;
+
+  if (!raw || raw.id == null) return null;
+
+  const row = pickRpcFields(raw, ADMIN_EVENT_DETAIL_FIELDS);
+
+  return {
+    id: String(row.id),
+    title: String(row.title ?? ""),
+    sport: String(row.sport ?? ""),
+    eventType: String(row.event_type ?? ""),
+    eventDate: String(row.event_date ?? ""),
+    eventTime: asOptionalString(row.event_time),
+    status: String(row.status ?? "active"),
+    region: String(row.region ?? ""),
+    address: asOptionalString(row.address),
+    gymId: String(row.gym_id ?? ""),
+    gymName: String(row.gym_name ?? "체육관"),
+    gymIsPublic: Boolean(row.gym_is_public),
+    hostLabel: String(row.host_label ?? "이름 없음"),
+    maxParticipants: asOptionalNumber(row.max_participants),
+    activeApplicationCount: asNumber(row.active_application_count),
+    createdAt: String(row.created_at ?? ""),
+    description: asOptionalString(row.description),
+    isPubliclyViewable: Boolean(row.is_publicly_viewable),
+  };
 }
 
 export async function getAdminUsers(

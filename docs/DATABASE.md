@@ -223,7 +223,7 @@ erDiagram
 |-------|-------------|--------|--------|
 | profiles | own + friends + host registrants; public/search via RPC (047+). Admin directory via `admin_get_users` | own (trigger) | own |
 | gyms | public gyms + owner. Admin directory via `admin_get_gyms` | authenticated (owner=self) | owner |
-| events | public gym non-draft + creator. Admin directory via `admin_get_events` | gym owner | gym owner |
+| events | public gym non-draft + creator. Admin list via `admin_get_events`, detail via `admin_get_event_detail` | gym owner | gym owner |
 | registrations | own + event owner. Admin aggregates via RPC only | self | own cancel / owner RPC |
 | gym_follows | own | self | self delete (toggle) |
 | event_interests | own | self | self delete (toggle) |

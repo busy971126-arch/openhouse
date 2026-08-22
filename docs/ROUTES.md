@@ -84,6 +84,7 @@
 | `/admin/reports/[id]` | 신고 상세 · 상태 |
 | `/admin/gyms` | 체육관 검색 |
 | `/admin/events` | 이벤트 검색 · draft/active/cancelled |
+| `/admin/events/[id]` | 이벤트 상세 (read-only). draft/private도 RPC로 조회 |
 | `/admin/users` | 사용자 검색 (read-only) |
 
 ---

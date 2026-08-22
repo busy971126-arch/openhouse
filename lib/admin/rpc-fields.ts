@@ -38,6 +38,27 @@ export const ADMIN_EVENT_FIELDS = [
   "application_count",
 ] as const;
 
+export const ADMIN_EVENT_DETAIL_FIELDS = [
+  "id",
+  "title",
+  "sport",
+  "event_type",
+  "event_date",
+  "event_time",
+  "status",
+  "region",
+  "address",
+  "gym_id",
+  "gym_name",
+  "gym_is_public",
+  "host_label",
+  "max_participants",
+  "active_application_count",
+  "created_at",
+  "description",
+  "is_publicly_viewable",
+] as const;
+
 export const ADMIN_FORBIDDEN_FIELDS = [
   "phone",
   "parent_phone",
