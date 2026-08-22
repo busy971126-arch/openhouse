@@ -9,8 +9,6 @@ export const ADMIN_OVERVIEW_FIELDS = [
   "draft_event_count",
   "events_next_7_days",
   "active_application_count",
-  "current_pending_application_count",
-  "stale_pending_application_count",
 ] as const;
 
 export const ADMIN_USER_FIELDS = [
