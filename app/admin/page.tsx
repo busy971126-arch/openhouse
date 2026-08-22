@@ -270,7 +270,7 @@ export default async function AdminHomePage() {
         </div>
         {todayEvents.length === 0 ? (
           <p className="border-b border-zinc-200 py-4 text-sm text-zinc-500">
-            오늘 진행 중인 공개 이벤트가 없습니다.
+            오늘 진행 중인 이벤트가 없습니다.
           </p>
         ) : (
           todayEvents.map((event) => <EventRow key={event.id} event={event} />)
@@ -282,7 +282,7 @@ export default async function AdminHomePage() {
         </div>
         {upcomingEvents.length === 0 ? (
           <p className="border-b border-zinc-200 py-4 text-sm text-zinc-500">
-            앞으로 7일 안에 예정된 공개 이벤트가 없습니다.
+            앞으로 7일 안에 예정된 이벤트가 없습니다.
           </p>
         ) : (
           upcomingEvents.map((event) => (
