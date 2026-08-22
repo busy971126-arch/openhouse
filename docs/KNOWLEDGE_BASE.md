@@ -22,6 +22,7 @@ OpenHouse의 공식 상태는 GitHub에 저장된 문서, 코드, migration을 �
 | 사용자는 어떻게 이용해야 하는가? | [`PRODUCT.md`](./PRODUCT.md) | 사용자 흐름, 기능 동작, 상태 |
 | 어떤 화면과 URL이 존재하는가? | [`ROUTES.md`](./ROUTES.md) | IA, route, API route |
 | 데이터는 어떻게 저장되고 연결되는가? | [`DATABASE.md`](./DATABASE.md) | 스키마, RLS, RPC, migration 가이드 |
+| AI가 Supabase의 실제 상태를 어떻게 확인하는가? | [`MCP.md`](./MCP.md) | Supabase MCP 연결, 권한, 안전 규칙 |
 | ERD 이름과 실제 DB 이름은 어떻게 대응하는가? | [`ERD_V1.1_MAPPING.md`](./ERD_V1.1_MAPPING.md) | ERD ↔ 실제 테이블 매핑 |
 | 화면은 어떤 원칙으로 보여야 하는가? | [`DESIGN.md`](./DESIGN.md) | UI/UX 원칙, 카드, CTA, 모바일 규칙 |
 | 무엇을 어떻게 테스트해야 하는가? | [`TESTING.md`](./TESTING.md) | 테스트 전략, Golden Path, 완료 기준 |
@@ -54,9 +55,11 @@ OpenHouse의 공식 상태는 GitHub에 저장된 문서, 코드, migration을 �
 1. `PROJECT.md`
 2. `docs/PRODUCT.md`
 3. `docs/DATABASE.md`
-4. `docs/ERD_V1.1_MAPPING.md`
-5. 관련 `docs/contracts/*.md`
-6. 실제 `supabase/migrations/`
+4. `docs/MCP.md`
+5. `docs/ERD_V1.1_MAPPING.md`
+6. 관련 `docs/contracts/*.md`
+7. 실제 `supabase/migrations/`
+8. 필요하면 Supabase MCP로 실제 현재 상태를 읽기 전용 확인
 
 ### QA/버그 수정
 
@@ -64,6 +67,7 @@ OpenHouse의 공식 상태는 GitHub에 저장된 문서, 코드, migration을 �
 2. `docs/USER_TEST_QA.md`
 3. 관련 제품/DB 문서
 4. 실제 코드와 테스트
+5. DB/로그 확인이 필요하면 `docs/MCP.md` 기준으로 Supabase MCP 사용
 
 ---
 
@@ -81,7 +85,7 @@ OpenHouse의 공식 상태는 GitHub에 저장된 문서, 코드, migration을 �
 
 ### DB 충돌
 
-실제 적용 대상은 `supabase/migrations/`과 Supabase schema다. `DATABASE.md`가 다르면 문서 drift로 보고하고, 기존 migration을 수정하지 않는다.
+실제 적용 대상은 `supabase/migrations/`과 Supabase schema다. `DATABASE.md`가 다르면 문서 drift로 보고한다. Supabase MCP는 실제 상태 확인에 사용할 수 있지만 현재 Production 연결은 read-only이며, MCP를 통해 schema를 직접 고치지 않는다.
 
 ### 테스트 상태 충돌
 
@@ -97,6 +101,7 @@ OpenHouse의 공식 상태는 GitHub에 저장된 문서, 코드, migration을 �
 - `PRODUCT.md`: 사용자에게 어떻게 동작하는지
 - `ROUTES.md`: 어디에 있는지
 - `DATABASE.md`: 어떻게 저장하는지
+- `MCP.md`: AI가 외부 시스템을 어떤 권한으로 확인하는지
 - `DESIGN.md`: 어떻게 보여주는지
 - `TESTING.md`: 어떻게 검증하는지
 - `DECISIONS.md`: 왜 그렇게 정했는지
@@ -113,6 +118,7 @@ OpenHouse의 공식 상태는 GitHub에 저장된 문서, 코드, migration을 �
 - 사용자 흐름/기능 동작 변경 → `PRODUCT.md`
 - URL/IA/API route 변경 → `ROUTES.md`
 - schema/RLS/RPC 변경 → migration + `DATABASE.md`
+- MCP server/권한/연결 정책 변경 → `.cursor/mcp.json` + `MCP.md`
 - UI 패턴 변경 → `DESIGN.md`
 - 테스트 기준 변경 → `TESTING.md`
 - 중요한 선택/철회 → `DECISIONS.md`
@@ -132,5 +138,6 @@ Knowledge Base가 제대로 작동하려면 AI가 새 기능을 구현하기 전
 5. 기존 결정과 충돌하지 않는가?
 6. 무엇을 테스트해야 완료인가?
 7. Production에 반영하기 전 어떤 승인 절차가 필요한가?
+8. 외부 시스템 확인이 필요하면 어떤 MCP를 어떤 권한으로 사용할 수 있는가?
 
 답을 찾을 수 없다면 구현 전에 문서 또는 요구사항을 먼저 보완한다.
