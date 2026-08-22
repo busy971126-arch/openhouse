@@ -162,6 +162,8 @@ OpenHouse
 - 사용자가 **3초 안에** 원하는 정보를 찾을 수 있는 구조
 - MVP에 필요하지 않은 애니메이션·고급 효과는 넣지 않는다
 
+상세 UI/UX 기준은 [`docs/DESIGN.md`](docs/DESIGN.md)를 따른다.
+
 ---
 
 ## 핵심 제품 원칙
@@ -182,11 +184,19 @@ OpenHouse는 코드 프로젝트가 아니라 **제품 프로젝트**다.
 
 ## 관련 문서
 
+> 전체 문서 지도와 읽기 순서는 [`docs/KNOWLEDGE_BASE.md`](docs/KNOWLEDGE_BASE.md)를 먼저 확인한다.
+
 | 문서 | 내용 |
 |------|------|
-| [README.md](README.md) | 로컬 실행 · 마이그레이션 |
-| [docs/ROUTES.md](docs/ROUTES.md) | 화면 · URL |
-| [docs/DATABASE.md](docs/DATABASE.md) | DB · 마이그레이션 |
+| [docs/KNOWLEDGE_BASE.md](docs/KNOWLEDGE_BASE.md) | Knowledge Base 지도 · 충돌 해결 · AI 읽기 순서 |
+| [docs/PRODUCT.md](docs/PRODUCT.md) | 사용자 흐름 · 제품 동작 |
+| [docs/ROUTES.md](docs/ROUTES.md) | 화면 · URL · API route |
+| [docs/DATABASE.md](docs/DATABASE.md) | DB · RLS · RPC · 마이그레이션 |
 | [docs/ERD_V1.1_MAPPING.md](docs/ERD_V1.1_MAPPING.md) | ERD ↔ Supabase 매핑 |
-| [docs/MVP-APPLY-HOST.md](docs/MVP-APPLY-HOST.md) | 참가 신청 · 호스트 관리 |
-| [AGENTS.md](AGENTS.md) | AI 팀 협업 규칙 |
+| [docs/DESIGN.md](docs/DESIGN.md) | UI · UX 원칙 |
+| [docs/TESTING.md](docs/TESTING.md) | 테스트 전략 · Golden Path · 완료 기준 |
+| [docs/USER_TEST_QA.md](docs/USER_TEST_QA.md) | 현재 QA 감사 · 위험 상태 |
+| [docs/DECISIONS.md](docs/DECISIONS.md) | 제품 · 기술 결정 로그 |
+| [docs/MVP-APPLY-HOST.md](docs/MVP-APPLY-HOST.md) | 참가 신청 · 호스트 관리 상세 |
+| [AGENTS.md](AGENTS.md) | AI 팀 권한 · branch · 승인 규칙 |
+| [README.md](README.md) | 로컬 실행 · 마이그레이션 |
