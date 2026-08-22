@@ -229,12 +229,18 @@ export default async function AdminHomePage() {
     .sort((a, b) => a.eventDate.localeCompare(b.eventDate))
     .slice(0, 5);
 
+  const activeEventIds = new Set(activeEvents.map((event) => event.id));
   const applicationSlicesAreComplete =
-    pendingApplications.length < 100 && approvedApplications.length < 100;
+    pendingApplications.length < 100 &&
+    approvedApplications.length < 100 &&
+    activeEvents.length < 100;
   const derivedActiveApplicationCount = [
     ...pendingApplications,
     ...approvedApplications,
-  ].filter((application) => application.eventDate >= today).length;
+  ].filter(
+    (application) =>
+      application.eventDate >= today && activeEventIds.has(application.eventId),
+  ).length;
   const activeApplicationCount = applicationSlicesAreComplete
     ? derivedActiveApplicationCount
     : overview.activeApplicationCount;
