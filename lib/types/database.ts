@@ -220,6 +220,15 @@ export type Inquiry = {
   created_at: string;
 };
 
+export type AdminActionLog = {
+  id: string;
+  admin_user_id: string;
+  action: "inquiry.update" | "report.update";
+  target_type: "inquiry" | "report";
+  target_id: string;
+  created_at: string;
+};
+
 export type EventInterest = {
   user_id: string;
   event_id: string;

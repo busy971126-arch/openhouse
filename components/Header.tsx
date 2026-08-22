@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { isAdminPath } from "@/lib/utils/admin";
 
 type HeaderProps = {
   isLoggedIn: boolean;
@@ -12,7 +13,10 @@ const AUTH_BRAND_PATHS = ["/login", "/signup"];
 export function Header({ isLoggedIn }: HeaderProps) {
   const pathname = usePathname();
 
-  if (AUTH_BRAND_PATHS.some((path) => pathname.startsWith(path))) {
+  if (
+    AUTH_BRAND_PATHS.some((path) => pathname.startsWith(path)) ||
+    isAdminPath(pathname)
+  ) {
     return null;
   }
 

@@ -64,3 +64,28 @@ Accepted risk:
 Revisit when:
 서버 전용 service_role API + rate limiting 구조로
 이전할 때.
+
+---
+
+## is_admin()
+
+Purpose:
+현재 세션 사용자가 `admin_users`에 있는지 boolean으로 확인.
+
+Why authenticated:
+`/admin` server guard와 admin RLS 정책이 동일 함수를 사용.
+
+Why SECURITY DEFINER:
+`admin_users`를 일반 SELECT로 열지 않고 존재 여부만 반환.
+
+Returned data:
+boolean only. `search_path = ''`.
+
+Why not anon:
+로그인 사용자만 execute.
+
+Accepted risk:
+본인이 admin인지 probing 가능. admin 목록/이메일은 노출하지 않음.
+
+Revisit when:
+서버 전용 admin session claim으로 이전할 때.

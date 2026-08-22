@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { isAdminPath } from "@/lib/utils/admin";
 import { shouldShowBottomNav } from "@/lib/utils/bottom-nav";
 
 type MainShellProps = {
@@ -10,6 +11,10 @@ type MainShellProps = {
 export function MainShell({ children }: MainShellProps) {
   const pathname = usePathname();
   const hasBottomNav = shouldShowBottomNav(pathname);
+
+  if (isAdminPath(pathname)) {
+    return <main className="w-full flex-1">{children}</main>;
+  }
 
   return (
     <main

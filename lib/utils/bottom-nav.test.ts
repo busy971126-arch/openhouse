@@ -19,6 +19,8 @@ describe("bottom-nav", () => {
       expect(shouldShowBottomNav("/host/gyms/abc")).toBe(false);
       expect(shouldShowBottomNav("/login")).toBe(false);
       expect(shouldShowBottomNav("/signup")).toBe(false);
+      expect(shouldShowBottomNav("/admin")).toBe(false);
+      expect(shouldShowBottomNav("/admin/inquiries")).toBe(false);
     });
   });
 

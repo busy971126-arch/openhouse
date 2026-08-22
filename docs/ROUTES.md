@@ -71,6 +71,23 @@
 
 ---
 
+## Admin (Closed Beta)
+
+`admin_users`에 등록된 운영자만. middleware는 로그인만 확인하고, admin 여부는 layout + RLS가 검사한다.
+
+| URL | 화면 |
+|-----|------|
+| `/admin` | Overview · Needs Attention |
+| `/admin/inquiries` | 문의 목록 |
+| `/admin/inquiries/[id]` | 문의 상세 · 답변 |
+| `/admin/reports` | 신고 목록 |
+| `/admin/reports/[id]` | 신고 상세 · 상태 |
+| `/admin/gyms` | 체육관 검색 |
+| `/admin/events` | 이벤트 검색 · draft/active/cancelled |
+| `/admin/users` | 사용자 검색 (read-only) |
+
+---
+
 ## API (Route Handlers)
 
 | Method | URL | 설명 |
@@ -84,6 +101,8 @@
 | GET | `/api/nickname/check` | 닉네임 중복 확인 |
 | GET | `/api/nickname/suggest` | 닉네임 제안 |
 | GET | `/api/geocode/reverse` | 역지오코딩 |
+| PATCH | `/api/admin/inquiries/[id]` | 관리자 문의 답변/상태 |
+| PATCH | `/api/admin/reports/[id]` | 관리자 신고 상태 |
 
 ---
 
