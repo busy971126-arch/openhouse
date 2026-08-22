@@ -2,6 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   isAdminPath,
   isAdminEventPubliclyViewable,
+  isAdminApplicationStale,
+  getAdminPastEventDays,
+  getAdminWaitDays,
+  formatAdminWaitLabel,
   parseEventAdminStatus,
   toKstDate,
   formatAdminDateTime,
@@ -61,6 +65,25 @@ describe("admin helpers", () => {
     expect(formatAdminDateTime("2026-08-21T15:00:00.000Z")).not.toEqual(
       formatAdminDateTime("2026-08-21T14:59:00.000Z"),
     );
+  });
+
+  it("calculates pending wait age on KST calendar days", () => {
+    const now = new Date("2026-08-22T10:00:00.000Z");
+    expect(getAdminWaitDays("2026-08-16T00:54:00.000Z", now)).toBe(6);
+    expect(formatAdminWaitLabel("2026-08-16T00:54:00.000Z", now)).toBe(
+      "6일 대기",
+    );
+    expect(formatAdminWaitLabel("2026-08-22T01:00:00.000Z", now)).toBe(
+      "오늘 신청",
+    );
+  });
+
+  it("separates past-event pending work as stale", () => {
+    const now = new Date("2026-08-22T10:00:00.000Z");
+    expect(isAdminApplicationStale("2026-08-16", now)).toBe(true);
+    expect(isAdminApplicationStale("2026-08-22", now)).toBe(false);
+    expect(isAdminApplicationStale("2026-08-23", now)).toBe(false);
+    expect(getAdminPastEventDays("2026-08-16", now)).toBe(6);
   });
 
   it("links recent activity to the matching admin record", () => {
