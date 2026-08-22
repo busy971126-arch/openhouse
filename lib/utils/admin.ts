@@ -126,6 +126,43 @@ export function toKstDate(iso: string): string {
   }).format(new Date(iso));
 }
 
+function dateKeyToUtcMs(dateKey: string): number {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  return Date.UTC(year, month - 1, day);
+}
+
+function dayDifference(fromDateKey: string, toDateKey: string): number {
+  return Math.round(
+    (dateKeyToUtcMs(toDateKey) - dateKeyToUtcMs(fromDateKey)) / 86_400_000,
+  );
+}
+
+export function getAdminWaitDays(createdAt: string, now = new Date()): number {
+  const createdDate = toKstDate(createdAt);
+  const today = toKstDate(now.toISOString());
+  return Math.max(0, dayDifference(createdDate, today));
+}
+
+export function formatAdminWaitLabel(createdAt: string, now = new Date()): string {
+  const days = getAdminWaitDays(createdAt, now);
+  return days === 0 ? "오늘 신청" : `${days}일 대기`;
+}
+
+export function isAdminApplicationStale(
+  eventDate: string,
+  now = new Date(),
+): boolean {
+  return eventDate < toKstDate(now.toISOString());
+}
+
+export function getAdminPastEventDays(
+  eventDate: string,
+  now = new Date(),
+): number {
+  const today = toKstDate(now.toISOString());
+  return Math.max(0, dayDifference(eventDate, today));
+}
+
 export function formatApplicationAdminStatus(status: string): string {
   if (status === "pending") return "대기";
   if (status === "approved") return "확정";
