@@ -172,7 +172,18 @@ Supabase Auth 사용자 확장.
 
 ### inquiries — 031+
 
-1:1 문의. 유저는 본인 문의만 조회.
+1:1 문의. 유저는 본인 문의만 조회. Closed Beta admin은 `is_admin()`으로 전체 조회·답변.
+
+### admin_users / admin_action_logs — Closed Beta
+
+| Table | Notes |
+|--------|-------|
+| admin_users | `user_id` → `auth.users`. 시드/이메일 하드코딩 없음. SQL Editor로 수동 insert |
+| admin_action_logs | 문의/신고 수정만 기록. 본문 복제 없음. `admin_user_id` nullable → `auth.users(id) ON DELETE SET NULL` |
+
+`public.is_admin()` — `SECURITY DEFINER`, 본인이 admin인지 boolean만 반환.
+
+디렉터리 조회 RPC (`admin_get_overview` / `admin_get_users` / `admin_get_gyms` / `admin_get_events`): `is_admin()` 필수, 민감 컬럼 미반환. profiles/gyms/events/registrations에 대한 admin 전체 SELECT RLS는 없음.
 
 ### notifications
 
@@ -210,15 +221,17 @@ erDiagram
 
 | Table | Public read | Insert | Update |
 |-------|-------------|--------|--------|
-| profiles | own + friends + host registrants; public/search via RPC (047+) | own (trigger) | own |
-| gyms | public gyms | authenticated (owner=self) | owner |
-| events | all active | gym owner | gym owner |
-| registrations | own + event owner | self | own cancel / owner RPC |
+| profiles | own + friends + host registrants; public/search via RPC (047+). Admin directory via `admin_get_users` | own (trigger) | own |
+| gyms | public gyms + owner. Admin directory via `admin_get_gyms` | authenticated (owner=self) | owner |
+| events | public gym non-draft + creator. Admin list via `admin_get_events`, detail via `admin_get_event_detail` | gym owner | gym owner |
+| registrations | own + event owner. Admin aggregates via RPC only | self | own cancel / owner RPC |
 | gym_follows | own | self | self delete (toggle) |
 | event_interests | own | self | self delete (toggle) |
 | friendships | participants | requester | participants |
-| reports | own | self | — |
-| inquiries | own | self | — |
+| reports | own + admin | self | admin (`status`, `admin_note`, `resolved_at`) |
+| inquiries | own + admin | self | admin (`status`, `admin_reply` only) |
+| admin_users | admin | — | SQL Editor / service_role |
+| admin_action_logs | admin | trigger | — |
 | notifications | own | system/trigger | own read |
 | announcements | all | gym owner | gym owner |
 

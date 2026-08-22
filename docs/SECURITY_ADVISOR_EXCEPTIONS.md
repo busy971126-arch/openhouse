@@ -64,3 +64,88 @@ Accepted risk:
 Revisit when:
 서버 전용 service_role API + rate limiting 구조로
 이전할 때.
+
+---
+
+## is_admin()
+
+Purpose:
+현재 세션 사용자가 `admin_users`에 있는지 boolean으로 확인.
+
+Why authenticated:
+`/admin` server guard와 admin RLS 정책이 동일 함수를 사용.
+
+Why SECURITY DEFINER:
+`admin_users`를 일반 SELECT로 열지 않고 존재 여부만 반환.
+
+Returned data:
+boolean only. `search_path = ''`.
+
+Why not anon:
+로그인 사용자만 execute.
+
+Accepted risk:
+본인이 admin인지 probing 가능. admin 목록/이메일은 노출하지 않음.
+
+Revisit when:
+서버 전용 admin session claim으로 이전할 때.
+
+---
+
+## admin_get_overview / admin_get_users / admin_get_gyms / admin_get_events
+
+Purpose:
+Closed Beta admin 디렉터리 조회. profiles/gyms/events/registrations 전체 SELECT RLS를 열지 않기 위함.
+
+Why authenticated:
+로그인한 admin JWT만 호출. 함수 시작 시 `is_admin()`이 아니면 exception.
+
+Why SECURITY DEFINER:
+admin이 아닌 사용자에게 해당 테이블 SELECT를 주지 않고 화면용 컬럼/집계만 반환.
+
+Returned data:
+집계 또는 nickname/display_name/title 등 디렉터리 필드만.
+`phone`, `parent_phone`, `pending_gym_info`, `emergency_contact`, `applicant_notes`, `operator_memo` 미반환.
+`search_path = ''`. 테이블은 `public.xxx`로 명시.
+
+Why not anon:
+로그인 사용자만 execute.
+
+Accepted risk:
+authenticated SECURITY DEFINER. 비관리자 호출은 exception.
+
+Revisit when:
+서버 전용 admin API로 이전할 때.
+
+---
+
+## admin_get_profile_labels / admin_get_event_titles
+
+Purpose:
+문의/신고 화면에서 닉네임·이벤트 제목만 표시. profile/event 전체 SELECT RLS 없이 라벨 조회.
+
+Why authenticated / SECURITY DEFINER:
+위 디렉터리 RPC와 동일. `is_admin()` 필수.
+
+Returned data:
+`id, nickname, display_name` 또는 `id, title`만.
+
+Revisit when:
+서버 전용 admin API로 이전할 때.
+
+---
+
+## admin_get_event_detail(uuid)
+
+Purpose:
+Closed Beta admin이 타인이 만든 draft / 비공개 체육관 이벤트를 검수. public `/events/{id}` RLS를 완화하지 않음.
+
+Why authenticated / SECURITY DEFINER:
+events 전체 SELECT RLS를 다시 열지 않고 검수용 컬럼만 반환. `is_admin()` 필수.
+
+Returned data:
+title, schedule, gym/host labels, application count, description, `is_publicly_viewable`.
+`emergency_contact`, 참가자 개인정보, `applicant_notes`, `operator_memo` 미반환.
+
+Revisit when:
+서버 전용 admin API로 이전할 때.
