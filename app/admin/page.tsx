@@ -15,6 +15,9 @@ import {
   adminEventPath,
   formatAdminActivity,
   formatAdminDateTime,
+  formatAdminWaitLabel,
+  getAdminPastEventDays,
+  isAdminApplicationStale,
 } from "@/lib/utils/admin";
 
 function NumberValue({ value }: { value: number }) {
@@ -69,9 +72,18 @@ function AttentionLink({
 
 function PendingApplicationRow({
   application,
+  stale,
+  now,
 }: {
   application: AdminApplicationListItem;
+  stale: boolean;
+  now: Date;
 }) {
+  const waitLabel = formatAdminWaitLabel(application.createdAt, now);
+  const pastEventDays = stale
+    ? getAdminPastEventDays(application.eventDate, now)
+    : 0;
+
   return (
     <Link
       href={adminApplicationPath(application.id)}
@@ -84,15 +96,20 @@ function PendingApplicationRow({
               {application.participantLabel}
             </span>
             <span className="text-[9px] font-black tracking-[0.14em] text-orange-600">
-              PENDING
+              {stale ? "STALE" : "PENDING"}
             </span>
           </div>
           <p className="mt-1 truncate text-sm text-zinc-700">
             {application.eventTitle}
           </p>
           <p className="mt-1 text-xs text-zinc-400">
-            {application.gymName} · {formatAdminDateTime(application.createdAt)}
+            {application.gymName} · {waitLabel}
           </p>
+          {stale ? (
+            <p className="mt-1 text-xs font-semibold text-orange-600">
+              이벤트 종료 후 {pastEventDays}일 경과
+            </p>
+          ) : null}
         </div>
         <span aria-hidden="true" className="mt-1 shrink-0 text-lg text-zinc-950">
           →
@@ -165,17 +182,40 @@ function formatShortDate(dateKey: string): string {
 
 export default async function AdminHomePage() {
   const { supabase } = await getAdminViewer();
-  const [overview, activity, pendingApplications, activeEvents] =
-    await Promise.all([
-      getAdminOverview(supabase),
-      getAdminRecentActivity(supabase),
-      getAdminApplications(supabase, { status: "pending" }),
-      getAdminEvents(supabase, { status: "active" }),
-    ]);
+  const [
+    overview,
+    activity,
+    pendingApplications,
+    approvedApplications,
+    activeEvents,
+  ] = await Promise.all([
+    getAdminOverview(supabase),
+    getAdminRecentActivity(supabase),
+    getAdminApplications(supabase, { status: "pending" }),
+    getAdminApplications(supabase, { status: "approved" }),
+    getAdminEvents(supabase, { status: "active" }),
+  ]);
 
-  const today = kstDateKey();
+  const now = new Date();
+  const today = kstDateKey(now);
   const next7 = addDays(today, 7);
-  const attentionApplications = pendingApplications.slice(0, 3);
+
+  const orderedPendingApplications = [...pendingApplications].sort((a, b) =>
+    a.createdAt.localeCompare(b.createdAt),
+  );
+  const staleApplications = orderedPendingApplications.filter((application) =>
+    isAdminApplicationStale(application.eventDate, now),
+  );
+  const currentPendingApplications = orderedPendingApplications.filter(
+    (application) => !isAdminApplicationStale(application.eventDate, now),
+  );
+
+  const attentionTotal =
+    overview.pendingApplicationCount +
+    overview.openInquiryCount +
+    overview.openReportCount +
+    overview.draftEventCount;
+
   const todayEvents = activeEvents
     .filter((event) => !event.isHidden && event.eventDate === today)
     .slice(0, 5);
@@ -188,6 +228,22 @@ export default async function AdminHomePage() {
     )
     .sort((a, b) => a.eventDate.localeCompare(b.eventDate))
     .slice(0, 5);
+
+  const activeEventIds = new Set(activeEvents.map((event) => event.id));
+  const applicationSlicesAreComplete =
+    pendingApplications.length < 100 &&
+    approvedApplications.length < 100 &&
+    activeEvents.length < 100;
+  const derivedActiveApplicationCount = [
+    ...pendingApplications,
+    ...approvedApplications,
+  ].filter(
+    (application) =>
+      application.eventDate >= today && activeEventIds.has(application.eventId),
+  ).length;
+  const activeApplicationCount = applicationSlicesAreComplete
+    ? derivedActiveApplicationCount
+    : overview.activeApplicationCount;
 
   return (
     <div>
@@ -213,19 +269,44 @@ export default async function AdminHomePage() {
               지금 확인하거나 처리할 운영 항목입니다.
             </p>
           </div>
-          <NumberValue value={overview.pendingApplicationCount} />
+          <NumberValue value={attentionTotal} />
         </div>
 
-        <div className="mt-4 border-t border-zinc-300">
-          {attentionApplications.length === 0 ? (
-            <p className="border-b border-zinc-200 py-4 text-sm text-zinc-500">
-              현재 대기 중인 신청이 없습니다.
-            </p>
-          ) : (
-            attentionApplications.map((application) => (
+        {staleApplications.length > 0 ? (
+          <div className="mt-5">
+            <div className="flex items-baseline justify-between border-b border-zinc-300 pb-2">
+              <h2 className="text-sm font-semibold text-orange-600">
+                지난 이벤트 미처리
+              </h2>
+              <NumberValue value={staleApplications.length} />
+            </div>
+            {staleApplications.slice(0, 3).map((application) => (
               <PendingApplicationRow
                 key={application.id}
                 application={application}
+                stale
+                now={now}
+              />
+            ))}
+          </div>
+        ) : null}
+
+        <div className={staleApplications.length > 0 ? "mt-7" : "mt-5"}>
+          <div className="flex items-baseline justify-between border-b border-zinc-300 pb-2">
+            <h2 className="text-sm font-semibold text-zinc-950">대기 신청</h2>
+            <NumberValue value={currentPendingApplications.length} />
+          </div>
+          {currentPendingApplications.length === 0 ? (
+            <p className="border-b border-zinc-200 py-4 text-sm text-zinc-500">
+              현재 처리할 대기 신청이 없습니다.
+            </p>
+          ) : (
+            currentPendingApplications.slice(0, 3).map((application) => (
+              <PendingApplicationRow
+                key={application.id}
+                application={application}
+                stale={false}
+                now={now}
               />
             ))
           )}
@@ -291,7 +372,7 @@ export default async function AdminHomePage() {
         )}
 
         <div className="mt-6">
-          <StatRow label="진행 중 신청" value={overview.activeApplicationCount} />
+          <StatRow label="진행 중 신청" value={activeApplicationCount} />
         </div>
       </section>
 
