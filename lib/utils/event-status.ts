@@ -67,6 +67,7 @@ type EventStatusInput = {
   /** pending + approved. null = count unavailable, skip capacity judgment */
   approvedCount: number | null;
   recruitmentClosed?: boolean;
+  adminRecruitmentPaused?: boolean;
   registrationDeadline?: string | null;
   eventStatus?: string | null;
   today?: string;
@@ -79,6 +80,7 @@ export function getEventRecruitmentStatus({
   maxParticipants,
   approvedCount,
   recruitmentClosed = false,
+  adminRecruitmentPaused = false,
   registrationDeadline = null,
   eventStatus = "active",
   today,
@@ -100,7 +102,7 @@ export function getEventRecruitmentStatus({
     return "closed";
   }
 
-  if (recruitmentClosed) {
+  if (recruitmentClosed || adminRecruitmentPaused) {
     return "closed";
   }
 
@@ -144,6 +146,7 @@ export function isOperatingEvent(eventDate: string): boolean {
 type RegistrationApplyGuardInput = {
   status?: string | null;
   recruitment_closed: boolean;
+  admin_recruitment_paused?: boolean;
   registration_deadline: string | null;
   event_date?: string | null;
   event_time?: string | null;
@@ -155,6 +158,7 @@ type RegistrationApplyGuardInput = {
 export function getRegistrationApplyBlockMessage({
   status,
   recruitment_closed,
+  admin_recruitment_paused = false,
   registration_deadline,
   event_date,
   event_time,
@@ -182,7 +186,7 @@ export function getRegistrationApplyBlockMessage({
       : "이미 시작된 이벤트입니다.";
   }
 
-  if (recruitment_closed) {
+  if (recruitment_closed || admin_recruitment_paused) {
     return "신청이 마감된 이벤트입니다.";
   }
 

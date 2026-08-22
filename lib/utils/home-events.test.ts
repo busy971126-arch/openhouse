@@ -86,4 +86,14 @@ describe("home-events", () => {
     expect(knownFull).toBe("closed");
     expect(isRecruitingEventStatus(knownFull)).toBe(false);
   });
+
+  it("treats admin recruitment pause as closed", () => {
+    expect(
+      getEventRecruitmentStatusForEvent(
+        { ...baseEvent, admin_recruitment_paused_at: "2026-08-12T00:00:00Z" },
+        10,
+        "2026-08-12",
+      ),
+    ).toBe("closed");
+  });
 });

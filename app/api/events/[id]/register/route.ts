@@ -145,7 +145,7 @@ export async function POST(request: Request, context: RouteContext) {
   const { data: event, error: eventError } = await supabase
     .from("events")
     .select(
-      "id, event_date, event_time, registration_deadline, recruitment_closed, status",
+      "id, event_date, event_time, registration_deadline, recruitment_closed, admin_recruitment_paused_at, status",
     )
     .eq("id", eventId)
     .maybeSingle();
@@ -164,7 +164,10 @@ export async function POST(request: Request, context: RouteContext) {
     );
   }
 
-  const closedMessage = getRegistrationApplyBlockMessage(event);
+  const closedMessage = getRegistrationApplyBlockMessage({
+    ...event,
+    admin_recruitment_paused: Boolean(event.admin_recruitment_paused_at),
+  });
   if (closedMessage) {
     return NextResponse.json({ error: closedMessage }, { status: 400 });
   }

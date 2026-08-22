@@ -3,6 +3,9 @@ import {
   isAdminPath,
   isAdminEventPubliclyViewable,
   parseEventAdminStatus,
+  toKstDate,
+  formatAdminDateTime,
+  adminActivityHref,
   parseInquiryStatus,
   parseReportStatus,
   resolveInquiryReplyStatus,
@@ -45,6 +48,43 @@ describe("admin helpers", () => {
 
   it("strips ilike metacharacters from search", () => {
     expect(sanitizeAdminSearch("김%,_이")).toBe("김 이");
+  });
+
+  it("uses Asia/Seoul for operational calendar dates around UTC midnight", () => {
+    expect(toKstDate("2026-08-21T15:00:00.000Z")).toBe("2026-08-22");
+    expect(toKstDate("2026-08-21T14:59:00.000Z")).toBe("2026-08-21");
+  });
+
+  it("formats admin date times in Asia/Seoul", () => {
+    expect(formatAdminDateTime("2026-08-21T15:00:00.000Z")).toMatch(/22/);
+    expect(formatAdminDateTime("2026-08-21T14:59:00.000Z")).toMatch(/21/);
+    expect(formatAdminDateTime("2026-08-21T15:00:00.000Z")).not.toEqual(
+      formatAdminDateTime("2026-08-21T14:59:00.000Z"),
+    );
+  });
+
+  it("links recent activity to the matching admin record", () => {
+    expect(
+      adminActivityHref({
+        targetType: "registration",
+        targetId: "reg-1",
+        eventId: "evt-1",
+      }),
+    ).toBe("/admin/applications/reg-1");
+    expect(
+      adminActivityHref({
+        targetType: "event",
+        targetId: "evt-1",
+        eventId: "evt-1",
+      }),
+    ).toBe("/admin/events/evt-1");
+    expect(
+      adminActivityHref({
+        targetType: "inquiry",
+        targetId: "inq-1",
+        eventId: null,
+      }),
+    ).toBe("/admin/inquiries/inq-1");
   });
 
   it("only treats non-draft events on public gyms as publicly viewable", () => {

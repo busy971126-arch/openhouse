@@ -117,6 +117,8 @@ export type Event = {
   registration_deadline: string | null;
   difficulty: EventDifficulty | null;
   recruitment_closed: boolean;
+  admin_hidden_at?: string | null;
+  admin_recruitment_paused_at?: string | null;
   status?: EventLifecycleStatus;
   safety_rules: string | null;
   prohibited_techniques: string | null;

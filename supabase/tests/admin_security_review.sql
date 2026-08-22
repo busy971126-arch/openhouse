@@ -74,8 +74,8 @@ begin
 
   insert into public.profiles (id, nickname, display_name)
   values
-    (v_admin, 'admin-review', 'Admin Review'),
-    (v_user, 'user-review', 'User Review')
+    (v_admin, format('admin-review-%s', substr(v_admin::text, 1, 8)), 'Admin Review'),
+    (v_user, format('user-review-%s', substr(v_user::text, 1, 8)), 'User Review')
   on conflict (id) do update
     set nickname = excluded.nickname;
 
@@ -135,13 +135,16 @@ begin
     select 1
     from json_object_keys(row_to_json(v_overview)) as cols(col)
     where cols.col not in (
-      'user_count',
-      'gym_count',
-      'public_event_count',
-      'draft_event_count',
-      'active_application_count',
+      'new_users_today',
+      'applications_today',
+      'events_published_today',
+      'active_events_today',
+      'pending_application_count',
       'open_inquiry_count',
-      'open_report_count'
+      'open_report_count',
+      'draft_event_count',
+      'events_next_7_days',
+      'active_application_count'
     )
   ) then
     raise exception 'admin_get_overview returned unexpected columns';

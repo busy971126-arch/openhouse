@@ -62,8 +62,8 @@ begin
 
   insert into public.profiles (id, nickname, display_name)
   values
-    (v_admin, 'admin-event', 'Admin Event'),
-    (v_user, 'host-event', 'Host Event')
+    (v_admin, format('admin-event-%s', substr(v_admin::text, 1, 8)), 'Admin Event'),
+    (v_user, format('host-event-%s', substr(v_user::text, 1, 8)), 'Host Event')
   on conflict (id) do update
     set nickname = excluded.nickname;
 
@@ -167,7 +167,10 @@ begin
       'active_application_count',
       'created_at',
       'description',
-      'is_publicly_viewable'
+      'is_publicly_viewable',
+      'admin_hidden_at',
+      'admin_recruitment_paused_at',
+      'last_moderation_reason'
     )
   ) then
     raise exception 'admin_get_event_detail returned unexpected columns';

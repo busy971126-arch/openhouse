@@ -145,7 +145,35 @@ events 전체 SELECT RLS를 다시 열지 않고 검수용 컬럼만 반환. `is
 
 Returned data:
 title, schedule, gym/host labels, application count, description, `is_publicly_viewable`.
+Phase 1 이후에는 `admin_hidden_at`, `admin_recruitment_paused_at`와, 로그에서 읽은 `last_moderation_reason`만 포함. admin UUID는 반환하지 않음.
 `emergency_contact`, 참가자 개인정보, `applicant_notes`, `operator_memo` 미반환.
+
+Revisit when:
+서버 전용 admin API로 이전할 때.
+
+---
+
+## admin_get_applications / admin_get_application_detail / admin_get_activity / admin_moderate_event
+
+Purpose:
+Control Center Phase 1. 신청 모니터링, 운영 피드, 이벤트 숨김/신청 중지.
+profiles/registrations/events 전체 SELECT RLS와 events UPDATE를 admin JWT에 주지 않기 위함.
+
+Why authenticated / SECURITY DEFINER:
+함수 시작 시 `is_admin()`이 아니면 exception.
+`search_path = ''`. 테이블은 `public.xxx`로 명시.
+
+Returned data:
+- applications: id, created_at, status, participant_label, event/gym labels
+- activity: occurred_at, actor_type, action, target ids
+- moderate: void. audit log + operational_activity 1건씩
+
+Why not anon:
+로그인 사용자만 execute.
+
+Accepted risk:
+authenticated SECURITY DEFINER. 비관리자 호출은 exception.
+`admin_moderate_event`만 events.admin_* 컬럼을 바꾼다.
 
 Revisit when:
 서버 전용 admin API로 이전할 때.

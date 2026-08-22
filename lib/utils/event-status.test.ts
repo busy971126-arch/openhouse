@@ -19,6 +19,17 @@ describe("getEventRecruitmentStatus", () => {
     ).toBe("ended");
   });
 
+  it("returns closed when admin recruitment is paused", () => {
+    expect(
+      getEventRecruitmentStatus({
+        eventDate: futureDate,
+        maxParticipants: 10,
+        approvedCount: 0,
+        adminRecruitmentPaused: true,
+      }),
+    ).toBe("closed");
+  });
+
   it("returns closed when recruitment_closed is true", () => {
     expect(
       getEventRecruitmentStatus({
@@ -160,5 +171,16 @@ describe("getRegistrationApplyBlockMessage", () => {
         today,
       }),
     ).toBe("취소된 이벤트입니다.");
+
+    expect(
+      getRegistrationApplyBlockMessage({
+        status: "active",
+        recruitment_closed: false,
+        admin_recruitment_paused: true,
+        registration_deadline: null,
+        event_date: "2099-12-31",
+        today,
+      }),
+    ).toBe("신청이 마감된 이벤트입니다.");
   });
 });

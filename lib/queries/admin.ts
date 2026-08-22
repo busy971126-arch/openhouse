@@ -1,5 +1,12 @@
-import { sanitizeAdminSearch, type EventAdminStatus } from "@/lib/utils/admin";
 import {
+  sanitizeAdminSearch,
+  type ApplicationAdminStatus,
+  type EventAdminStatus,
+} from "@/lib/utils/admin";
+import {
+  ADMIN_ACTIVITY_FIELDS,
+  ADMIN_APPLICATION_DETAIL_FIELDS,
+  ADMIN_APPLICATION_FIELDS,
   ADMIN_EVENT_DETAIL_FIELDS,
   ADMIN_EVENT_FIELDS,
   ADMIN_GYM_FIELDS,
@@ -12,21 +19,26 @@ import type { createClient } from "@/lib/supabase/server";
 type AdminClient = Awaited<ReturnType<typeof createClient>>;
 
 export type AdminOverview = {
-  userCount: number;
-  gymCount: number;
-  publicEventCount: number;
-  draftEventCount: number;
-  activeApplicationCount: number;
+  newUsersToday: number;
+  applicationsToday: number;
+  eventsPublishedToday: number;
+  activeEventsToday: number;
+  pendingApplicationCount: number;
   openInquiryCount: number;
   openReportCount: number;
+  draftEventCount: number;
+  eventsNext7Days: number;
+  activeApplicationCount: number;
 };
 
-export type AdminActionLogItem = {
+export type AdminActivityItem = {
   id: string;
+  occurredAt: string;
+  actorType: string;
   action: string;
   targetType: string;
   targetId: string;
-  createdAt: string;
+  eventId: string | null;
 };
 
 export type AdminInquiryListItem = {
@@ -81,6 +93,8 @@ export type AdminEventListItem = {
   gymName: string;
   hostLabel: string;
   applicationCount: number;
+  isHidden: boolean;
+  isPaused: boolean;
 };
 
 export type AdminEventDetail = {
@@ -102,6 +116,26 @@ export type AdminEventDetail = {
   createdAt: string;
   description: string | null;
   isPubliclyViewable: boolean;
+  isHidden: boolean;
+  isPaused: boolean;
+  moderationReason: string | null;
+};
+
+export type AdminApplicationListItem = {
+  id: string;
+  createdAt: string;
+  status: string;
+  participantLabel: string;
+  eventId: string;
+  eventTitle: string;
+  eventDate: string;
+  gymName: string;
+};
+
+export type AdminApplicationDetail = AdminApplicationListItem & {
+  participantId: string;
+  gymId: string | null;
+  hostLabel: string;
 };
 
 export type AdminUserListItem = {
@@ -157,13 +191,16 @@ export async function getAdminOverview(
   if (error) {
     console.error("admin_get_overview:", error.message);
     return {
-      userCount: 0,
-      gymCount: 0,
-      publicEventCount: 0,
-      draftEventCount: 0,
-      activeApplicationCount: 0,
+      newUsersToday: 0,
+      applicationsToday: 0,
+      eventsPublishedToday: 0,
+      activeEventsToday: 0,
+      pendingApplicationCount: 0,
       openInquiryCount: 0,
       openReportCount: 0,
+      draftEventCount: 0,
+      eventsNext7Days: 0,
+      activeApplicationCount: 0,
     };
   }
 
@@ -173,37 +210,43 @@ export async function getAdminOverview(
   );
 
   return {
-    userCount: asNumber(row.user_count),
-    gymCount: asNumber(row.gym_count),
-    publicEventCount: asNumber(row.public_event_count),
-    draftEventCount: asNumber(row.draft_event_count),
-    activeApplicationCount: asNumber(row.active_application_count),
+    newUsersToday: asNumber(row.new_users_today),
+    applicationsToday: asNumber(row.applications_today),
+    eventsPublishedToday: asNumber(row.events_published_today),
+    activeEventsToday: asNumber(row.active_events_today),
+    pendingApplicationCount: asNumber(row.pending_application_count),
     openInquiryCount: asNumber(row.open_inquiry_count),
     openReportCount: asNumber(row.open_report_count),
+    draftEventCount: asNumber(row.draft_event_count),
+    eventsNext7Days: asNumber(row.events_next_7_days),
+    activeApplicationCount: asNumber(row.active_application_count),
   };
 }
 
 export async function getAdminRecentActivity(
   supabase: AdminClient,
-): Promise<AdminActionLogItem[]> {
-  const { data, error } = await supabase
-    .from("admin_action_logs")
-    .select("id, action, target_type, target_id, created_at")
-    .order("created_at", { ascending: false })
-    .limit(8);
+): Promise<AdminActivityItem[]> {
+  const { data, error } = await supabase.rpc("admin_get_activity", {
+    p_limit: 20,
+  });
 
   if (error) {
-    console.error("admin action logs:", error.message);
+    console.error("admin_get_activity:", error.message);
     return [];
   }
 
-  return (data ?? []).map((row) => ({
-    id: row.id,
-    action: row.action,
-    targetType: row.target_type,
-    targetId: row.target_id,
-    createdAt: row.created_at,
-  }));
+  return ((data ?? []) as Record<string, unknown>[]).map((raw) => {
+    const row = pickRpcFields(raw, ADMIN_ACTIVITY_FIELDS);
+    return {
+      id: String(row.id),
+      occurredAt: String(row.occurred_at ?? ""),
+      actorType: String(row.actor_type ?? "user"),
+      action: String(row.action ?? ""),
+      targetType: String(row.target_type ?? ""),
+      targetId: String(row.target_id ?? ""),
+      eventId: row.event_id ? String(row.event_id) : null,
+    };
+  });
 }
 
 export async function getAdminInquiries(
@@ -426,6 +469,8 @@ export async function getAdminEvents(
       gymName: String(row.gym_name ?? "체육관"),
       hostLabel: String(row.host_label ?? "이름 없음"),
       applicationCount: asNumber(row.application_count),
+      isHidden: Boolean(row.is_hidden),
+      isPaused: Boolean(row.is_paused),
     };
   });
 }
@@ -483,6 +528,73 @@ export async function getAdminEventDetail(
     createdAt: String(row.created_at ?? ""),
     description: asOptionalString(row.description),
     isPubliclyViewable: Boolean(row.is_publicly_viewable),
+    isHidden: Boolean(row.admin_hidden_at),
+    isPaused: Boolean(row.admin_recruitment_paused_at),
+    moderationReason: asOptionalString(row.last_moderation_reason),
+  };
+}
+
+export async function getAdminApplications(
+  supabase: AdminClient,
+  options: { search?: string; status?: ApplicationAdminStatus | null } = {},
+): Promise<AdminApplicationListItem[]> {
+  const { data, error } = await supabase.rpc("admin_get_applications", {
+    search: sanitizeAdminSearch(options.search ?? ""),
+    p_status: options.status ?? null,
+  });
+
+  if (error) {
+    console.error("admin_get_applications:", error.message);
+    return [];
+  }
+
+  return ((data ?? []) as Record<string, unknown>[]).map((raw) => {
+    const row = pickRpcFields(raw, ADMIN_APPLICATION_FIELDS);
+    return {
+      id: String(row.id),
+      createdAt: String(row.created_at ?? ""),
+      status: String(row.status ?? ""),
+      participantLabel: String(row.participant_label ?? "이름 없음"),
+      eventId: String(row.event_id ?? ""),
+      eventTitle: String(row.event_title ?? "이벤트"),
+      eventDate: String(row.event_date ?? ""),
+      gymName: String(row.gym_name ?? "체육관"),
+    };
+  });
+}
+
+export async function getAdminApplication(
+  supabase: AdminClient,
+  id: string,
+): Promise<AdminApplicationDetail | null> {
+  const { data, error } = await supabase.rpc("admin_get_application_detail", {
+    application_id: id,
+  });
+
+  if (error) {
+    console.error("admin_get_application_detail:", error.message);
+    return null;
+  }
+
+  const raw = (Array.isArray(data) ? data[0] : data) as
+    | Record<string, unknown>
+    | null
+    | undefined;
+  if (!raw || raw.id == null) return null;
+
+  const row = pickRpcFields(raw, ADMIN_APPLICATION_DETAIL_FIELDS);
+  return {
+    id: String(row.id),
+    createdAt: String(row.created_at ?? ""),
+    status: String(row.status ?? ""),
+    participantLabel: String(row.participant_label ?? "이름 없음"),
+    participantId: String(row.participant_id ?? ""),
+    eventId: String(row.event_id ?? ""),
+    eventTitle: String(row.event_title ?? "이벤트"),
+    eventDate: String(row.event_date ?? ""),
+    gymId: row.gym_id ? String(row.gym_id) : null,
+    gymName: String(row.gym_name ?? "체육관"),
+    hostLabel: String(row.host_label ?? "이름 없음"),
   };
 }
 

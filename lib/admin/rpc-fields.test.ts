@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  ADMIN_ACTIVITY_FIELDS,
+  ADMIN_APPLICATION_DETAIL_FIELDS,
+  ADMIN_APPLICATION_FIELDS,
   ADMIN_EVENT_DETAIL_FIELDS,
   ADMIN_EVENT_FIELDS,
   ADMIN_FORBIDDEN_FIELDS,
@@ -52,6 +55,8 @@ describe("admin RPC field allowlists", () => {
       "gym_name",
       "host_label",
       "application_count",
+      "is_hidden",
+      "is_paused",
     ]);
     expect(ADMIN_EVENT_DETAIL_FIELDS).toEqual([
       "id",
@@ -72,6 +77,41 @@ describe("admin RPC field allowlists", () => {
       "created_at",
       "description",
       "is_publicly_viewable",
+      "admin_hidden_at",
+      "admin_recruitment_paused_at",
+      "last_moderation_reason",
+    ]);
+    expect(ADMIN_APPLICATION_FIELDS).toEqual([
+      "id",
+      "created_at",
+      "status",
+      "participant_label",
+      "event_id",
+      "event_title",
+      "event_date",
+      "gym_name",
+    ]);
+    expect(ADMIN_APPLICATION_DETAIL_FIELDS).toEqual([
+      "id",
+      "created_at",
+      "status",
+      "participant_id",
+      "participant_label",
+      "event_id",
+      "event_title",
+      "event_date",
+      "gym_id",
+      "gym_name",
+      "host_label",
+    ]);
+    expect(ADMIN_ACTIVITY_FIELDS).toEqual([
+      "id",
+      "occurred_at",
+      "actor_type",
+      "action",
+      "target_type",
+      "target_id",
+      "event_id",
     ]);
   });
 

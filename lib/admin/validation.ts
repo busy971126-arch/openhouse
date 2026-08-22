@@ -1,12 +1,15 @@
 import {
+  parseEventAdminAction,
   parseInquiryStatus,
   parseReportStatus,
   resolveInquiryReplyStatus,
+  type EventAdminAction,
   type InquiryAdminStatus,
   type ReportAdminStatus,
 } from "@/lib/utils/admin";
 
 export const ADMIN_REPLY_MAX_LENGTH = 5000;
+export const ADMIN_REASON_MAX_LENGTH = 500;
 export const ADMIN_GENERIC_ERROR = "처리하지 못했습니다.";
 
 export function resolvedAtForReportStatus(
@@ -86,4 +89,34 @@ export function parseReportAdminPatch(
     status,
     resolvedAt: resolvedAtForReportStatus(status),
   };
+}
+
+export function parseEventAdminActionPatch(
+  body: unknown,
+):
+  | { ok: true; action: EventAdminAction; reason: string }
+  | { ok: false; error: string } {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return { ok: false, error: "올바른 요청이 아닙니다." };
+  }
+
+  const payload = body as Record<string, unknown>;
+  const action = parseEventAdminAction(payload.action);
+  if (!action) {
+    return { ok: false, error: "올바른 작업이 아닙니다." };
+  }
+
+  if (typeof payload.reason !== "string") {
+    return { ok: false, error: "사유를 입력해주세요." };
+  }
+
+  const reason = payload.reason.trim();
+  if (!reason) {
+    return { ok: false, error: "사유를 입력해주세요." };
+  }
+  if (reason.length > ADMIN_REASON_MAX_LENGTH) {
+    return { ok: false, error: "사유가 너무 깁니다." };
+  }
+
+  return { ok: true, action, reason };
 }

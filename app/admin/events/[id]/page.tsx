@@ -8,6 +8,7 @@ import {
   formatEventAdminStatus,
 } from "@/lib/utils/admin";
 import { formatEventType } from "@/lib/constants/event-types";
+import { EventAdminActions } from "@/components/admin/EventAdminActions";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -38,7 +39,10 @@ export default async function AdminEventDetailPage({ params }: PageProps) {
       </p>
       <p className="mt-1 text-xs text-zinc-400">
         {formatEventAdminStatus(event.status)} ·{" "}
-        {event.gymIsPublic ? "공개 체육관" : "비공개 체육관"} ·{" "}
+        {event.gymIsPublic ? "공개 체육관" : "비공개 체육관"}
+        {event.isHidden ? " · 숨김" : ""}
+        {event.isPaused ? " · 신청 중지" : ""}
+        {" · "}
         {formatAdminDateTime(event.createdAt)}
       </p>
 
@@ -91,6 +95,12 @@ export default async function AdminEventDetailPage({ params }: PageProps) {
         </div>
       )}
 
+      {event.moderationReason && (
+        <p className="mt-6 text-sm text-zinc-600">
+          최근 사유: {event.moderationReason}
+        </p>
+      )}
+
       {event.isPubliclyViewable && (
         <Link
           href={`/events/${event.id}`}
@@ -99,6 +109,12 @@ export default async function AdminEventDetailPage({ params }: PageProps) {
           PUBLIC VIEW →
         </Link>
       )}
+
+      <EventAdminActions
+        eventId={event.id}
+        isHidden={event.isHidden}
+        isPaused={event.isPaused}
+      />
     </div>
   );
 }
