@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { getAdminViewer } from "@/lib/admin/auth";
 import {
-  parseInquiryStatus,
-  resolveInquiryReplyStatus,
-} from "@/lib/utils/admin";
+  ADMIN_GENERIC_ERROR,
+  parseInquiryAdminPatch,
+} from "@/lib/admin/validation";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -18,10 +18,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
   }
 
-  const body = (await request.json().catch(() => null)) as {
-    status?: unknown;
-    adminReply?: unknown;
-  } | null;
+  const body = await request.json().catch(() => null);
 
   const { data: current, error: loadError } = await supabase
     .from("inquiries")
@@ -33,24 +30,26 @@ export async function PATCH(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "문의를 찾을 수 없습니다." }, { status: 404 });
   }
 
-  const reply =
-    typeof body?.adminReply === "string" ? body.adminReply.trim() : current.admin_reply ?? "";
-  const nextStatus = resolveInquiryReplyStatus(
-    current.status,
-    parseInquiryStatus(body?.status),
-    reply,
-  );
+  const parsed = parseInquiryAdminPatch(body, {
+    status: current.status,
+    adminReply: current.admin_reply,
+  });
+
+  if (!parsed.ok) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
+  }
 
   const { error } = await supabase
     .from("inquiries")
     .update({
-      status: nextStatus,
-      admin_reply: reply || null,
+      status: parsed.status,
+      admin_reply: parsed.adminReply,
     })
     .eq("id", id);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    console.error("admin inquiry update:", error.message);
+    return NextResponse.json({ error: ADMIN_GENERIC_ERROR }, { status: 400 });
   }
 
   return NextResponse.json({ ok: true });

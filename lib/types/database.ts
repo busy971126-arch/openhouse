@@ -222,7 +222,7 @@ export type Inquiry = {
 
 export type AdminActionLog = {
   id: string;
-  admin_user_id: string;
+  admin_user_id: string | null;
   action: "inquiry.update" | "report.update";
   target_type: "inquiry" | "report";
   target_id: string;

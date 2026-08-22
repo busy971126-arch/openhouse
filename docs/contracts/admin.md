@@ -20,25 +20,42 @@
 ### PATCH `/api/admin/inquiries/[id]`
 
 입력: `{ status?: open|answered|closed, adminReply?: string }`  
-출력: `{ ok: true }`  
+- `status`가 있으면 allowlist만 허용. 그 외 HTTP 400.
+- `adminReply`는 string만. 최대 5000자. 초과 시 HTTP 400.
+출력: `{ ok: true }` 또는 `{ error }` (DB 내부 메시지는 노출하지 않음)  
 권한: admin  
-부수효과: `inquiries.status`, `inquiries.admin_reply` 갱신. 트리거가 `admin_action_logs`에 `inquiry.update` 기록.
+부수효과: `inquiries.status`, `inquiries.admin_reply` 갱신. 트리거가 `admin_action_logs`에 `inquiry.update` 1건 기록.
 
 ### PATCH `/api/admin/reports/[id]`
 
 입력: `{ status: received|reviewing|resolved }`  
-출력: `{ ok: true }`  
+- allowlist 밖이면 HTTP 400.
+- `reviewing`이면 `resolved_at = null`. `resolved`이면 `resolved_at = now()`.
+출력: `{ ok: true }` 또는 `{ error }` (DB 내부 메시지는 노출하지 않음)  
 권한: admin  
-부수효과: `reports.status`, `resolved_at`. 트리거가 `report.update` 기록.
+부수효과: `reports.status`, `resolved_at`. 트리거가 `report.update` 1건 기록.
 
 ## 조회
 
-Admin SELECT는 RLS `is_admin()`으로 허용.
+문의/신고 본문은 admin SELECT RLS로 읽는다. 디렉터리 조회는 table SELECT가 아니라 RPC다.
 
-- inquiries / reports: 전체
-- gyms / events: 비공개·draft 포함
-- profiles: 목록용. 화면에는 닉네임·표시 이름·가입일만
-- registrations: 집계만
+| RPC | 반환 |
+|-----|------|
+| `admin_get_overview()` | 집계 7개 |
+| `admin_get_users(search)` | id, nickname, display_name, created_at, is_operator, application_count |
+| `admin_get_gyms(search)` | id, name, sport, region, is_public, created_at, owner_label, upcoming_event_count |
+| `admin_get_events(search, p_status)` | id, title, event_date, status, gym_name, host_label, application_count |
+| `admin_get_profile_labels(user_ids)` | id, nickname, display_name |
+| `admin_get_event_titles(event_ids)` | id, title |
+
+반환 금지: `phone`, `parent_phone`, `pending_gym_info`, `emergency_contact`, `applicant_notes`, `operator_memo`.
+
+비관리자가 RPC를 호출하면 exception.
+
+## Audit
+
+`admin_action_logs.admin_user_id`는 nullable이며 `auth.users(id) ON DELETE SET NULL`.
+`admin_users`에서 권한을 제거해도 과거 로그는 남는다.
 
 ## 하지 않음
 

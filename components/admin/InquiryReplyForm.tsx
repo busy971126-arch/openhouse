@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ADMIN_REPLY_MAX_LENGTH } from "@/lib/admin/validation";
 import {
   INQUIRY_ADMIN_STATUSES,
   type InquiryAdminStatus,
@@ -79,6 +80,7 @@ export function InquiryReplyForm({
         <textarea
           value={reply}
           onChange={(event) => setReply(event.target.value)}
+          maxLength={ADMIN_REPLY_MAX_LENGTH}
           rows={6}
           className="mt-1 w-full border-0 border-b border-zinc-400 bg-transparent px-0 py-2 text-sm leading-6 text-zinc-950"
         />

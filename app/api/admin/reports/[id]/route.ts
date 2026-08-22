@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { getAdminViewer } from "@/lib/admin/auth";
-import { parseReportStatus } from "@/lib/utils/admin";
+import {
+  ADMIN_GENERIC_ERROR,
+  parseReportAdminPatch,
+} from "@/lib/admin/validation";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -15,13 +18,10 @@ export async function PATCH(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
   }
 
-  const body = (await request.json().catch(() => null)) as {
-    status?: unknown;
-  } | null;
-
-  const nextStatus = parseReportStatus(body?.status);
-  if (!nextStatus) {
-    return NextResponse.json({ error: "올바른 상태가 아닙니다." }, { status: 400 });
+  const body = await request.json().catch(() => null);
+  const parsed = parseReportAdminPatch(body);
+  if (!parsed.ok) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
 
   const { data: current, error: loadError } = await supabase
@@ -37,13 +37,14 @@ export async function PATCH(request: Request, context: RouteContext) {
   const { error } = await supabase
     .from("reports")
     .update({
-      status: nextStatus,
-      resolved_at: nextStatus === "resolved" ? new Date().toISOString() : null,
+      status: parsed.status,
+      resolved_at: parsed.resolvedAt,
     })
     .eq("id", id);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    console.error("admin report update:", error.message);
+    return NextResponse.json({ error: ADMIN_GENERIC_ERROR }, { status: 400 });
   }
 
   return NextResponse.json({ ok: true });

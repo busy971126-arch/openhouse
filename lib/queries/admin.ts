@@ -1,5 +1,11 @@
-import { getTodayDateString } from "@/lib/utils/date";
 import { sanitizeAdminSearch, type EventAdminStatus } from "@/lib/utils/admin";
+import {
+  ADMIN_EVENT_FIELDS,
+  ADMIN_GYM_FIELDS,
+  ADMIN_OVERVIEW_FIELDS,
+  ADMIN_USER_FIELDS,
+  pickRpcFields,
+} from "@/lib/admin/rpc-fields";
 import type { createClient } from "@/lib/supabase/server";
 
 type AdminClient = Awaited<ReturnType<typeof createClient>>;
@@ -85,16 +91,10 @@ export type AdminUserListItem = {
   applicationCount: number;
 };
 
-async function counted(
-  label: string,
-  result: PromiseLike<{ count: number | null; error: { message: string } | null }>,
-): Promise<number> {
-  const { count, error } = await result;
-  if (error) {
-    console.error(`admin count ${label}:`, error.message);
-    return 0;
-  }
-  return count ?? 0;
+function asNumber(value: unknown): number {
+  if (typeof value === "number") return value;
+  if (typeof value === "string" && value.trim()) return Number(value);
+  return 0;
 }
 
 function profileLabel(profile: {
@@ -104,68 +104,60 @@ function profileLabel(profile: {
   return profile?.nickname?.trim() || profile?.display_name?.trim() || "이름 없음";
 }
 
+async function getProfileLabelMap(
+  supabase: AdminClient,
+  userIds: string[],
+): Promise<Map<string, { nickname: string | null; display_name: string | null }>> {
+  if (userIds.length === 0) return new Map();
+
+  const { data, error } = await supabase.rpc("admin_get_profile_labels", {
+    user_ids: userIds,
+  });
+
+  if (error) {
+    console.error("admin_get_profile_labels:", error.message);
+    return new Map();
+  }
+
+  return new Map(
+    ((data ?? []) as Array<{
+      id: string;
+      nickname: string | null;
+      display_name: string | null;
+    }>).map((row) => [row.id, row]),
+  );
+}
+
 export async function getAdminOverview(
   supabase: AdminClient,
 ): Promise<AdminOverview> {
-  const [
-    userCount,
-    gymCount,
-    publicEventCount,
-    draftEventCount,
-    activeApplicationCount,
-    openInquiryCount,
-    openReportCount,
-  ] = await Promise.all([
-    counted(
-      "profiles",
-      supabase.from("profiles").select("id", { count: "exact", head: true }),
-    ),
-    counted("gyms", supabase.from("gyms").select("id", { count: "exact", head: true })),
-    counted(
-      "active events",
-      supabase
-        .from("events")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "active"),
-    ),
-    counted(
-      "draft events",
-      supabase
-        .from("events")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "draft"),
-    ),
-    counted(
-      "applications",
-      supabase
-        .from("registrations")
-        .select("id", { count: "exact", head: true })
-        .in("status", ["pending", "approved"]),
-    ),
-    counted(
-      "inquiries",
-      supabase
-        .from("inquiries")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "open"),
-    ),
-    counted(
-      "reports",
-      supabase
-        .from("reports")
-        .select("id", { count: "exact", head: true })
-        .neq("status", "resolved"),
-    ),
-  ]);
+  const { data, error } = await supabase.rpc("admin_get_overview");
+  if (error) {
+    console.error("admin_get_overview:", error.message);
+    return {
+      userCount: 0,
+      gymCount: 0,
+      publicEventCount: 0,
+      draftEventCount: 0,
+      activeApplicationCount: 0,
+      openInquiryCount: 0,
+      openReportCount: 0,
+    };
+  }
+
+  const row = pickRpcFields(
+    ((Array.isArray(data) ? data[0] : data) ?? {}) as Record<string, unknown>,
+    ADMIN_OVERVIEW_FIELDS,
+  );
 
   return {
-    userCount,
-    gymCount,
-    publicEventCount,
-    draftEventCount,
-    activeApplicationCount,
-    openInquiryCount,
-    openReportCount,
+    userCount: asNumber(row.user_count),
+    gymCount: asNumber(row.gym_count),
+    publicEventCount: asNumber(row.public_event_count),
+    draftEventCount: asNumber(row.draft_event_count),
+    activeApplicationCount: asNumber(row.active_application_count),
+    openInquiryCount: asNumber(row.open_inquiry_count),
+    openReportCount: asNumber(row.open_report_count),
   };
 }
 
@@ -207,15 +199,9 @@ export async function getAdminInquiries(
   }
 
   const rows = data ?? [];
-  const userIds = [...new Set(rows.map((row) => row.user_id))];
-  const { data: profiles } = userIds.length
-    ? await supabase
-        .from("profiles")
-        .select("id, nickname, display_name")
-        .in("id", userIds)
-    : { data: [] };
-  const profileMap = new Map(
-    (profiles ?? []).map((profile) => [profile.id, profile]),
+  const profileMap = await getProfileLabelMap(
+    supabase,
+    [...new Set(rows.map((row) => row.user_id))],
   );
 
   return rows.map((row) => ({
@@ -240,11 +226,7 @@ export async function getAdminInquiry(
 
   if (error || !data) return null;
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("nickname, display_name")
-    .eq("id", data.user_id)
-    .maybeSingle();
+  const profileMap = await getProfileLabelMap(supabase, [data.user_id]);
 
   return {
     id: data.id,
@@ -254,7 +236,7 @@ export async function getAdminInquiry(
     status: data.status,
     adminReply: data.admin_reply,
     createdAt: data.created_at,
-    userLabel: profileLabel(profile),
+    userLabel: profileLabel(profileMap.get(data.user_id) ?? null),
   };
 }
 
@@ -286,19 +268,10 @@ export async function getAdminReports(
     ...new Set(rows.map((row) => row.event_id).filter(Boolean) as string[]),
   ];
 
-  const [{ data: profiles }, { data: events }] = await Promise.all([
-    userIds.length
-      ? supabase.from("profiles").select("id, nickname, display_name").in("id", userIds)
-      : Promise.resolve({ data: [] }),
-    eventIds.length
-      ? supabase.from("events").select("id, title").in("id", eventIds)
-      : Promise.resolve({ data: [] }),
+  const [profileMap, eventMap] = await Promise.all([
+    getProfileLabelMap(supabase, userIds),
+    getEventTitleMap(supabase, eventIds),
   ]);
-
-  const profileMap = new Map(
-    (profiles ?? []).map((profile) => [profile.id, profile]),
-  );
-  const eventMap = new Map((events ?? []).map((event) => [event.id, event.title]));
 
   return rows.map((row) => ({
     id: row.id,
@@ -313,6 +286,29 @@ export async function getAdminReports(
     eventTitle: row.event_id ? eventMap.get(row.event_id) ?? null : null,
     eventId: row.event_id,
   }));
+}
+
+async function getEventTitleMap(
+  supabase: AdminClient,
+  eventIds: string[],
+): Promise<Map<string, string>> {
+  if (eventIds.length === 0) return new Map();
+
+  const { data, error } = await supabase.rpc("admin_get_event_titles", {
+    event_ids: eventIds,
+  });
+
+  if (error) {
+    console.error("admin_get_event_titles:", error.message);
+    return new Map();
+  }
+
+  return new Map(
+    ((data ?? []) as Array<{ id: string; title: string }>).map((row) => [
+      row.id,
+      row.title,
+    ]),
+  );
 }
 
 export async function getAdminReport(
@@ -332,19 +328,10 @@ export async function getAdminReport(
   const userIds = [data.reporter_id, data.reported_user_id].filter(
     Boolean,
   ) as string[];
-
-  const [{ data: profiles }, { data: event }] = await Promise.all([
-    userIds.length
-      ? supabase.from("profiles").select("id, nickname, display_name").in("id", userIds)
-      : Promise.resolve({ data: [] }),
-    data.event_id
-      ? supabase.from("events").select("id, title").eq("id", data.event_id).maybeSingle()
-      : Promise.resolve({ data: null }),
+  const [profileMap, eventMap] = await Promise.all([
+    getProfileLabelMap(supabase, userIds),
+    getEventTitleMap(supabase, data.event_id ? [data.event_id] : []),
   ]);
-
-  const profileMap = new Map(
-    (profiles ?? []).map((profile) => [profile.id, profile]),
-  );
 
   return {
     id: data.id,
@@ -360,7 +347,7 @@ export async function getAdminReport(
     reportedUserLabel: data.reported_user_id
       ? profileLabel(profileMap.get(data.reported_user_id) ?? null)
       : null,
-    eventTitle: event?.title ?? null,
+    eventTitle: data.event_id ? eventMap.get(data.event_id) ?? null : null,
     eventId: data.event_id,
   };
 }
@@ -369,179 +356,80 @@ export async function getAdminGyms(
   supabase: AdminClient,
   search = "",
 ): Promise<AdminGymListItem[]> {
-  let query = supabase
-    .from("gyms")
-    .select("id, name, sport, region, is_public, created_at, owner_id")
-    .order("created_at", { ascending: false })
-    .limit(100);
+  const { data, error } = await supabase.rpc("admin_get_gyms", {
+    search: sanitizeAdminSearch(search),
+  });
 
-  const trimmed = sanitizeAdminSearch(search);
-  if (trimmed) {
-    query = query.or(
-      `name.ilike.%${trimmed}%,region.ilike.%${trimmed}%,sport.ilike.%${trimmed}%`,
-    );
-  }
-
-  const { data, error } = await query;
   if (error) {
-    console.error("admin gyms:", error.message);
+    console.error("admin_get_gyms:", error.message);
     return [];
   }
 
-  const rows = data ?? [];
-  const ownerIds = [...new Set(rows.map((row) => row.owner_id))];
-  const gymIds = rows.map((row) => row.id);
-  const today = getTodayDateString();
-
-  const [{ data: profiles }, { data: events }] = await Promise.all([
-    ownerIds.length
-      ? supabase.from("profiles").select("id, nickname, display_name").in("id", ownerIds)
-      : Promise.resolve({ data: [] }),
-    gymIds.length
-      ? supabase
-          .from("events")
-          .select("id, gym_id")
-          .in("gym_id", gymIds)
-          .eq("status", "active")
-          .gte("event_date", today)
-      : Promise.resolve({ data: [] }),
-  ]);
-
-  const profileMap = new Map(
-    (profiles ?? []).map((profile) => [profile.id, profile]),
-  );
-  const upcomingByGym = new Map<string, number>();
-  for (const event of events ?? []) {
-    upcomingByGym.set(event.gym_id, (upcomingByGym.get(event.gym_id) ?? 0) + 1);
-  }
-
-  return rows.map((row) => ({
-    id: row.id,
-    name: row.name,
-    sport: row.sport,
-    region: row.region,
-    isPublic: row.is_public,
-    createdAt: row.created_at,
-    ownerLabel: profileLabel(profileMap.get(row.owner_id) ?? null),
-    upcomingEventCount: upcomingByGym.get(row.id) ?? 0,
-  }));
+  return ((data ?? []) as Record<string, unknown>[]).map((raw) => {
+    const row = pickRpcFields(raw, ADMIN_GYM_FIELDS);
+    return {
+      id: String(row.id),
+      name: String(row.name ?? ""),
+      sport: String(row.sport ?? ""),
+      region: String(row.region ?? ""),
+      isPublic: Boolean(row.is_public),
+      createdAt: String(row.created_at ?? ""),
+      ownerLabel: String(row.owner_label ?? "이름 없음"),
+      upcomingEventCount: asNumber(row.upcoming_event_count),
+    };
+  });
 }
 
 export async function getAdminEvents(
   supabase: AdminClient,
   options: { search?: string; status?: EventAdminStatus | null } = {},
 ): Promise<AdminEventListItem[]> {
-  let query = supabase
-    .from("events")
-    .select("id, title, event_date, status, created_by, gym_id")
-    .order("event_date", { ascending: false })
-    .limit(100);
+  const { data, error } = await supabase.rpc("admin_get_events", {
+    search: sanitizeAdminSearch(options.search ?? ""),
+    p_status: options.status ?? null,
+  });
 
-  if (options.status) {
-    query = query.eq("status", options.status);
-  }
-
-  const trimmed = sanitizeAdminSearch(options.search ?? "");
-  if (trimmed) {
-    query = query.ilike("title", `%${trimmed}%`);
-  }
-
-  const { data, error } = await query;
   if (error) {
-    console.error("admin events:", error.message);
+    console.error("admin_get_events:", error.message);
     return [];
   }
 
-  const rows = data ?? [];
-  const gymIds = [...new Set(rows.map((row) => row.gym_id))];
-  const hostIds = [...new Set(rows.map((row) => row.created_by))];
-  const eventIds = rows.map((row) => row.id);
-
-  const [{ data: gyms }, { data: profiles }, { data: registrations }] =
-    await Promise.all([
-      gymIds.length
-        ? supabase.from("gyms").select("id, name").in("id", gymIds)
-        : Promise.resolve({ data: [] }),
-      hostIds.length
-        ? supabase
-            .from("profiles")
-            .select("id, nickname, display_name")
-            .in("id", hostIds)
-        : Promise.resolve({ data: [] }),
-      eventIds.length
-        ? supabase
-            .from("registrations")
-            .select("event_id")
-            .in("event_id", eventIds)
-            .in("status", ["pending", "approved"])
-        : Promise.resolve({ data: [] }),
-    ]);
-
-  const gymMap = new Map((gyms ?? []).map((gym) => [gym.id, gym.name]));
-  const profileMap = new Map(
-    (profiles ?? []).map((profile) => [profile.id, profile]),
-  );
-  const countMap = new Map<string, number>();
-  for (const row of registrations ?? []) {
-    countMap.set(row.event_id, (countMap.get(row.event_id) ?? 0) + 1);
-  }
-
-  return rows.map((row) => ({
-    id: row.id,
-    title: row.title,
-    eventDate: row.event_date,
-    status: row.status ?? "active",
-    gymName: gymMap.get(row.gym_id) ?? "체육관",
-    hostLabel: profileLabel(profileMap.get(row.created_by) ?? null),
-    applicationCount: countMap.get(row.id) ?? 0,
-  }));
+  return ((data ?? []) as Record<string, unknown>[]).map((raw) => {
+    const row = pickRpcFields(raw, ADMIN_EVENT_FIELDS);
+    return {
+      id: String(row.id),
+      title: String(row.title ?? ""),
+      eventDate: String(row.event_date ?? ""),
+      status: String(row.status ?? "active"),
+      gymName: String(row.gym_name ?? "체육관"),
+      hostLabel: String(row.host_label ?? "이름 없음"),
+      applicationCount: asNumber(row.application_count),
+    };
+  });
 }
 
 export async function getAdminUsers(
   supabase: AdminClient,
   search = "",
 ): Promise<AdminUserListItem[]> {
-  let query = supabase
-    .from("profiles")
-    .select("id, nickname, display_name, created_at")
-    .order("created_at", { ascending: false })
-    .limit(100);
+  const { data, error } = await supabase.rpc("admin_get_users", {
+    search: sanitizeAdminSearch(search),
+  });
 
-  const trimmed = sanitizeAdminSearch(search);
-  if (trimmed) {
-    query = query.or(`nickname.ilike.%${trimmed}%,display_name.ilike.%${trimmed}%`);
-  }
-
-  const { data, error } = await query;
   if (error) {
-    console.error("admin users:", error.message);
+    console.error("admin_get_users:", error.message);
     return [];
   }
 
-  const rows = data ?? [];
-  const userIds = rows.map((row) => row.id);
-
-  const [{ data: gyms }, { data: registrations }] = await Promise.all([
-    userIds.length
-      ? supabase.from("gyms").select("owner_id").in("owner_id", userIds)
-      : Promise.resolve({ data: [] }),
-    userIds.length
-      ? supabase.from("registrations").select("user_id").in("user_id", userIds)
-      : Promise.resolve({ data: [] }),
-  ]);
-
-  const operatorIds = new Set((gyms ?? []).map((gym) => gym.owner_id));
-  const applicationMap = new Map<string, number>();
-  for (const row of registrations ?? []) {
-    applicationMap.set(row.user_id, (applicationMap.get(row.user_id) ?? 0) + 1);
-  }
-
-  return rows.map((row) => ({
-    id: row.id,
-    nickname: row.nickname,
-    displayName: row.display_name,
-    createdAt: row.created_at,
-    isOperator: operatorIds.has(row.id),
-    applicationCount: applicationMap.get(row.id) ?? 0,
-  }));
+  return ((data ?? []) as Record<string, unknown>[]).map((raw) => {
+    const row = pickRpcFields(raw, ADMIN_USER_FIELDS);
+    return {
+      id: String(row.id),
+      nickname: (row.nickname as string | null) ?? null,
+      displayName: (row.display_name as string | null) ?? null,
+      createdAt: String(row.created_at ?? ""),
+      isOperator: Boolean(row.is_operator),
+      applicationCount: asNumber(row.application_count),
+    };
+  });
 }
