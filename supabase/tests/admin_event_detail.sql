@@ -170,7 +170,7 @@ begin
       'is_publicly_viewable',
       'admin_hidden_at',
       'admin_recruitment_paused_at',
-      'admin_moderation_reason'
+      'last_moderation_reason'
     )
   ) then
     raise exception 'admin_get_event_detail returned unexpected columns';

@@ -170,7 +170,7 @@ describe("admin directory queries use RPCs", () => {
           is_publicly_viewable: false,
           admin_hidden_at: null,
           admin_recruitment_paused_at: null,
-          admin_moderation_reason: null,
+          last_moderation_reason: null,
           emergency_contact: "010",
           applicant_notes: "nope",
           operator_memo: "secret",

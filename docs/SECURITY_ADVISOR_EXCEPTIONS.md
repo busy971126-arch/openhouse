@@ -145,7 +145,7 @@ events 전체 SELECT RLS를 다시 열지 않고 검수용 컬럼만 반환. `is
 
 Returned data:
 title, schedule, gym/host labels, application count, description, `is_publicly_viewable`.
-Phase 1 이후에는 `admin_hidden_at`, `admin_recruitment_paused_at`, `admin_moderation_reason` 포함.
+Phase 1 이후에는 `admin_hidden_at`, `admin_recruitment_paused_at`와, 로그에서 읽은 `last_moderation_reason`만 포함. admin UUID는 반환하지 않음.
 `emergency_contact`, 참가자 개인정보, `applicant_notes`, `operator_memo` 미반환.
 
 Revisit when:

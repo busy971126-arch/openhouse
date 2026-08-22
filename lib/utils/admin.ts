@@ -159,6 +159,7 @@ export function formatAdminUserLabel(
 
 export function formatAdminDateTime(value: string): string {
   return new Date(value).toLocaleString("ko-KR", {
+    timeZone: "Asia/Seoul",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",

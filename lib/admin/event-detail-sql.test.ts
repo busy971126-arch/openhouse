@@ -25,7 +25,7 @@ describe("admin event detail SQL", () => {
       (field) =>
         field !== "admin_hidden_at" &&
         field !== "admin_recruitment_paused_at" &&
-        field !== "admin_moderation_reason",
+        field !== "last_moderation_reason",
     );
     for (const field of originalFields) {
       expect(migration).toContain(field);

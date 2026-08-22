@@ -79,7 +79,7 @@ describe("admin RPC field allowlists", () => {
       "is_publicly_viewable",
       "admin_hidden_at",
       "admin_recruitment_paused_at",
-      "admin_moderation_reason",
+      "last_moderation_reason",
     ]);
     expect(ADMIN_APPLICATION_FIELDS).toEqual([
       "id",

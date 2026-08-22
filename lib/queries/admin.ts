@@ -530,7 +530,7 @@ export async function getAdminEventDetail(
     isPubliclyViewable: Boolean(row.is_publicly_viewable),
     isHidden: Boolean(row.admin_hidden_at),
     isPaused: Boolean(row.admin_recruitment_paused_at),
-    moderationReason: asOptionalString(row.admin_moderation_reason),
+    moderationReason: asOptionalString(row.last_moderation_reason),
   };
 }
 

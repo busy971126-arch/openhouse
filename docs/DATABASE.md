@@ -119,9 +119,8 @@ Supabase Auth 사용자 확장.
 | recruitment_closed | 수동 마감 |
 | fee_amount, registration_deadline, difficulty | 020+ |
 | status | `active` / `cancelled` / `draft` (031+, 135+) |
-| admin_hidden_at / admin_hidden_by | 공개 숨김. 호스트 조회·관리는 유지 (Phase 1) |
-| admin_recruitment_paused_at / admin_recruitment_paused_by | 호스트 `recruitment_closed`와 별개인 신청 중지 |
-| admin_moderation_reason | 최근 admin 조치 사유 (최대 500자, RPC에서 강제) |
+| admin_hidden_at | 공개 숨김. 호스트 조회·관리는 유지. 행위자/사유는 `admin_action_logs` |
+| admin_recruitment_paused_at | 호스트 `recruitment_closed`와 별개인 신청 중지. 행위자/사유는 `admin_action_logs` |
 
 ### registrations (Participation)
 
@@ -251,7 +250,7 @@ erDiagram
 1. **중복 신청**: 이벤트당 active registration 1건.
 2. **정원**: `pending + approved` 합산 (046). insert 트리거 + auto_approve RPC + 공개 집계 RPC 동일 기준.
 3. **관심 vs 참가**: GymInterest/EventInterest는 capacity에 영향 없음.
-4. **동행**: accepted 친구만 `create_party_registration` (030+).
+4. **동행**: accepted 친구만 `create_party_registration` (030+). Closed Beta 동안 authenticated EXECUTE는 회수하고 service_role만 유지.
 5. **공개 목록**: upcoming · active · 모집 중 이벤트만 (앱 레이어에서 추가 필터). `admin_hidden_at`이 있으면 RLS에서 비호스트에게 숨김.
 6. **공개 신청 인원**: `get_event_registration_count` / `get_event_registration_counts` RPC (038+) — pending + approved, RLS 우회 집계.
 7. **운영 날짜**: admin Overview TODAY 집계는 `Asia/Seoul` 달력 날짜. 브라우저 로컬 날짜를 쓰지 않는다.

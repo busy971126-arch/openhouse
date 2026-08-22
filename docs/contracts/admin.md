@@ -54,7 +54,7 @@
 | `admin_get_users(search)` | id, nickname, display_name, created_at, is_operator, application_count |
 | `admin_get_gyms(search)` | id, name, sport, region, is_public, created_at, owner_label, upcoming_event_count |
 | `admin_get_events(search, p_status)` | 목록 필드 + `is_hidden`, `is_paused` |
-| `admin_get_event_detail(event_id)` | 검수용 이벤트 필드 + 공개 여부 + admin moderation 상태. 민감 연락처/메모 없음 |
+| `admin_get_event_detail(event_id)` | 검수용 이벤트 필드 + 공개 여부 + hide/pause 시각. 최근 사유는 `admin_action_logs`에서만. admin UUID 없음 |
 | `admin_get_applications(search, p_status)` | 신청 목록. 참가자 라벨·이벤트명만 검색. 연락처 없음 |
 | `admin_get_application_detail(application_id)` | 신청 상세. 참가자 라벨·호스트 라벨·이벤트/체육관만 |
 | `admin_get_activity(p_limit)` | Recent Activity. 본문/연락처 없음 |

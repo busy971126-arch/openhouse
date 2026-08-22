@@ -119,7 +119,6 @@ export type Event = {
   recruitment_closed: boolean;
   admin_hidden_at?: string | null;
   admin_recruitment_paused_at?: string | null;
-  admin_moderation_reason?: string | null;
   status?: EventLifecycleStatus;
   safety_rules: string | null;
   prohibited_techniques: string | null;

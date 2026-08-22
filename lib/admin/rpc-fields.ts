@@ -64,7 +64,7 @@ export const ADMIN_EVENT_DETAIL_FIELDS = [
   "is_publicly_viewable",
   "admin_hidden_at",
   "admin_recruitment_paused_at",
-  "admin_moderation_reason",
+  "last_moderation_reason",
 ] as const;
 
 export const ADMIN_APPLICATION_FIELDS = [

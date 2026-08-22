@@ -4,6 +4,7 @@ import {
   isAdminEventPubliclyViewable,
   parseEventAdminStatus,
   toKstDate,
+  formatAdminDateTime,
   adminActivityHref,
   parseInquiryStatus,
   parseReportStatus,
@@ -52,6 +53,14 @@ describe("admin helpers", () => {
   it("uses Asia/Seoul for operational calendar dates around UTC midnight", () => {
     expect(toKstDate("2026-08-21T15:00:00.000Z")).toBe("2026-08-22");
     expect(toKstDate("2026-08-21T14:59:00.000Z")).toBe("2026-08-21");
+  });
+
+  it("formats admin date times in Asia/Seoul", () => {
+    expect(formatAdminDateTime("2026-08-21T15:00:00.000Z")).toMatch(/22/);
+    expect(formatAdminDateTime("2026-08-21T14:59:00.000Z")).toMatch(/21/);
+    expect(formatAdminDateTime("2026-08-21T15:00:00.000Z")).not.toEqual(
+      formatAdminDateTime("2026-08-21T14:59:00.000Z"),
+    );
   });
 
   it("links recent activity to the matching admin record", () => {
