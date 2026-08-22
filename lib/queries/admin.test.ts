@@ -8,6 +8,8 @@ import {
   rpcRowHasForbiddenFields,
 } from "@/lib/admin/rpc-fields";
 import {
+  getAdminApplication,
+  getAdminApplications,
   getAdminEventDetail,
   getAdminEvents,
   getAdminGyms,
@@ -27,13 +29,16 @@ function rpcClient(name: string, data: unknown) {
 describe("admin directory queries use RPCs", () => {
   it("maps overview from admin_get_overview without extra fields", async () => {
     const row = {
-      user_count: 3,
-      gym_count: 1,
-      public_event_count: 2,
-      draft_event_count: 1,
-      active_application_count: 4,
+      new_users_today: 2,
+      applications_today: 3,
+      events_published_today: 1,
+      active_events_today: 4,
+      pending_application_count: 5,
       open_inquiry_count: 0,
       open_report_count: 1,
+      draft_event_count: 2,
+      events_next_7_days: 6,
+      active_application_count: 7,
       phone: "010",
     };
     expect(rpcRowHasForbiddenFields(row)).toBe(true);
@@ -42,15 +47,18 @@ describe("admin directory queries use RPCs", () => {
       rpcClient("admin_get_overview", [row]),
     );
     expect(overview).toEqual({
-      userCount: 3,
-      gymCount: 1,
-      publicEventCount: 2,
-      draftEventCount: 1,
-      activeApplicationCount: 4,
+      newUsersToday: 2,
+      applicationsToday: 3,
+      eventsPublishedToday: 1,
+      activeEventsToday: 4,
+      pendingApplicationCount: 5,
       openInquiryCount: 0,
       openReportCount: 1,
+      draftEventCount: 2,
+      eventsNext7Days: 6,
+      activeApplicationCount: 7,
     });
-    expect(ADMIN_OVERVIEW_FIELDS).toHaveLength(7);
+    expect(ADMIN_OVERVIEW_FIELDS).toHaveLength(10);
   });
 
   it("maps users/gyms/events from allowlisted RPC columns only", async () => {
@@ -116,6 +124,8 @@ describe("admin directory queries use RPCs", () => {
           gym_name: "Gym",
           host_label: "호스트",
           application_count: 3,
+          is_hidden: true,
+          is_paused: false,
           applicant_notes: "nope",
         },
       ]),
@@ -128,6 +138,8 @@ describe("admin directory queries use RPCs", () => {
       gymName: "Gym",
       hostLabel: "호스트",
       applicationCount: 3,
+      isHidden: true,
+      isPaused: false,
     });
 
     expect(ADMIN_USER_FIELDS.length + ADMIN_GYM_FIELDS.length + ADMIN_EVENT_FIELDS.length).toBeGreaterThan(0);
@@ -156,6 +168,9 @@ describe("admin directory queries use RPCs", () => {
           created_at: "2026-08-01T00:00:00Z",
           description: "검수용 설명",
           is_publicly_viewable: false,
+          admin_hidden_at: null,
+          admin_recruitment_paused_at: null,
+          admin_moderation_reason: null,
           emergency_contact: "010",
           applicant_notes: "nope",
           operator_memo: "secret",
@@ -183,7 +198,76 @@ describe("admin directory queries use RPCs", () => {
       createdAt: "2026-08-01T00:00:00Z",
       description: "검수용 설명",
       isPubliclyViewable: false,
+      isHidden: false,
+      isPaused: false,
+      moderationReason: null,
     });
     expect(detail && "emergency_contact" in detail).toBe(false);
+  });
+
+  it("maps applications from allowlisted RPC columns only", async () => {
+    const items = await getAdminApplications(
+      rpcClient("admin_get_applications", [
+        {
+          id: "r1",
+          created_at: "2026-08-22T00:00:00Z",
+          status: "pending",
+          participant_label: "nick",
+          event_id: "e1",
+          event_title: "Open",
+          event_date: "2026-09-01",
+          gym_name: "Gym",
+          phone: "010",
+          applicant_notes: "nope",
+        },
+      ]),
+    );
+    expect(items).toEqual([
+      {
+        id: "r1",
+        createdAt: "2026-08-22T00:00:00Z",
+        status: "pending",
+        participantLabel: "nick",
+        eventId: "e1",
+        eventTitle: "Open",
+        eventDate: "2026-09-01",
+        gymName: "Gym",
+      },
+    ]);
+    expect("phone" in items[0]).toBe(false);
+
+    const detail = await getAdminApplication(
+      rpcClient("admin_get_application_detail", [
+        {
+          id: "r1",
+          created_at: "2026-08-22T00:00:00Z",
+          status: "pending",
+          participant_id: "u1",
+          participant_label: "nick",
+          event_id: "e1",
+          event_title: "Open",
+          event_date: "2026-09-01",
+          gym_id: "g1",
+          gym_name: "Gym",
+          host_label: "호스트",
+          parent_phone: "011",
+        },
+      ]),
+      "r1",
+    );
+    expect(detail).toEqual({
+      id: "r1",
+      createdAt: "2026-08-22T00:00:00Z",
+      status: "pending",
+      participantLabel: "nick",
+      participantId: "u1",
+      eventId: "e1",
+      eventTitle: "Open",
+      eventDate: "2026-09-01",
+      gymId: "g1",
+      gymName: "Gym",
+      hostLabel: "호스트",
+    });
+    expect(detail && "parent_phone" in detail).toBe(false);
   });
 });

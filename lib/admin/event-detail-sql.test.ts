@@ -21,7 +21,13 @@ describe("admin event detail SQL", () => {
   });
 
   it("returns only inspection fields and omits sensitive columns", () => {
-    for (const field of ADMIN_EVENT_DETAIL_FIELDS) {
+    const originalFields = ADMIN_EVENT_DETAIL_FIELDS.filter(
+      (field) =>
+        field !== "admin_hidden_at" &&
+        field !== "admin_recruitment_paused_at" &&
+        field !== "admin_moderation_reason",
+    );
+    for (const field of originalFields) {
       expect(migration).toContain(field);
     }
     expect(migration).not.toMatch(/\be\.emergency_contact\b/);

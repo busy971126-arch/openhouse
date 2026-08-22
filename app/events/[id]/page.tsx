@@ -178,6 +178,7 @@ export default async function EventDetailPage({ params }: PageProps) {
     maxParticipants: event.max_participants,
     approvedCount,
     recruitmentClosed: event.recruitment_closed ?? false,
+    adminRecruitmentPaused: Boolean(event.admin_recruitment_paused_at),
     registrationDeadline: event.registration_deadline ?? null,
     eventStatus: event.status ?? "active",
   });
@@ -190,7 +191,7 @@ export default async function EventDetailPage({ params }: PageProps) {
       ? event.registration_deadline &&
         event.registration_deadline < new Date().toISOString().slice(0, 10)
         ? "신청 마감일이 지났습니다."
-        : event.recruitment_closed
+        : event.recruitment_closed || event.admin_recruitment_paused_at
           ? "모집이 마감되었습니다."
           : "정원이 마감되었습니다."
       : recruitmentStatus === "ended"

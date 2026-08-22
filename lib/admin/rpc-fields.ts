@@ -1,11 +1,14 @@
 export const ADMIN_OVERVIEW_FIELDS = [
-  "user_count",
-  "gym_count",
-  "public_event_count",
-  "draft_event_count",
-  "active_application_count",
+  "new_users_today",
+  "applications_today",
+  "events_published_today",
+  "active_events_today",
+  "pending_application_count",
   "open_inquiry_count",
   "open_report_count",
+  "draft_event_count",
+  "events_next_7_days",
+  "active_application_count",
 ] as const;
 
 export const ADMIN_USER_FIELDS = [
@@ -36,6 +39,8 @@ export const ADMIN_EVENT_FIELDS = [
   "gym_name",
   "host_label",
   "application_count",
+  "is_hidden",
+  "is_paused",
 ] as const;
 
 export const ADMIN_EVENT_DETAIL_FIELDS = [
@@ -57,6 +62,44 @@ export const ADMIN_EVENT_DETAIL_FIELDS = [
   "created_at",
   "description",
   "is_publicly_viewable",
+  "admin_hidden_at",
+  "admin_recruitment_paused_at",
+  "admin_moderation_reason",
+] as const;
+
+export const ADMIN_APPLICATION_FIELDS = [
+  "id",
+  "created_at",
+  "status",
+  "participant_label",
+  "event_id",
+  "event_title",
+  "event_date",
+  "gym_name",
+] as const;
+
+export const ADMIN_APPLICATION_DETAIL_FIELDS = [
+  "id",
+  "created_at",
+  "status",
+  "participant_id",
+  "participant_label",
+  "event_id",
+  "event_title",
+  "event_date",
+  "gym_id",
+  "gym_name",
+  "host_label",
+] as const;
+
+export const ADMIN_ACTIVITY_FIELDS = [
+  "id",
+  "occurred_at",
+  "actor_type",
+  "action",
+  "target_type",
+  "target_id",
+  "event_id",
 ] as const;
 
 export const ADMIN_FORBIDDEN_FIELDS = [

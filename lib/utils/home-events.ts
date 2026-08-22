@@ -27,6 +27,7 @@ export function getEventRecruitmentStatusForEvent(
     maxParticipants: event.max_participants,
     approvedCount,
     recruitmentClosed: event.recruitment_closed ?? false,
+    adminRecruitmentPaused: Boolean(event.admin_recruitment_paused_at),
     registrationDeadline: event.registration_deadline,
     eventStatus: event.status ?? "active",
     today,

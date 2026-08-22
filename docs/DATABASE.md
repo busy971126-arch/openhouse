@@ -62,6 +62,8 @@ Supabase **SQL Editor**에서 `supabase/migrations/` 파일을 **번호 순서�
 
 > `016_resume.sql`은 016 중단 시에만 사용. 정상 경로는 016 한 번 실행.
 
+Closed Beta 이후 timestamp 마이그레이션은 `supabase/migrations/20260822*.sql`을 번호 순서대로 적용한다. Phase 1은 `20260822140000_admin_control_center_phase1.sql`. 기존 파일을 수정하지 않고 새 파일만 추가한다.
+
 ### 오류 예시와 대응
 
 | 오류 | 대응 |
@@ -116,7 +118,10 @@ Supabase Auth 사용자 확장.
 | max_participants | capacity; NULL = 무제한 |
 | recruitment_closed | 수동 마감 |
 | fee_amount, registration_deadline, difficulty | 020+ |
-| status | `active` / `cancelled` (031+) |
+| status | `active` / `cancelled` / `draft` (031+, 135+) |
+| admin_hidden_at / admin_hidden_by | 공개 숨김. 호스트 조회·관리는 유지 (Phase 1) |
+| admin_recruitment_paused_at / admin_recruitment_paused_by | 호스트 `recruitment_closed`와 별개인 신청 중지 |
+| admin_moderation_reason | 최근 admin 조치 사유 (최대 500자, RPC에서 강제) |
 
 ### registrations (Participation)
 
@@ -174,16 +179,19 @@ Supabase Auth 사용자 확장.
 
 1:1 문의. 유저는 본인 문의만 조회. Closed Beta admin은 `is_admin()`으로 전체 조회·답변.
 
-### admin_users / admin_action_logs — Closed Beta
+### admin_users / admin_action_logs / operational_activity — Closed Beta + Phase 1
 
 | Table | Notes |
 |--------|-------|
 | admin_users | `user_id` → `auth.users`. 시드/이메일 하드코딩 없음. SQL Editor로 수동 insert |
-| admin_action_logs | 문의/신고 수정만 기록. 본문 복제 없음. `admin_user_id` nullable → `auth.users(id) ON DELETE SET NULL` |
+| admin_action_logs | 문의/신고/이벤트 운영 조치 기록. 본문 복제 없음. `reason`은 이벤트 조치에만 사용. `admin_user_id` nullable → `auth.users(id) ON DELETE SET NULL` |
+| operational_activity | append-only 운영 피드. 등록/이벤트 공개·취소, admin 조치. 연락처·본문 없음. admin SELECT RLS만 |
 
 `public.is_admin()` — `SECURITY DEFINER`, 본인이 admin인지 boolean만 반환.
 
-디렉터리 조회 RPC (`admin_get_overview` / `admin_get_users` / `admin_get_gyms` / `admin_get_events`): `is_admin()` 필수, 민감 컬럼 미반환. profiles/gyms/events/registrations에 대한 admin 전체 SELECT RLS는 없음.
+디렉터리 조회 RPC (`admin_get_overview` / `admin_get_users` / `admin_get_gyms` / `admin_get_events` / `admin_get_applications` / `admin_get_activity`): `is_admin()` 필수, 민감 컬럼 미반환. profiles/gyms/events/registrations에 대한 admin 전체 SELECT RLS는 없음.
+
+이벤트 운영 조치는 `admin_moderate_event`만 사용한다. admin JWT에 events UPDATE/DELETE를 주지 않는다.
 
 ### notifications
 
@@ -223,7 +231,7 @@ erDiagram
 |-------|-------------|--------|--------|
 | profiles | own + friends + host registrants; public/search via RPC (047+). Admin directory via `admin_get_users` | own (trigger) | own |
 | gyms | public gyms + owner. Admin directory via `admin_get_gyms` | authenticated (owner=self) | owner |
-| events | public gym non-draft + creator. Admin list via `admin_get_events`, detail via `admin_get_event_detail` | gym owner | gym owner |
+| events | public gym non-draft + not admin-hidden + creator. Admin list via `admin_get_events`, detail via `admin_get_event_detail` | gym owner | gym owner. admin_* 컬럼은 `admin_moderate_event` / `is_admin()`만 |
 | registrations | own + event owner. Admin aggregates via RPC only | self | own cancel / owner RPC |
 | gym_follows | own | self | self delete (toggle) |
 | event_interests | own | self | self delete (toggle) |
@@ -231,7 +239,8 @@ erDiagram
 | reports | own + admin | self | admin (`status`, `admin_note`, `resolved_at`) |
 | inquiries | own + admin | self | admin (`status`, `admin_reply` only) |
 | admin_users | admin | — | SQL Editor / service_role |
-| admin_action_logs | admin | trigger | — |
+| admin_action_logs | admin | trigger / `admin_moderate_event` | — |
+| operational_activity | admin | trigger / `admin_moderate_event` | — |
 | notifications | own | system/trigger | own read |
 | announcements | all | gym owner | gym owner |
 
@@ -243,8 +252,10 @@ erDiagram
 2. **정원**: `pending + approved` 합산 (046). insert 트리거 + auto_approve RPC + 공개 집계 RPC 동일 기준.
 3. **관심 vs 참가**: GymInterest/EventInterest는 capacity에 영향 없음.
 4. **동행**: accepted 친구만 `create_party_registration` (030+).
-5. **공개 목록**: upcoming · active · 모집 중 이벤트만 (앱 레이어에서 추가 필터).
+5. **공개 목록**: upcoming · active · 모집 중 이벤트만 (앱 레이어에서 추가 필터). `admin_hidden_at`이 있으면 RLS에서 비호스트에게 숨김.
 6. **공개 신청 인원**: `get_event_registration_count` / `get_event_registration_counts` RPC (038+) — pending + approved, RLS 우회 집계.
+7. **운영 날짜**: admin Overview TODAY 집계는 `Asia/Seoul` 달력 날짜. 브라우저 로컬 날짜를 쓰지 않는다.
+8. **신청 중지**: `admin_recruitment_paused_at`은 호스트 `recruitment_closed`와 독립. 신규 신청 insert/RPC는 `REGISTRATION_CLOSED`.
 
 ---
 

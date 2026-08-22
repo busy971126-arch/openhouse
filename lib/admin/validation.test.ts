@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  ADMIN_REASON_MAX_LENGTH,
   ADMIN_REPLY_MAX_LENGTH,
+  parseEventAdminActionPatch,
   parseInquiryAdminPatch,
   parseReportAdminPatch,
   resolvedAtForReportStatus,
@@ -75,5 +77,38 @@ describe("parseReportAdminPatch", () => {
 describe("resolvedAtForReportStatus", () => {
   it("returns null for reviewing", () => {
     expect(resolvedAtForReportStatus("reviewing")).toBeNull();
+  });
+});
+
+describe("parseEventAdminActionPatch", () => {
+  it("rejects an invalid action", () => {
+    const parsed = parseEventAdminActionPatch({
+      action: "event.delete",
+      reason: "삭제",
+    });
+    expect(parsed.ok).toBe(false);
+  });
+
+  it("rejects a reason over the max length", () => {
+    const parsed = parseEventAdminActionPatch({
+      action: "event.hide",
+      reason: "가".repeat(ADMIN_REASON_MAX_LENGTH + 1),
+    });
+    expect(parsed.ok).toBe(false);
+    if (!parsed.ok) {
+      expect(parsed.error).toBe("사유가 너무 깁니다.");
+    }
+  });
+
+  it("accepts a hide action with a trimmed reason", () => {
+    const parsed = parseEventAdminActionPatch({
+      action: "event.hide",
+      reason: " 스팸  ",
+    });
+    expect(parsed).toEqual({
+      ok: true,
+      action: "event.hide",
+      reason: "스팸",
+    });
   });
 });

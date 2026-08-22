@@ -4,7 +4,12 @@ import {
   getAdminOverview,
   getAdminRecentActivity,
 } from "@/lib/queries/admin";
-import { ADMIN_PATHS, formatAdminDateTime } from "@/lib/utils/admin";
+import {
+  ADMIN_PATHS,
+  adminActivityHref,
+  formatAdminActivity,
+  formatAdminDateTime,
+} from "@/lib/utils/admin";
 
 function StatRow({
   label,
@@ -21,10 +26,26 @@ function StatRow({
   );
 }
 
-function actionLabel(action: string, targetType: string): string {
-  if (action === "inquiry.update") return "문의 처리";
-  if (action === "report.update") return "신고 상태 변경";
-  return `${targetType} ${action}`;
+function AttentionLink({
+  href,
+  label,
+  value,
+}: {
+  href: string;
+  label: string;
+  value: number;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex items-baseline justify-between border-b border-zinc-200 py-3"
+    >
+      <span className="text-sm text-zinc-950">{label}</span>
+      <span className="font-mono text-lg tabular-nums text-zinc-950">
+        {value} →
+      </span>
+    </Link>
+  );
 }
 
 export default async function AdminHomePage() {
@@ -37,48 +58,50 @@ export default async function AdminHomePage() {
   return (
     <div>
       <p className="text-[10px] font-black tracking-[0.18em] text-zinc-400">
-        OVERVIEW
+        TODAY
       </p>
-
       <section className="mt-4">
-        <StatRow label="Users" value={overview.userCount} />
-        <StatRow label="Gyms" value={overview.gymCount} />
-        <StatRow label="Events" value={overview.publicEventCount} />
-        <StatRow label="Draft events" value={overview.draftEventCount} />
-        <StatRow label="Applications" value={overview.activeApplicationCount} />
+        <StatRow label="신규 사용자" value={overview.newUsersToday} />
+        <StatRow label="오늘 신청" value={overview.applicationsToday} />
+        <StatRow label="오늘 공개된 이벤트" value={overview.eventsPublishedToday} />
+        <StatRow label="오늘 진행 이벤트" value={overview.activeEventsToday} />
       </section>
 
       <section className="mt-10">
         <p className="text-[10px] font-black tracking-[0.18em] text-orange-600">
           NEEDS ATTENTION
         </p>
-        <Link
-          href={ADMIN_PATHS.inquiries}
-          className="mt-4 flex items-baseline justify-between border-b border-zinc-200 py-3"
-        >
-          <span className="text-sm text-zinc-950">Inquiries</span>
-          <span className="font-mono text-lg tabular-nums text-zinc-950">
-            {overview.openInquiryCount} →
-          </span>
-        </Link>
-        <Link
-          href={ADMIN_PATHS.reports}
-          className="flex items-baseline justify-between border-b border-zinc-200 py-3"
-        >
-          <span className="text-sm text-zinc-950">Reports</span>
-          <span className="font-mono text-lg tabular-nums text-zinc-950">
-            {overview.openReportCount} →
-          </span>
-        </Link>
-        <Link
-          href={`${ADMIN_PATHS.events}?status=draft`}
-          className="flex items-baseline justify-between border-b border-zinc-200 py-3"
-        >
-          <span className="text-sm text-zinc-950">Draft events</span>
-          <span className="font-mono text-lg tabular-nums text-zinc-950">
-            {overview.draftEventCount} →
-          </span>
-        </Link>
+        <div className="mt-4">
+          <AttentionLink
+            href={`${ADMIN_PATHS.applications}?status=pending`}
+            label="대기 신청"
+            value={overview.pendingApplicationCount}
+          />
+          <AttentionLink
+            href={ADMIN_PATHS.inquiries}
+            label="미답변 문의"
+            value={overview.openInquiryCount}
+          />
+          <AttentionLink
+            href={ADMIN_PATHS.reports}
+            label="미해결 신고"
+            value={overview.openReportCount}
+          />
+          <AttentionLink
+            href={`${ADMIN_PATHS.events}?status=draft`}
+            label="Draft 이벤트"
+            value={overview.draftEventCount}
+          />
+        </div>
+      </section>
+
+      <section className="mt-10">
+        <p className="text-[10px] font-black tracking-[0.18em] text-zinc-400">
+          LIVE OPERATIONS
+        </p>
+        <StatRow label="오늘 진행 이벤트" value={overview.activeEventsToday} />
+        <StatRow label="앞으로 7일 이벤트" value={overview.eventsNext7Days} />
+        <StatRow label="진행 중 신청" value={overview.activeApplicationCount} />
       </section>
 
       <section className="mt-10">
@@ -86,22 +109,37 @@ export default async function AdminHomePage() {
           RECENT ACTIVITY
         </p>
         {activity.length === 0 ? (
-          <p className="mt-4 text-sm text-zinc-500">최근 처리 기록이 없습니다.</p>
+          <p className="mt-4 text-sm text-zinc-500">최근 기록이 없습니다.</p>
         ) : (
           <ul className="mt-4">
-            {activity.map((item) => (
-              <li
-                key={item.id}
-                className="flex items-baseline justify-between gap-4 border-b border-zinc-200 py-3"
-              >
-                <span className="text-sm text-zinc-950">
-                  {actionLabel(item.action, item.targetType)}
-                </span>
-                <time className="shrink-0 text-xs text-zinc-500">
-                  {formatAdminDateTime(item.createdAt)}
-                </time>
-              </li>
-            ))}
+            {activity.map((item) => {
+              const href = adminActivityHref(item);
+              return (
+                <li
+                  key={item.id}
+                  className="flex items-baseline justify-between gap-4 border-b border-zinc-200 py-3"
+                >
+                  <span className="text-sm text-zinc-950">
+                    {href ? (
+                      <Link
+                        href={href}
+                        className="underline underline-offset-4"
+                      >
+                        {formatAdminActivity(item.action, item.actorType)}
+                      </Link>
+                    ) : (
+                      formatAdminActivity(item.action, item.actorType)
+                    )}
+                    <span className="ml-2 text-xs text-zinc-400">
+                      {item.actorType}
+                    </span>
+                  </span>
+                  <time className="shrink-0 text-xs text-zinc-500">
+                    {formatAdminDateTime(item.occurredAt)}
+                  </time>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
