@@ -34,9 +34,12 @@ Also read:
 
 - `docs/PRODUCT.md`
 - `docs/DATABASE.md`
+- `docs/MCP.md`
 - `docs/ERD_V1.1_MAPPING.md`
 - relevant `docs/contracts/*.md`
 - relevant files in `supabase/migrations/`
+
+When the actual Supabase state needs verification, use the configured `supabase-openhouse-readonly` MCP server only for inspection.
 
 ### QA / bug fixes
 
@@ -45,6 +48,8 @@ Also read:
 - `docs/TESTING.md`
 - `docs/USER_TEST_QA.md`
 - the product/database documents affected by the bug
+
+For DB/log investigation, follow `docs/MCP.md` and use MCP read-only inspection when useful.
 
 For the complete document map, use `docs/KNOWLEDGE_BASE.md`.
 
@@ -56,6 +61,7 @@ Use each document for its own responsibility:
 - PRODUCT = user behavior
 - ROUTES = URL / IA
 - DATABASE = schema / RLS / RPC
+- MCP = external-system connection and permissions
 - DESIGN = UI / UX
 - TESTING = verification strategy
 - USER_TEST_QA = audit snapshot
@@ -63,6 +69,17 @@ Use each document for its own responsibility:
 - AGENTS = governance
 
 If detailed information already exists in one canonical document, link/reference it instead of copying a second version elsewhere.
+
+## MCP safety rules
+
+The current Supabase MCP connection points at the existing OpenHouse project and is intentionally project-scoped and read-only.
+
+- Use MCP to inspect tables, schema, migrations, logs, advisors and current project metadata.
+- Do not attempt INSERT, UPDATE, DELETE, DDL, migration application, RLS changes or deployments through the current MCP server.
+- Do not bypass read-only restrictions by using another credential, service-role key, PAT or ad-hoc server.
+- Never commit authentication tokens, PATs, service-role keys or secrets.
+- If a write-capable MCP is needed, first propose a separate Development project/branch and obtain Founder approval before changing configuration.
+- If repository docs/migrations disagree with the live schema, report drift before proposing changes.
 
 ## Conflict handling
 
