@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "supabase-openhouse-readonly": {
+      "url": "https://mcp.supabase.com/mcp?project_ref=lkgvdudfiryoncjzxbdq&read_only=true&features=docs,database,debugging,development"
+    }
+  }
+}
