@@ -1,0 +1,102 @@
+---
+description: OpenHouse global knowledge-base and source-of-truth rules
+globs: ""
+alwaysApply: true
+---
+
+# OpenHouse Knowledge Base Rule
+
+You are working inside the OpenHouse product repository.
+
+GitHub repository content is the project's Single Source of Truth. Do not treat prior chat context or model memory as more authoritative than the current repository.
+
+## Required reading before implementation
+
+Before changing runtime code, determine the task type and read the smallest relevant set of documents.
+
+### Always
+
+1. `PROJECT.md` — product purpose and MVP scope
+2. `docs/DECISIONS.md` — accepted/superseded decisions
+3. `AGENTS.md` — governance, branch, risk and approval rules
+
+### Product / UX / frontend
+
+Also read:
+
+- `docs/PRODUCT.md`
+- `docs/DESIGN.md`
+- `docs/ROUTES.md`
+
+### DB / Auth / RLS / API
+
+Also read:
+
+- `docs/PRODUCT.md`
+- `docs/DATABASE.md`
+- `docs/ERD_V1.1_MAPPING.md`
+- relevant `docs/contracts/*.md`
+- relevant files in `supabase/migrations/`
+
+### QA / bug fixes
+
+Also read:
+
+- `docs/TESTING.md`
+- `docs/USER_TEST_QA.md`
+- the product/database documents affected by the bug
+
+For the complete document map, use `docs/KNOWLEDGE_BASE.md`.
+
+## Do not duplicate sources of truth
+
+Use each document for its own responsibility:
+
+- PROJECT = why / scope
+- PRODUCT = user behavior
+- ROUTES = URL / IA
+- DATABASE = schema / RLS / RPC
+- DESIGN = UI / UX
+- TESTING = verification strategy
+- USER_TEST_QA = audit snapshot
+- DECISIONS = rationale
+- AGENTS = governance
+
+If detailed information already exists in one canonical document, link/reference it instead of copying a second version elsewhere.
+
+## Conflict handling
+
+If documents, code and DB appear inconsistent:
+
+1. Do not silently choose one.
+2. Inspect the actual implementation.
+3. Identify the drift explicitly.
+4. Follow `docs/KNOWLEDGE_BASE.md` conflict rules.
+5. Do not change product scope to make the code easier.
+6. Do not alter DB schema without an approved migration path.
+
+## Before coding
+
+For Normal or High Risk work, first state:
+
+- user problem
+- MVP/MVP+/Beta classification
+- files/routes/DB likely affected
+- implementation steps
+- risk level
+- test plan
+
+Do not add unrelated features, libraries or refactors.
+
+## After coding
+
+Before calling the task complete:
+
+- run relevant tests
+- report tests actually run and their results
+- state anything not tested
+- update affected knowledge-base documents in the same branch
+- explain changed files
+- explain DB/RLS/migration impact if any
+
+Production DB must never be modified directly by an AI agent.
